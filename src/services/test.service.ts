@@ -42,13 +42,14 @@ class TestService {
   }
 
   async getTestById(id: number): Promise<Test | null> {
-    return AppDataSource.getRepository(Test).findOne({ where: { id } });
+    return AppDataSource.getRepository(Test).findOne({ where: { id }, relations: ['groups', 'profiles'] });
   }
 
-  async linkUserToTest(userId: number, testId: number): Promise<void> {
-    // Implement the logic to link a user to a test
-    // This might involve creating a new entity or updating an existing one
-    // The exact implementation depends on your data model
+  async linkUserAndGroupToTest(userId: number, groupId: number, testId: number) {
+    return Promise.all([
+      AppDataSource.createQueryBuilder().relation(Test, 'profiles').of(testId).add(userId),
+      AppDataSource.createQueryBuilder().relation(Test, 'groups').of(testId).add(groupId)
+    ]);
   }
 }
 

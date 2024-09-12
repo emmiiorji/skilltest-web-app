@@ -42,7 +42,7 @@ export function testController(app: FastifyInstance, opts: any, done: () => void
 
       // Linking the user to the test and getting the templates
       const [ _, idTemplate, firstTemplate ] = await Promise.all ([
-        testService.linkUserToTest(profile_id, test_id),
+        testService.linkUserAndGroupToTest(profile_id, group_id, test_id),
         template_id ? templateService.getTemplateById(template_id) : null,
         templateService.getFirstTemplate()
       ]);
