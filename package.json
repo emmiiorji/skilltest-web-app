@@ -5,7 +5,7 @@
   "main": "server.ts",
   "scripts": {
     "dev": "nodemon --watch src -e ts,hbs src/server.ts",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.json && npm run copy-views",
     "copy-views": "mkdir -p dist/views && cp -R src/views dist",
     "start": "node dist/server.js"
   },
@@ -26,9 +26,12 @@
   "dependencies": {
     "@fastify/helmet": "^11.1.1",
     "@fastify/view": "^9.1.0",
+    "dotenv": "^16.4.5",
     "fastify": "^4.28.1",
     "fastify-helmet": "^7.1.0",
     "handlebars": "^4.7.8",
+    "mysql2": "^3.11.2",
+    "typeorm": "^0.3.20",
     "zod": "^3.23.8"
   },
   "devDependencies": {
