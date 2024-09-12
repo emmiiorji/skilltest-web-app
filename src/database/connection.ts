@@ -1,5 +1,6 @@
 import { DataSource } from "typeorm";
-import { env } from "../env.config";
+import { env, isDev } from "../env.config";
+import { logger } from "../server";
 
 export const AppDataSource = new DataSource({
   type: "mysql",
@@ -7,9 +8,9 @@ export const AppDataSource = new DataSource({
   port: env.DB_PORT,
   username: env.DB_USER,
   password: env.DB_PASSWORD,
-  database: env.DB_NAME, // Replace with your actual database name
-  synchronize: env.NODE_ENV === "development", // Be cautious with this in production
-  logging: env.NODE_ENV === "development",
+  database: env.DB_NAME,
+  synchronize: false,
+  logging: isDev,
   entities: ["src/entities/**/*.ts"],
   migrations: ["src/migrations/**/*.ts"],
   subscribers: ["src/subscribers/**/*.ts"],
@@ -18,9 +19,9 @@ export const AppDataSource = new DataSource({
 export async function initializeDatabase() {
   try {
     await AppDataSource.initialize();
-    console.log("Database connection established successfully.");
+    logger.info("Database connection established successfully.");
   } catch (error) {
-    console.error("Error connecting to the database:", error);
+    logger.fatal("Error connecting to the database:", error);
     throw error;
   }
 }

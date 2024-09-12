@@ -11,6 +11,9 @@ const envSchema = z.object({
 	DB_USER: z.string(),
 	DB_PASSWORD: z.string(),
 	DB_NAME: z.string(),
+	SESSION_SECRET: z.string().min(32),
 });
 
 export const env = envSchema.parse(process.env);
+export const isDev = env.NODE_ENV === "development";
+export const isProd = env.NODE_ENV === "production";
