@@ -1,9 +1,9 @@
 import { AppDataSource } from '../database/connection';
-import { Group } from '../database/entities/Group';
-import { Profile } from '../database/entities/Profile';
-import { Template } from '../database/entities/Template';
-import { Test } from '../database/entities/Test';
-import { generateRandomString } from '../utils/helpers';
+import { Group } from '../database/entities/Group.entity';
+import { Profile } from '../database/entities/Profile.entity';
+import { Template } from '../database/entities/Template.entity';
+import { Test } from '../database/entities/Test.entity';
+import { generateRandomString } from '../utils/generateRandomString.utils';
 
 class TestService {
   private testRepository = AppDataSource.getRepository(Test);
@@ -18,14 +18,13 @@ class TestService {
     });
   }
 
-  async createTest(data: { group_id: number; profile_id: number; template_id: number }): Promise<Test> {
-    const { group_id, profile_id, template_id } = data;
+  async createTest(data: { group_id: number; profile_id: number}): Promise<Test> {
+    const { group_id, profile_id} = data;
 
     // Fetch related entities in parallel
-    const [group, profile, template] = await Promise.all([
+    const [group, profile] = await Promise.all([
       this.groupRepository.findOneOrFail({ where: { id: group_id } }),
       this.profileRepository.findOneOrFail({ where: { id: profile_id } }),
-      this.templateRepository.findOneOrFail({ where: { id: template_id } })
     ]);
 
     // Create and save the test
@@ -33,15 +32,23 @@ class TestService {
       name: generateRandomString(9),
       groups: [group],
       profiles: [profile],
-      templates: [template]
     });
 
     return this.testRepository.save({
       name: generateRandomString(9),
       groups: [group],
       profiles: [profile],
-      templates: [template]
     });
+  }
+
+  async getTestById(id: number): Promise<Test | null> {
+    return AppDataSource.getRepository(Test).findOne({ where: { id } });
+  }
+
+  async linkUserToTest(userId: number, testId: number): Promise<void> {
+    // Implement the logic to link a user to a test
+    // This might involve creating a new entity or updating an existing one
+    // The exact implementation depends on your data model
   }
 }
 

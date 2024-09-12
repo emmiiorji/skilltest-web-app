@@ -1,6 +1,6 @@
 import { AppDataSource } from '../database/connection';
-import { Template } from '../database/entities/Template';
-import { generateRandomString } from '../utils/helpers';
+import { Template } from '../database/entities/Template.entity';
+import { generateRandomString } from '../utils/generateRandomString.utils';
 
 class TemplateService {
   private templateRepository = AppDataSource.getRepository(Template);
@@ -16,6 +16,16 @@ class TemplateService {
     const newTemplate = new Template();
     newTemplate.template = generateRandomString(10);
     return this.templateRepository.save(newTemplate);
+  }
+
+  async getTemplateById(id: number): Promise<Template | null> {
+    return this.templateRepository.findOneBy({ id });
+  };
+
+  async getFirstTemplate(): Promise<Template | null> {
+    return AppDataSource.getRepository(Template).find({
+      take: 1,
+    }).then(res => res[0] ?? null);
   }
 }
 

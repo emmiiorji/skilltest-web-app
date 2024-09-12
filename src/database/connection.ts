@@ -10,10 +10,16 @@ export const AppDataSource = new DataSource({
   database: env.DB_NAME,
   synchronize: false,
   logging: isDev,
-  entities: ["src/database/entities/**/*.ts"],
+  entities: ["src/database/entities/**/*.entity.ts"],
   // entities: [Test, Group, Profile, Template],
   migrations: ["src/database/migrations/**/*.ts"],
   subscribers: ["src/database/subscribers/**/*.ts"],
+  // Update connection pooling options
+  extra: {
+    connectionLimit: env.DB_CONNECTION_LIMIT,
+    queueLimit: 0,
+    waitForConnections: true,
+  },
 });
 
 export async function initializeDatabase() {

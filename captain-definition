@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "dockerfileLines": [
+    "FROM node:18-alpine",
+    "RUN mkdir -p /usr/src/app",
+    "WORKDIR /usr/src/app",
+    "COPY package.json pnpm-lock.yaml ./",
+    "RUN npm install -g pnpm",
+    "RUN pnpm install",
+    "COPY . .",
+    "RUN pnpm run build",
+    "ENV NODE_ENV production",
+    "ENV PORT 80",
+    "EXPOSE 80",
+    "CMD [ \"node\", \"dist/server.js\" ]"
+  ]
+}
