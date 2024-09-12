@@ -1,6 +1,6 @@
 import { Column, Entity, ManyToMany } from "typeorm";
-import { BaseEntity } from "./BaseEntity";
-import { Test } from "./Test";
+import { BaseEntity } from "./BaseEntity.entity";
+import { Test } from "./Test.entity";
 
 @Entity("templates")
 export class Template extends BaseEntity {

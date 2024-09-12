@@ -1,7 +1,7 @@
-import dotenv from 'dotenv';
-import { z } from "zod";
+import { config } from 'dotenv';
+import { z } from 'zod';
 
-dotenv.config();
+config();
 
 const envSchema = z.object({
 	NODE_ENV: z.enum(["development", "production"]),
@@ -12,6 +12,7 @@ const envSchema = z.object({
 	DB_PASSWORD: z.string(),
 	DB_NAME: z.string(),
 	SESSION_SECRET: z.string().min(32),
+	SESSION_SALT: z.string(),
 	URL: z.string().url(),
 });
 

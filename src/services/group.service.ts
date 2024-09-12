@@ -1,6 +1,6 @@
 import { AppDataSource } from '../database/connection';
-import { Group } from '../database/entities/Group';
-import { generateRandomString } from '../utils/helpers';
+import { Group } from '../database/entities/Group.entity';
+import { generateRandomString } from '../utils/generateRandomString.utils';
 
 class GroupService {
   private groupRepository = AppDataSource.getRepository(Group);

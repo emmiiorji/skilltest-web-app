@@ -1,6 +1,6 @@
 import { AppDataSource } from '../database/connection';
-import { Template } from '../database/entities/Template';
-import { generateRandomString } from '../utils/helpers';
+import { Template } from '../database/entities/Template.entity';
+import { generateRandomString } from '../utils/generateRandomString.utils';
 
 class TemplateService {
   private templateRepository = AppDataSource.getRepository(Template);

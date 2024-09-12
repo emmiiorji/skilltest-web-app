@@ -1,6 +1,6 @@
 import { ZodError } from 'zod';
 import { AppDataSource } from '../database/connection';
-import { Profile } from '../database/entities/Profile';
+import { Profile } from '../database/entities/Profile.entity';
 import { ProfileInput, ProfileSchema } from '../database/validators/profile.validator';
 
 class ProfileService {

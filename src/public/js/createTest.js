@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('createGroup').addEventListener('click', async () => {
-    const response = await fetch('/admin/createGroupAjax', { method: 'POST' });
+    const response = await fetch('/admin/group/create-ajax', { method: 'POST' });
     const data = await response.json();
     if (data.success) {
       const groupSelect = document.getElementById('group_id');
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('instantCreateProfile').addEventListener('click', async () => {
-    const response = await fetch('/admin/createProfileAjax', { method: 'POST' });
+    const response = await fetch('/admin/profile/create-ajax', { method: 'POST' });
     const data = await response.json();
     if (data.success) {
       const profileSelect = document.getElementById('profile_id');
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('createTestForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const response = await fetch('/admin/createTest', {
+    const response = await fetch('/admin/test/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(Object.fromEntries(formData))
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('createTemplate').addEventListener('click', async () => {
-    const response = await fetch('/admin/createTemplateAjax', { method: 'POST' });
+    const response = await fetch('/admin/template/create-ajax', { method: 'POST' });
     const data = await response.json();
     if (data.success) {
       const templateSelect = document.getElementById('template_id');

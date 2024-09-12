@@ -1,7 +1,7 @@
 import { Column, Entity, JoinTable, ManyToMany } from "typeorm";
-import { BaseEntity } from "./BaseEntity";
-import { Profile } from "./Profile";
-import { Test } from "./Test";
+import { BaseEntity } from "./BaseEntity.entity";
+import { Profile } from "./Profile.entity";
+import { Test } from "./Test.entity";
 
 @Entity("groups")
 export class Group extends BaseEntity {

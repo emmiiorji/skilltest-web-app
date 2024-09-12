@@ -1,7 +1,7 @@
 import { Column, Entity, ManyToMany } from "typeorm";
-import { BaseEntity } from "./BaseEntity";
-import { Group } from "./Group";
-import { Test } from "./Test";
+import { BaseEntity } from "./BaseEntity.entity";
+import { Group } from "./Group.entity";
+import { Test } from "./Test.entity";
 
 @Entity()
 export class Profile extends BaseEntity {

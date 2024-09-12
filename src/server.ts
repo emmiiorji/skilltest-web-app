@@ -1,5 +1,5 @@
 import fastifyCors from '@fastify/cors';
-import fastifyFormbody from '@fastify/formbody'; // Add this import
+import fastifyFormbody from '@fastify/formbody';
 import fastifyHelmet from '@fastify/helmet';
 import fastifySecureSession from '@fastify/secure-session';
 import fastifySensible from '@fastify/sensible';
@@ -8,15 +8,15 @@ import fastifyView from '@fastify/view';
 import Fastify, { FastifyRequest } from 'fastify';
 import Handlebars from 'handlebars';
 import path, { join } from 'path';
-import { adminController } from './controllers/admin.controller';
-import { testController } from './controllers/test.controller';
 import { initializeDatabase } from './database/connection';
 import { env, isProd } from './env.config';
-import { registerHandlebarsHelpers } from './utils/handlebars-helpers';
+import adminRouter from './routes/admin.router';
+import attendTestRouter from './routes/attendTest.router';
+import { registerHandlebarsHelpers } from './utils/handlebars-helpers.utils';
 
 const server = Fastify({
   logger: true,
-	bodyLimit: 1024 * 1024 * 10, // 10MB
+  bodyLimit: 1024 * 1024 * 10, // 10MB
   // trustProxy: true, // Enables the use of X-Forwarded- headers, useful if you're behind a reverse proxy.
   ignoreTrailingSlash: true,
   caseSensitive: false,
@@ -25,9 +25,13 @@ const server = Fastify({
 
 export const logger = server.log;
 
-// Add CORS to only accept connections from the same domain
+// Add CORS with strict configuration
 server.register(fastifyCors, {
   origin: false,
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 600, // 10 minutes
 });
 
 // Add @fastify/sensible
@@ -36,7 +40,7 @@ server.register(fastifySensible);
 // Add @fastify/secure-session with strict configuration
 server.register(fastifySecureSession, {
   secret: env.SESSION_SECRET,
-  salt: 'mq9hDxBVDbspDR6n', // Generate a random salt
+  salt: env.SESSION_SALT,
   cookieName: '__session',
   cookie: {
     path: '/',
@@ -47,7 +51,26 @@ server.register(fastifySecureSession, {
   }
 });
 
-server.register(fastifyHelmet)
+// Add Helmet with strict CSP
+server.register(fastifyHelmet, {
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"], // Consider removing 'unsafe-inline' if possible
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+  referrerPolicy: {
+    policy: 'same-origin'
+  },
+});
+
 server.register(fastifyFormbody);
 
 server.register(fastifyView, {
@@ -71,18 +94,15 @@ server.register(fastifyView, {
 registerHandlebarsHelpers();
 
 server.setErrorHandler(function (error, request, reply) {
-	if (error instanceof Fastify.errorCodes.FST_ERR_BAD_STATUS_CODE) {
-    // Log error
-		request.log.error(error, "Fastify central error handler with bad status code.");
-		// Send error response
+  if (error instanceof Fastify.errorCodes.FST_ERR_BAD_STATUS_CODE) {
+    request.log.error(error, "Fastify central error handler with bad status code.");
     if(!reply.sent)
-		reply.status(500).send({ ok: false, error: 'Internal Server Error' });
-	} else {
+    reply.status(500).send({ ok: false, error: 'Internal Server Error' });
+  } else {
     request.log.error(error, "Fastify central error handler.");
-		// fastify will use parent error handler to handle this
     if(!reply.sent)
-		reply.send({ ok: false, error: error.message || 'Unknown error occurred' });
-	}
+    reply.send({ ok: false, error: error.message || 'Unknown error occurred' });
+  }
 });
 
 server.get('/', (request, reply) => {
@@ -90,11 +110,9 @@ server.get('/', (request, reply) => {
     url: request.url })
 });
 
-// Register admin routes
-adminController(server);
-
-// Register test routes
-testController(server);
+// Register admin router
+server.register(adminRouter, { prefix: '/admin' });
+server.register(attendTestRouter, { prefix: '/test' });
 
 // Serve static files from the public directory
 server.register(fastifyStatic, {
@@ -113,11 +131,10 @@ async function startServer() {
   }
 };
 
-
 const unexpectedErrorHandler = (error: unknown) => {
-	server.log.fatal(error, "Unexpected error.");
-	server.close();
-	process.exit(1);
+  server.log.fatal(error, "Unexpected error.");
+  server.close();
+  process.exit(1);
 };
 
 process.on("uncaughtException", unexpectedErrorHandler);

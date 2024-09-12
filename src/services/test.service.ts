@@ -1,9 +1,9 @@
 import { AppDataSource } from '../database/connection';
-import { Group } from '../database/entities/Group';
-import { Profile } from '../database/entities/Profile';
-import { Template } from '../database/entities/Template';
-import { Test } from '../database/entities/Test';
-import { generateRandomString } from '../utils/helpers';
+import { Group } from '../database/entities/Group.entity';
+import { Profile } from '../database/entities/Profile.entity';
+import { Template } from '../database/entities/Template.entity';
+import { Test } from '../database/entities/Test.entity';
+import { generateRandomString } from '../utils/generateRandomString.utils';
 
 class TestService {
   private testRepository = AppDataSource.getRepository(Test);

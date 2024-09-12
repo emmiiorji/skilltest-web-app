@@ -6,7 +6,7 @@ import { groupService } from '../services/group.service';
 import { profileService } from '../services/profile.service';
 import { templateService } from '../services/template.service';
 import { testService } from '../services/test.service';
-import { generateRandomString } from '../utils/helpers';
+import { generateRandomString } from '../utils/generateRandomString.utils';
 
 export function adminController(app: FastifyInstance) {
   app.get('/admin/createProfile', (request, reply) => {
