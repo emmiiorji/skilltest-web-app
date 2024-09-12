@@ -7,7 +7,15 @@
     "dev": "nodemon --watch src -e ts,hbs src/server.ts",
     "build": "tsc -p tsconfig.json && npm run copy-views",
     "copy-views": "mkdir -p dist/views && cp -R src/views dist",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:create": "npm run typeorm migration:create",
+    "migration:generate": "npm run typeorm migration:generate -- -d src/database/connection.ts",
+    "migration:run": "npm run typeorm migration:run -- -d src/database/connection.ts",
+    "migration:revert": "npm run typeorm migration:revert -- -d src/database/connection.ts",
+    "db:drop": "typeorm-ts-node-commonjs schema:drop -d src/database/connection.ts",
+    "db:sync": "typeorm-ts-node-commonjs schema:sync -d src/database/connection.ts",
+    "db:reset": "echo 'WARNING: This command will delete all entries in the old database. This action is non-reversible and data cannot be recovered. Are you sure you want to proceed? (y/n)' && read -r response && [ \"$response\" = \"y\" ] && npm run db:drop && npm run migration:generate src/database/migrations/InitialMigration && npm run migration:run || echo 'Database reset aborted.'"
   },
   "repository": {
     "type": "git",
@@ -25,6 +33,7 @@
   "homepage": "https://github.com/qwillio-live/skilltest-new#readme",
   "dependencies": {
     "@fastify/cors": "^9.0.1",
+    "@fastify/formbody": "^7.4.0",
     "@fastify/helmet": "^11.1.1",
     "@fastify/secure-session": "^7.5.1",
     "@fastify/sensible": "^5.6.0",
@@ -40,6 +49,7 @@
   "devDependencies": {
     "@types/node": "^22.5.4",
     "nodemon": "^3.1.4",
+    "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
   }
 }

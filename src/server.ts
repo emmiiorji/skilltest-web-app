@@ -1,15 +1,18 @@
 import fastifyCors from '@fastify/cors';
+import fastifyFormbody from '@fastify/formbody'; // Add this import
 import fastifyHelmet from '@fastify/helmet';
 import fastifySecureSession from '@fastify/secure-session';
 import fastifySensible from '@fastify/sensible';
 import fastifyView from '@fastify/view';
-import Fastify from 'fastify';
+import Fastify, { FastifyRequest } from 'fastify';
 import Handlebars from 'handlebars';
 import { join } from 'path';
+import { adminController } from './controllers/admin.controller';
 import { initializeDatabase } from './database/connection';
 import { env } from './env.config';
+import { registerHandlebarsHelpers } from './utils/handlebars-helpers';
 
-export const server = Fastify({
+const server = Fastify({
   logger: true,
 	bodyLimit: 1024 * 1024 * 10, // 10MB
   // trustProxy: true, // Enables the use of X-Forwarded- headers, useful if you're behind a reverse proxy.
@@ -43,6 +46,11 @@ server.register(fastifySecureSession, {
 });
 
 server.register(fastifyHelmet)
+server.register(fastifyFormbody); // Add this plugin to parse form data
+
+// Remove the preHandler hook
+// server.addHook('preHandler', (request, reply, done) => { ... });
+
 server.register(fastifyView, {
   engine: {
     handlebars: Handlebars
@@ -54,13 +62,44 @@ server.register(fastifyView, {
       header: 'partials/header.hbs',
       footer: 'partials/footer.hbs'
     }
+  },
+  defaultContext: (request: FastifyRequest) => { // Explicitly type the request parameter
+    return {
+      url: request.url
+    };
   }
 })
+registerHandlebarsHelpers();
+
+server.setErrorHandler(function (error, request, reply) {
+	if (error instanceof Fastify.errorCodes.FST_ERR_BAD_STATUS_CODE) {
+    console.error(error);
+		// Log error
+		request.log.error(error, "Fastify central error handler with bad status code.");
+		// Send error response
+    if(!reply.sent)
+		reply.status(500).send({ ok: false, error: 'Internal Server Error' });
+	} else {
+    console.error(error);
+		request.log.error(error, "Fastify central error handler.");
+		// fastify will use parent error handler to handle this
+    if(!reply.sent)
+		reply.send({ ok: false, error: error.message || 'Unknown error occurred' });
+	}
+});
+
+server.get('/', (request, reply) => {
+  reply.view('index', { title: 'Skill Test', 
+    url: request.url })
+});
+
+// Register admin routes
+adminController(server);
 
 async function startServer() {
   try {
     await initializeDatabase();
-    await server.listen({ port: env.PORT,  host: "0.0.0.0" });
+    await server.listen({ port: env.PORT, host: "0.0.0.0" });
     server.log.info(`Server is running on http://localhost:${env.PORT}`);
   } catch (err) {
     server.log.fatal(err);
