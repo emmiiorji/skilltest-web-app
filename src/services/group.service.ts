@@ -1,6 +1,5 @@
 import { AppDataSource } from '../database/connection';
 import { Group } from '../database/entities/Group.entity';
-import { generateRandomString } from '../utils/generateRandomString.utils';
 
 class GroupService {
   private groupRepository = AppDataSource.getRepository(Group);
@@ -12,11 +11,16 @@ class GroupService {
     });
   }
 
-  async createGroup(): Promise<Group> {
-    const newGroup = this.groupRepository.create({
-      name: generateRandomString(8) // Generate a random 8-character string
+  async getGroupById(id: number): Promise<Group | null> {
+    return AppDataSource.getRepository(Group).findOneBy({ id });
+  };
+
+  async createGroup(groupData: { id: number; name?: string }): Promise<Group> {
+    const group = AppDataSource.getRepository(Group).create({
+      id: groupData.id,
+      name: groupData.name ?? `Group ${groupData.id}` 
     });
-    return this.groupRepository.save(newGroup);
+    return AppDataSource.getRepository(Group).save(group);
   }
 }
 

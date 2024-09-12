@@ -17,6 +17,16 @@ class TemplateService {
     newTemplate.template = generateRandomString(10);
     return this.templateRepository.save(newTemplate);
   }
+
+  async getTemplateById(id: number): Promise<Template | null> {
+    return this.templateRepository.findOneBy({ id });
+  };
+
+  async getFirstTemplate(): Promise<Template | null> {
+    return AppDataSource.getRepository(Template).find({
+      take: 1,
+    }).then(res => res[0] ?? null);
+  }
 }
 
 export const templateService = new TemplateService();

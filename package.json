@@ -13,9 +13,10 @@
     "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/database/connection.ts",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/connection.ts",
     "migration:revert": "pnpm run typeorm migration:revert -- -d src/database/connection.ts",
-    "db:drop": "typeorm-ts-node-commonjs schema:drop -d src/database/connection.ts",
+    "db:drop": "echo 'WARNING: This command will delete all entries in the database. This action is non-reversible and data cannot be recovered. Are you sure you want to proceed? (y/n)' && read -r response && [ \"$response\" = \"y\" ] && typeorm-ts-node-commonjs schema:drop -d src/database/connection.ts || echo 'Database drop aborted.'",
     "db:sync": "typeorm-ts-node-commonjs schema:sync -d src/database/connection.ts",
-    "db:reset": "echo 'WARNING: This command will delete all entries in the old database. This action is non-reversible and data cannot be recovered. Are you sure you want to proceed? (y/n)' && read -r response && [ \"$response\" = \"y\" ] && pnpm run db:drop && rm -rf src/database/migrations && pnpm run migration:generate src/database/migrations/InitialMigration && pnpm run migration:run || echo 'Database reset aborted.'"
+    "db:reset": "pnpm run db:drop && rm -rf src/database/migrations && pnpm run migration:generate src/database/migrations/InitialMigration && pnpm run migration:run && pnpm run seed:all",
+    "seed:all": "ts-node src/database/seeds/index.ts"
   },
   "repository": {
     "type": "git",
