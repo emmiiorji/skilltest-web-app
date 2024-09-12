@@ -12,6 +12,7 @@ const envSchema = z.object({
 	DB_PASSWORD: z.string(),
 	DB_NAME: z.string(),
 	SESSION_SECRET: z.string().min(32),
+	URL: z.string().url(),
 });
 
 export const env = envSchema.parse(process.env);

@@ -9,7 +9,6 @@ export class Group extends BaseEntity {
   name: string;
 
   @ManyToMany(() => Test)
-  @JoinTable({ name: "group_tests" })
   tests: Test[];
 
   @ManyToMany(() => Profile)

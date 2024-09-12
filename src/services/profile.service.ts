@@ -4,37 +4,44 @@ import { Profile } from '../database/entities/Profile';
 import { ProfileInput, ProfileSchema } from '../database/validators/profile.validator';
 
 class ProfileService {
-  async createProfile(data: ProfileInput): Promise<Profile> {
-    try {
-      const validatedData = ProfileSchema.parse(data);
-      const profileRepository = AppDataSource.getRepository(Profile); // Use DataSource to get the repository
-      const profile = profileRepository.create(validatedData);
-      await profileRepository.save(profile);
-      return profile;
-    } catch (error) {
-      if (error instanceof ZodError) {
-        throw error; // Throw the original ZodError
-      }
-      throw new Error('Failed to create profile');
-    }
-  }
+	private profileRepository = AppDataSource.getRepository(Profile);
 
-  async getProfiles(page: number, limit: number) {
-    const profileRepository = AppDataSource.getRepository(Profile);
-    const [profiles, total] = await profileRepository.findAndCount({
-      skip: (page - 1) * limit,
-      take: limit,
-      order: { createdAt: 'DESC' }
-    });
+	async createProfile(data: ProfileInput): Promise<Profile> {
+		try {
+			const validatedData = ProfileSchema.parse(data);
+			const profile = this.profileRepository.create(validatedData);
+			await this.profileRepository.save(profile);
+			return profile;
+		} catch (error) {
+			if (error instanceof ZodError) {
+				throw error;
+			}
+			throw new Error('Failed to create profile');
+		}
+	}
 
-    const totalPages = Math.ceil(total / limit);
+	async getProfiles(page: number, limit: number) {
+		const [profiles, total] = await this.profileRepository.findAndCount({
+			skip: (page - 1) * limit,
+			take: limit,
+			order: { createdAt: 'DESC' }
+		});
 
-    return {
-      profiles,
-      totalPages,
-      currentPage: page
-    };
-  }
+		const totalPages = Math.ceil(total / limit);
+
+		return {
+			profiles,
+			totalPages,
+			currentPage: page
+		};
+	}
+
+	async getProfilesIdAndName(): Promise<{ id: number; name: string }[]> {
+		return this.profileRepository.find({
+			select: ['id', 'name'],
+			order: { name: 'ASC' }
+		});
+	}
 }
 
 export const profileService = new ProfileService();

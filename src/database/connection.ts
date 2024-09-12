@@ -1,5 +1,5 @@
 import { DataSource } from "typeorm";
-import { env } from "../env.config";
+import { env, isDev } from "../env.config";
 
 export const AppDataSource = new DataSource({
   type: "mysql",
@@ -9,8 +9,9 @@ export const AppDataSource = new DataSource({
   password: env.DB_PASSWORD,
   database: env.DB_NAME,
   synchronize: false,
-  logging: false, // isDev,
+  logging: isDev,
   entities: ["src/database/entities/**/*.ts"],
+  // entities: [Test, Group, Profile, Template],
   migrations: ["src/database/migrations/**/*.ts"],
   subscribers: ["src/database/subscribers/**/*.ts"],
 });

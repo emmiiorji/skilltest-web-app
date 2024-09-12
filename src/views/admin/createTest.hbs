@@ -1,0 +1,42 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-6">Create Test</h1>
+  
+  <form id="createTestForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <label for="group_id" class="font-semibold">Group ID:</label>
+    <div class="flex items-center">
+      <select id="group_id" name="group_id" class="w-full p-2 border rounded" required>
+        {{#each groups}}
+          <option value="{{this.id}}">{{this.id}} | {{this.name}}</option>
+        {{/each}}
+      </select>
+      <button type="button" id="createGroup" class="ml-2 px-4 py-2 bg-blue-500 text-white rounded">Create Group</button>
+    </div>
+
+    <label for="profile_id" class="font-semibold">Profile ID:</label>
+    <div class="flex items-center">
+      <select id="profile_id" name="profile_id" class="w-full p-2 border rounded" required>
+        {{#each profiles}}
+          <option value="{{this.id}}">{{this.id}} | {{this.name}}</option>
+        {{/each}}
+      </select>
+      <button type="button" id="instantCreateProfile" class="ml-2 px-4 py-2 bg-green-500 text-white rounded">Instant Create</button>
+      <a href="/admin/createProfile" class="ml-2 px-4 py-2 bg-yellow-500 text-white rounded">Create Profile</a>
+    </div>
+
+    <label for="template_id" class="font-semibold">Template ID:</label>
+    <div class="flex items-center">
+      <select id="template_id" name="template_id" class="w-full p-2 border rounded" required>
+        {{#each templates}}
+          <option value="{{this.id}}">{{this.id}} | {{this.template}}</option>
+        {{/each}}
+      </select>
+      <button type="button" id="createTemplate" class="ml-2 px-4 py-2 bg-purple-500 text-white rounded">Create Template</button>
+    </div>
+
+    <div class="md:col-span-2 mt-4">
+      <button type="submit" class="w-full px-4 py-2 bg-indigo-600 text-white rounded">Create Test</button>
+    </div>
+  </form>
+</div>
+
+<script src="/js/createTest.js"></script>

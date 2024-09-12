@@ -1,4 +1,4 @@
-import { Column, Entity, JoinTable, ManyToMany } from "typeorm";
+import { Column, Entity, ManyToMany } from "typeorm";
 import { BaseEntity } from "./BaseEntity";
 import { Group } from "./Group";
 import { Test } from "./Test";
@@ -66,10 +66,8 @@ export class Profile extends BaseEntity {
   process: string;
 
   @ManyToMany(() => Test)
-  @JoinTable({ name: "profile_test" })
   tests: Test[];
 
   @ManyToMany(() => Group)
-  @JoinTable({ name: "group_profiles" })
   groups: Group[];
 }

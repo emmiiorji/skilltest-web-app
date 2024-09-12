@@ -12,7 +12,7 @@ export const ProfileSchema = z.object({
   lastActivity: dateSchemaOptional,
   earned: z.coerce.number().optional(),
   rate: z.coerce.number().optional(),
-  totalHours: z.coerce.number(),
+  totalHours: z.coerce.number().optional(),
   inProgress: z.boolean().optional(),
   invitedAt: dateSchemaOptional,
   shortname: z.string().max(100).optional(),
