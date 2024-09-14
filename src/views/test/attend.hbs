@@ -1,14 +1,65 @@
-<div class="min-h-screen bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 flex items-center justify-center">
-  <div class="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
-    <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Test Parameters</h1>
-    {{#if user}}
-      <p class="mb-4"><span class="font-semibold">User:</span> <span class="text-indigo-600">{{user}}</span></p>
-    {{/if}}
-    {{#if test}}
-      <p class="mb-4"><span class="font-semibold">Test:</span> <span class="text-pink-600">{{test}}</span></p>
-    {{/if}}
-    {{#unless user}}{{#unless test}}
-      <p class="text-gray-600 text-center">No parameters provided.</p>
-    {{/unless}}{{/unless}}
+<div class="flex flex-col md:flex-row h-screen">
+  <div class="w-full md:w-1/2 p-4 overflow-y-auto">
+    <h1 class="text-2xl font-bold mb-4">{{test.name}}</h1>
+    <div class="question-container">
+      <h2 class="text-xl mb-2">{{question}}</h2>
+      <form id="answerForm" method="POST" action="/test/attend">
+        <input type="hidden" name="test_id" value="{{test_id}}">
+        <input type="hidden" name="question_id" value="{{question_id}}">
+        <input type="hidden" name="profile_id" value="{{user_id}}">
+        {{#if (eq answer_type "textarea")}}
+          <textarea name="answer" class="w-full p-2 border rounded" rows="4"></textarea>
+        {{else if (eq answer_type "radiobutton")}}
+          {{{answer_html}}}
+        {{else if (eq answer_type "multiinput")}}
+          {{{answer_html}}}
+        {{/if}}
+        <input type="hidden" name="time_taken" id="timeTaken">
+        <input type="hidden" name="copy_count" id="copyCount">
+        <input type="hidden" name="paste_count" id="pasteCount">
+        <input type="hidden" name="right_click_count" id="rightClickCount">
+        <input type="hidden" name="inactive_time" id="inactiveTime">
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded mt-4">Submit</button>
+      </form>
+    </div>
+  </div>
+  <div class="w-full md:w-1/2 bg-gray-100 p-4 overflow-y-auto">
+    <!-- Additional content or instructions can go here -->
   </div>
 </div>
+
+<script>
+  const startTime = Date.now();
+  let inactiveTime = 0;
+  let lastActiveTime = startTime;
+  let copyCount = 0;
+  let pasteCount = 0;
+  let rightClickCount = 0;
+
+  // Track inactive time
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      lastActiveTime = Date.now();
+    } else {
+      inactiveTime += Date.now() - lastActiveTime;
+    }
+  });
+
+  // Track copy, paste, and right-click events
+  document.addEventListener('copy', () => copyCount++);
+  document.addEventListener('paste', () => pasteCount++);
+  document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    rightClickCount++;
+  });
+
+  // Handle form submission
+  document.getElementById('answerForm').addEventListener('submit', (e) => {
+    const timeTaken = Date.now() - startTime;
+    document.getElementById('timeTaken').value = timeTaken;
+    document.getElementById('copyCount').value = copyCount;
+    document.getElementById('pasteCount').value = pasteCount;
+    document.getElementById('rightClickCount').value = rightClickCount;
+    document.getElementById('inactiveTime').value = inactiveTime;
+  });
+</script>
