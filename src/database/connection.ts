@@ -31,23 +31,3 @@ export async function initializeDatabase() {
     throw error;
   }
 }
-
-export async function dropDatabase() {
-  try {
-    await AppDataSource.dropDatabase();
-    console.info("Database dropped successfully.");
-  } catch (error) {
-    console.error("Error dropping the database:", error);
-    throw error;
-  }
-}
-
-export async function syncDatabase() {
-  try {
-    await AppDataSource.synchronize();
-    console.info("Database schema synchronized successfully.");
-  } catch (error) {
-    console.error("Error synchronizing the database schema:", error);
-    throw error;
-  }
-}
