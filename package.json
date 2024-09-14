@@ -5,7 +5,7 @@
   "main": "server.ts",
   "scripts": {
     "dev": "nodemon --watch src -e ts,hbs src/server.ts",
-    "build": "rm -rf dist && tsc -p tsconfig.json && pnpm run copy-views",
+    "build": "tsc",
     "copy-views": "mkdir -p dist/views && cp -R src/views dist",
     "start": "node dist/server.js",
     "typeorm": "typeorm-ts-node-commonjs",

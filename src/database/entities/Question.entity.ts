@@ -1,5 +1,6 @@
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Answer } from "./Answer.entity";
+import { QuestionTest } from "./QuestionTest.entity";
 
 @Entity("questions")
 export class Question {
@@ -29,4 +30,7 @@ export class Question {
 
     @OneToMany(() => Answer, answer => answer.question)
     answers: Answer[];
+
+    @OneToMany(() => QuestionTest, questionTest => questionTest.question)
+    questionTests: QuestionTest[];
 }
