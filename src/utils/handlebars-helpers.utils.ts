@@ -20,4 +20,13 @@ export function registerHandlebarsHelpers() {
   Handlebars.registerHelper('and', function() {
     return Array.prototype.every.call(arguments, Boolean);
   });
+
+  Handlebars.registerHelper('parseJson', function(jsonString) {
+    try {
+      return JSON.parse(jsonString);
+    } catch (error) {
+      console.error('Error parsing JSON:', error);
+      return null;
+    }
+  });
 }
