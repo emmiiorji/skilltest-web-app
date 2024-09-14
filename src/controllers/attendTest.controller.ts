@@ -36,8 +36,10 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
     }).then(answers => answers.map(a => a.question_id));
 
     const pendingQuestion = await questionRepo.findOne({
+      relations: ["questionTests"],
       where: {
-        id: Not(In(answeredQuestionsIds))
+        id: Not(In(answeredQuestionsIds)),
+        questionTests: { test_id }
       }
     });
 
