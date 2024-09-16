@@ -42,6 +42,16 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
       select: ['question_id'],
     }).then(answers => answers.map(a => a.question_id));
 
+    // If no questions have been answered, show the welcome page
+    if (answeredQuestionsIds.length === 0) {
+      return reply.view('test/start', { 
+        title: 'Start Test', 
+        userLinkId,
+        test_id,
+        url: request.url,
+      });
+    }
+
     const pendingQuestion = await questionRepo.findOne({
       relations: ["questionTests"],
       where: {
