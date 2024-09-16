@@ -3,7 +3,7 @@ import { z } from "zod";
 const dateSchemaOptional = z.string().optional();
 
 export const ProfileSchema = z.object({
-  link: z.string().optional(),
+  link: z.string(),
   url: z.string().optional(),
   name: z.string().optional(),
   country: z.string().optional(),

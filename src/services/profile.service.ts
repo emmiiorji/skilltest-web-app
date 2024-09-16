@@ -26,10 +26,10 @@ class ProfileService {
 		}
 	}
 
-	async createProfileById(id: number, group_id: number): Promise<Profile> {
+	async createProfileByLinkId(userLinkId: string, group_id: number): Promise<Profile> {
 		const profile = this.profileRepository.create({
-			id,
-			name: `User ${id}`,
+			link: userLinkId,
+			name: `User ${userLinkId}`,
 			groups: [{id: group_id}]
 		});
 		return await this.profileRepository.save(profile);
@@ -58,9 +58,9 @@ class ProfileService {
 		});
 	}
 
-	async getProfileById(id: number): Promise<Profile | null> {
+	async getProfileByLinkId(id: string): Promise<Profile | null> {
 		return this.profileRepository.findOne({
-			where: { id },
+			where: { link: id },
 			relations: ["groups"]
 		});
 	}

@@ -6,6 +6,7 @@ import { Answer } from '../database/entities/Answer.entity';
 import { Question } from '../database/entities/Question.entity';
 import { Test } from '../database/entities/Test.entity';
 import { AnswerSchema } from '../database/validators/answer.validation';
+import { profileService } from '../services/profile.service';
 import { checkAnswerCorrectness } from '../utils/checkAnswerCorrectness';
 
 export function attendTestController(app: FastifyInstance, opts: any, done: () => void) {
@@ -21,18 +22,23 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
     request: FastifyRequest<{ Querystring: { user: string; test: string } }>,
     reply: FastifyReply
   ) => {
-    const { user: profile_id, test: test_id } = z.object({
-      user: z.coerce.number(),
+    const { user: userLinkId, test: test_id } = z.object({
+      user: z.string(),
       test: z.coerce.number(),
     }).parse(request.query);
 
-    const testExists = await checkTestExistsForUser(profile_id, test_id);
+    const profile = await profileService.getProfileByLinkId(userLinkId);
+    if (!profile) {
+      return reply.status(404).send({ error: 'Invalid URL or test not found' });
+    };
+
+    const testExists = await checkTestExistsForUser(profile.id, test_id);
     if (!testExists) {
       return reply.status(404).send({ error: 'Invalid URL or test not found' });
     }
 
     const answeredQuestionsIds = await answerRepo.find({
-      where: { test: { id: test_id }, profile: { id: profile_id } },
+      where: { test: { id: test_id }, profile: { id: profile.id } },
       select: ['question_id'],
     }).then(answers => answers.map(a => a.question_id));
 
@@ -50,7 +56,8 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
 
     return reply.view('test/attend', { 
       title: 'Take Test', 
-      user_id: profile_id, 
+      user_id: profile.id, 
+      userLinkId,
       test_id, 
       url: request.url,
       question: pendingQuestion.question,
@@ -61,9 +68,15 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
   });
 
   app.post('/attend', async (
-    request: FastifyRequest<{ Body: z.infer<typeof AnswerSchema> & { user_id: number; test_id: number } }>,
+    request: FastifyRequest<{ 
+      Body: z.infer<typeof AnswerSchema> & { user_id: number; test_id: number },
+      Querystring: { user: string; test: string }
+    }>,
     reply: FastifyReply
   ) => {
+    const { user: userLinkId } = z.object({
+      user: z.string(),
+    }).parse(request.query);
 
     const { correct: correctAnswer } = await questionRepo.findOneOrFail({ 
       select: ['correct'],
@@ -88,7 +101,7 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
 
     await answerRepo.save(newAnswer);
 
-    return reply.redirect(`/test/attend?user=${validatedAnswer.profile_id}&test=${validatedAnswer.test_id}`);
+    return reply.redirect(`/test/attend?user=${userLinkId}&test=${validatedAnswer.test_id}`);
   });
 
   done();
