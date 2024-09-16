@@ -48,10 +48,10 @@ class TestService {
   async linkUserAndGroupToTest(profileId: number, groupId: number, test: Test) {
 
     return Promise.all([
-      test.groups?.some(group => group.id === groupId)
+      test.profiles?.some(profile => profile.id === profileId)
         ? test
         : AppDataSource.createQueryBuilder().relation(Test, 'profiles').of(test.id).add(profileId),
-      test.profiles?.some(profile => profile.id === profileId)
+      test.groups?.some(group => group.id === groupId)
         ? test
         : AppDataSource.createQueryBuilder().relation(Test, 'groups').of(test.id).add(groupId)
     ]);
