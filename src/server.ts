@@ -8,7 +8,6 @@ import fastifyView from '@fastify/view';
 import Fastify, { FastifyRequest } from 'fastify';
 import Handlebars from 'handlebars';
 import path, { join } from 'path';
-import "reflect-metadata";
 import { initializeDatabase } from './database/connection';
 import { env, isProd } from './env.config';
 import adminRouter from './routes/admin.router';
