@@ -7,7 +7,7 @@
     "dev": "nodemon --watch src -e ts,hbs src/server.ts",
     "build": "tsc",
     "copy-views": "mkdir -p dist/views && cp -R src/views dist",
-    "start": "ts-node src/server.ts",
+    "start": "ts-node src/server.ts --env-file=.env",
     "typeorm": "typeorm-ts-node-commonjs",
     "migration:create": "pnpm run typeorm migration:create",
     "migration:generate": "node generate-migration.js",
