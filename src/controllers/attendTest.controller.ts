@@ -6,6 +6,7 @@ import { Answer } from '../database/entities/Answer.entity';
 import { Question } from '../database/entities/Question.entity';
 import { Test } from '../database/entities/Test.entity';
 import { AnswerSchema } from '../database/validators/answer.validation';
+import { checkAnswerCorrectness } from '../utils/checkAnswerCorrectness';
 
 export function attendTestController(app: FastifyInstance, opts: any, done: () => void) {
   const answerRepo = AppDataSource.getRepository(Answer);
@@ -63,25 +64,25 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
     request: FastifyRequest<{ Body: z.infer<typeof AnswerSchema> & { user_id: number; test_id: number } }>,
     reply: FastifyReply
   ) => {
+
+    const { correct: correctAnswer } = await questionRepo.findOneOrFail({ 
+      select: ['correct'],
+      where: { id: request.body.question_id } 
+    });
+
+    const is_correct = checkAnswerCorrectness(request.body.answer, correctAnswer);
     
     if (typeof request.body.answer === 'object') {
       request.body.answer = JSON.stringify(request.body.answer);
     };
 
-    const validatedAnswer = AnswerSchema.parse(request.body);
+    const {ip, ...validatedAnswer} = AnswerSchema.parse(request.body);
     console.debug({validatedAnswer});
 
-    const { correct: correctAnswer } = await questionRepo.findOneOrFail({ 
-      select: ['correct'],
-      where: { id: validatedAnswer.question_id } 
-    });
-
-    const is_correct = checkAnswerCorrectness(validatedAnswer.answer, correctAnswer);
-    
     const newAnswer = answerRepo.create({
       is_correct,
       user_agent: request.headers['user-agent'] || '',
-      ip: request.ip,
+      ip: ip || request.ip,
       ...validatedAnswer,
     });
 
@@ -91,12 +92,6 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
   });
 
   done();
-}
-
-function checkAnswerCorrectness(userAnswer: any, correctAnswers: string): boolean {
-  // Implementation depends on the structure of userAnswer and correctAnswers
-  // This is a placeholder function
-  return false;
 }
 
 /*
