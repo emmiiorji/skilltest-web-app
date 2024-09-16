@@ -45,10 +45,15 @@ class TestService {
     return AppDataSource.getRepository(Test).findOne({ where: { id }, relations: ['groups', 'profiles'] });
   }
 
-  async linkUserAndGroupToTest(userId: number, groupId: number, testId: number) {
+  async linkUserAndGroupToTest(profileId: number, groupId: number, test: Test) {
+
     return Promise.all([
-      AppDataSource.createQueryBuilder().relation(Test, 'profiles').of(testId).add(userId),
-      AppDataSource.createQueryBuilder().relation(Test, 'groups').of(testId).add(groupId)
+      test.groups?.some(group => group.id === groupId)
+        ? test
+        : AppDataSource.createQueryBuilder().relation(Test, 'profiles').of(test.id).add(profileId),
+      test.profiles?.some(profile => profile.id === profileId)
+        ? test
+        : AppDataSource.createQueryBuilder().relation(Test, 'groups').of(test.id).add(groupId)
     ]);
   }
 }

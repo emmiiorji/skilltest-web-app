@@ -29,7 +29,7 @@ export function testController(app: FastifyInstance, opts: any, done: () => void
 
       // Check if group and user exist
       let [group, user] = await Promise.all([groupService.getGroupById(group_id), profileService.getProfileById(profile_id)]);
-
+      
       // If group or user does not exist, create them. If the user is not in the group, add them to the group.
       [group, user] = await Promise.all([
         group ?? groupService.createGroup({ id: group_id }), 
@@ -42,7 +42,7 @@ export function testController(app: FastifyInstance, opts: any, done: () => void
 
       // Linking the user to the test and getting the templates
       const [ _, idTemplate, firstTemplate ] = await Promise.all ([
-        testService.linkUserAndGroupToTest(profile_id, group_id, test_id),
+        testService.linkUserAndGroupToTest(profile_id, group_id, test),
         template_id ? templateService.getTemplateById(template_id) : null,
         templateService.getFirstTemplate()
       ]);
@@ -51,9 +51,13 @@ export function testController(app: FastifyInstance, opts: any, done: () => void
         throw new Error('No template found');
       };
 
-      const attendUrl = `${env.URL}/test/attend?user=${profile_id}&test=${test_id}`;
-      console.log({firstTemplate});
-      const renderedTemplate = idTemplate ? idTemplate.template.replaceAll('{url}', attendUrl) : firstTemplate!.template.replaceAll('{url}', attendUrl);
+      let attendUrl = `${env.URL}/test/attend?user=${profile_id}&test=${test_id}`;
+      attendUrl = `<a href=${attendUrl} target="_blank">${attendUrl}</a>`;
+
+      let renderedTemplate = idTemplate 
+        ? (idTemplate.template.replaceAll('{url}', attendUrl) && idTemplate.template.replaceAll('{link}', attendUrl)) 
+        : (firstTemplate!.template.replaceAll('{url}', attendUrl) && firstTemplate!.template.replaceAll('{link}', attendUrl));
+      
       
       return reply.type('text/html').send(renderedTemplate);
     } catch (error) {
