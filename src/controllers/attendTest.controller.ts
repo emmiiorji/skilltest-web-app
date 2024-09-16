@@ -19,10 +19,11 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
   };
 
   app.get('/attend', async (
-    request: FastifyRequest<{ Querystring: { user: string; test: string } }>,
+    request: FastifyRequest<{ Querystring: { start?: true, user: string; test: string } }>,
     reply: FastifyReply
   ) => {
-    const { user: userLinkId, test: test_id } = z.object({
+    const { start, user: userLinkId, test: test_id } = z.object({
+      start: z.string().optional().transform((value) => value === "true"),
       user: z.string(),
       test: z.coerce.number(),
     }).parse(request.query);
@@ -43,9 +44,9 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
     }).then(answers => answers.map(a => a.question_id));
 
     // If no questions have been answered, show the welcome page
-    if (answeredQuestionsIds.length === 0) {
-      return reply.view('test/start', { 
-        title: 'Start Test', 
+    if (!start) {
+      return reply.view(`/test/start`, {
+        title: 'Start Test',
         userLinkId,
         test_id,
         url: request.url,
@@ -111,7 +112,7 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
 
     await answerRepo.save(newAnswer);
 
-    return reply.redirect(`/test/attend?user=${userLinkId}&test=${validatedAnswer.test_id}`);
+    return reply.redirect(`/test/attend?start=true&user=${userLinkId}&test=${validatedAnswer.test_id}`);
   });
 
   done();
