@@ -58,8 +58,8 @@ server.register(fastifyHelmet, {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'"], // Consider removing 'unsafe-inline' if possible
       styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https://siteimages.b-cdn.net"],
+      connectSrc: ["'self'", "https://api.ipify.org"],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],

@@ -6,6 +6,7 @@ export const AnswerSchema = z.object({
     profile_id: z.coerce.number().int().positive(),
     answer: z.string().min(1, "Answer is required"),
     time_taken: z.coerce.number().int().positive(),
+    ip: z.string().optional(),
     copy_count: z.coerce.number().int().nonnegative(),
     paste_count: z.coerce.number().int().nonnegative(),
     right_click_count: z.coerce.number().int().nonnegative(),

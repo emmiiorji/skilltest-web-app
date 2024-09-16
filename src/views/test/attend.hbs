@@ -2,24 +2,31 @@
   <div class="w-full md:w-1/2 p-4 overflow-y-auto">
     <h1 class="text-2xl font-bold mb-4">{{test.name}}</h1>
     <div class="question-container">
-      <h2 class="text-xl mb-2">{{question}}</h2>
+      <h2 class="text-xl mb-2 max-w-[90vw] max-h-[90vh] overflow-auto">
+        <div class="max-w-full max-h-full overflow-auto" id="question-div">
+          {{{question}}}
+        </div>
+      </h2>
       <form id="answerForm" method="POST" action="/test/attend">
         <input type="hidden" name="test_id" value="{{test_id}}">
         <input type="hidden" name="question_id" value="{{question_id}}">
         <input type="hidden" name="profile_id" value="{{user_id}}">
         {{#if (eq answer_type "textarea")}}
-          <textarea name="answer" class="w-full p-2 border rounded" rows="4"></textarea>
+          {{{answer_html}}}
+          {{!-- <textarea name="answer" class="w-full p-2 border rounded" rows="4"></textarea> --}}
         {{else if (eq answer_type "radiobutton")}}
           {{{answer_html}}}
         {{else if (eq answer_type "multiinput")}}
           {{{answer_html}}}
         {{/if}}
         <input type="hidden" name="time_taken" id="timeTaken">
+        <input type="hidden" name="ip" id="ip">
         <input type="hidden" name="copy_count" id="copyCount">
         <input type="hidden" name="paste_count" id="pasteCount">
         <input type="hidden" name="right_click_count" id="rightClickCount">
         <input type="hidden" name="inactive_time" id="inactiveTime">
-        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded mt-4">Submit</button>
+        <button type="submit" id="submitButton" class="bg-blue-500 text-white px-4 py-2 rounded mt-4">Submit</button>
+        <span id="submittingMessage" class="ml-2" style="display: none;">Submitting...</span>
       </form>
     </div>
   </div>
@@ -35,6 +42,24 @@
   let copyCount = 0;
   let pasteCount = 0;
   let rightClickCount = 0;
+  let ip = '';
+
+    
+    fetch("https://api.ipify.org")
+      .then(res => res.text())
+      .then((res) => {
+          ip = res
+      });
+
+  // This is to make sure the images within the question dont overflow the question div.
+  document.addEventListener('DOMContentLoaded', function() {
+    const questionDiv = document.getElementById('question-div');
+    const children = questionDiv.children;
+    for (let child of children) {
+      child.style.maxWidth = '100%';
+      child.style.maxHeight = '100%';
+    }
+  });
 
   // Track inactive time
   document.addEventListener('visibilitychange', () => {
@@ -55,8 +80,18 @@
 
   // Handle form submission
   document.getElementById('answerForm').addEventListener('submit', (e) => {
+    const submitButton = document.getElementById('submitButton');
+    const submittingMessage = document.getElementById('submittingMessage');
+
+    // Disable button and show submitting message
+    submitButton.disabled = true;
+    submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+    submittingMessage.classList.remove('hidden');
+    submittingMessage.style.display = 'block';
+
     const timeTaken = Date.now() - startTime;
     document.getElementById('timeTaken').value = timeTaken;
+    document.getElementById('ip').value = ip;
     document.getElementById('copyCount').value = copyCount;
     document.getElementById('pasteCount').value = pasteCount;
     document.getElementById('rightClickCount').value = rightClickCount;
