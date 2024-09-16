@@ -5,8 +5,11 @@ import { Test } from "./Test.entity";
 
 @Entity()
 export class Profile extends BaseEntity {
-  @Column({ nullable: true })
-  link!: string;
+  @Column({
+    type: 'varchar',
+    unique: true
+  })
+  link: string;
 
   @Column({ nullable: true })
   url: string;
