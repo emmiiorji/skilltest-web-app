@@ -18,8 +18,11 @@
         <input type="hidden" name="paste_count" id="pasteCount">
         <input type="hidden" name="right_click_count" id="rightClickCount">
         <input type="hidden" name="inactive_time" id="inactiveTime">
-        <button type="submit" id="submitButton" class="bg-blue-500 text-white px-4 py-2 rounded mt-4">Submit</button>
-        <span id="submittingMessage" class="ml-2" style="display: none;">Submitting...</span>
+        <div style="margin-top: 2rem; text-align: center;">
+          <button type="submit" id="submitButton" style="background-color: #2563eb; color: white; font-weight: 600; padding: 0.75rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;">
+            Submit Answer
+          </button>
+        </div>
       </form>
     </div>
   </div>
@@ -67,30 +70,23 @@
   document.addEventListener('copy', () => copyCount++);
   document.addEventListener('paste', () => pasteCount++);
   document.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
     rightClickCount++;
   });
 
   const disableSubmitButton = () => {
     const submitButton = document.getElementById('submitButton');
-    const submittingMessage = document.getElementById('submittingMessage');
-
-    // Disable button and show submitting message
     submitButton.disabled = true;
-    submitButton.classList.add('opacity-50', 'cursor-not-allowed');
-    submittingMessage.classList.remove('hidden');
-    submittingMessage.style.display = 'block';
+    submitButton.style.opacity = '0.5';
+    submitButton.style.cursor = 'not-allowed';
+    submitButton.textContent = 'Submitting...';
   };
 
   const enableSubmitButton = () => {
     const submitButton = document.getElementById('submitButton');
-    const submittingMessage = document.getElementById('submittingMessage');
-
-    // Enable button and hide submitting message
     submitButton.disabled = false;
-    submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
-    submittingMessage.classList.add('hidden');
-    submittingMessage.style.display = 'none';
+    submitButton.style.opacity = '1';
+    submitButton.style.cursor = 'pointer';
+    submitButton.textContent = 'Submit Answer';
   };
 
   // Handle form submission
@@ -143,12 +139,12 @@
     }
 
     const timeTaken = Date.now() - startTime;
-    document.getElementById('timeTaken').value = timeTaken;
+    document.getElementById('timeTaken').value = Math.round(timeTaken/1000); // Time in seconds;
     document.getElementById('ip').value = ip;
     document.getElementById('copyCount').value = copyCount;
     document.getElementById('pasteCount').value = pasteCount;
     document.getElementById('rightClickCount').value = rightClickCount;
-    document.getElementById('inactiveTime').value = inactiveTime;
+    document.getElementById('inactiveTime').value = Math.round(inactiveTime / 1000); // Time in seconds
 
     // Submit the form
     e.target.submit();
