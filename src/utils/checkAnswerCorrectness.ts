@@ -1,37 +1,38 @@
 import { convertAnswerToArray } from "./convertAnswerToArray";
 
-const checkArraysEqual = (
-  userAnswer: string | number | (string | number)[],
-  correctAnswerArray: (string | number)[]
-): boolean => {
+const checkEqualityWhenUserAnswerString = (userAnswer: string, correctAnswersArray: (string | number)[] ) => {
+  // coerce to number if correctAnswer is a number
+  return correctAnswersArray.some(correctAnswer => 
+    typeof correctAnswer === 'number' ? Number(userAnswer) === correctAnswer : correctAnswer == userAnswer
+  );
+};
 
-  // If user answer is array, check if it has the same length as correct answer array
-  if (Array.isArray(userAnswer)) {
-    if (userAnswer.length !== correctAnswerArray.length) {
-      return false;
-    }
+const checkEqualityWhenUserAnswerArray = (userAnswer: (string | number)[], correctAnswersArray: (string | number)[]) => {
+  console.debug({userAnswer, correctAnswersArray});
+  if (userAnswer.length !== correctAnswersArray.length) {
+    return false;
+  }
+  return correctAnswersArray.every((correctAnswer, index) => {
+    const userValue = userAnswer[index];
     
-    // Check if user answer is equal to any of the correct answers
-    return correctAnswerArray.every(
-      (correctAnswer, index) => correctAnswer == userAnswer[index]
-    );
-  };
-
-  return correctAnswerArray.includes(userAnswer);
+    // coerce to number if correctAnswer is a number
+    return typeof correctAnswer === 'number' ? Number(userValue) === correctAnswer : correctAnswer == userValue;
+  });
 }
-    
 
 export function checkAnswerCorrectness(
-  userAnswer: string | number | (string | number)[], 
+  userAnswer: string, 
   correctAnswers: string
 ): boolean {
   const correctAnswersArray = convertAnswerToArray(correctAnswers);
   console.debug({correctAnswersArray, userAnswer});
 
-  // Check if arrays have the same length
+  // Check if correct answers array is an array of arrays.
   if (Array.isArray(correctAnswersArray[0])) {
     for (const correctAnswer of correctAnswersArray) {
-      const isCorrect = checkArraysEqual(userAnswer, correctAnswer as (string | number)[]);
+      const isCorrect = checkEqualityWhenUserAnswerArray(
+        typeof userAnswer === "string" ? JSON.parse(userAnswer) : userAnswer, 
+        correctAnswer as (string | number)[]);
       if (isCorrect) {
         return true;
       }
@@ -39,5 +40,5 @@ export function checkAnswerCorrectness(
     return false;
   } 
   
-  return checkArraysEqual(userAnswer, correctAnswersArray as (string | number)[]);
+  return checkEqualityWhenUserAnswerString(userAnswer as  string, correctAnswersArray as (string | number)[]);
 }

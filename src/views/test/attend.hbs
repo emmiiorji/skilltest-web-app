@@ -11,14 +11,7 @@
         <input type="hidden" name="test_id" value="{{test_id}}">
         <input type="hidden" name="question_id" value="{{question_id}}">
         <input type="hidden" name="profile_id" value="{{user_id}}">
-        {{#if (eq answer_type "textarea")}}
-          {{{answer_html}}}
-          {{!-- <textarea name="answer" class="w-full p-2 border rounded" rows="4"></textarea> --}}
-        {{else if (eq answer_type "radiobutton")}}
-          {{{answer_html}}}
-        {{else if (eq answer_type "multiinput")}}
-          {{{answer_html}}}
-        {{/if}}
+        {{{answer_html}}}
         <input type="hidden" name="time_taken" id="timeTaken">
         <input type="hidden" name="ip" id="ip">
         <input type="hidden" name="copy_count" id="copyCount">
@@ -78,8 +71,7 @@
     rightClickCount++;
   });
 
-  // Handle form submission
-  document.getElementById('answerForm').addEventListener('submit', (e) => {
+  const disableSubmitButton = () => {
     const submitButton = document.getElementById('submitButton');
     const submittingMessage = document.getElementById('submittingMessage');
 
@@ -88,6 +80,67 @@
     submitButton.classList.add('opacity-50', 'cursor-not-allowed');
     submittingMessage.classList.remove('hidden');
     submittingMessage.style.display = 'block';
+  };
+
+  const enableSubmitButton = () => {
+    const submitButton = document.getElementById('submitButton');
+    const submittingMessage = document.getElementById('submittingMessage');
+
+    // Enable button and hide submitting message
+    submitButton.disabled = false;
+    submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+    submittingMessage.classList.add('hidden');
+    submittingMessage.style.display = 'none';
+  };
+
+  // Handle form submission
+  document.getElementById('answerForm').addEventListener('submit', (e) => {
+    e.preventDefault(); // Prevent default form submission
+
+    disableSubmitButton();
+
+    // Get all possible answer inputs
+    let answerInputs = document.querySelectorAll('input[name="answer"]');
+    
+    // Check if any answer is provided
+    let hasAnswer = Array.from(answerInputs).some(input => {
+      if (input.type === 'radio' || input.type === 'checkbox') {
+        return input.checked;
+      } else {
+        return input.value.trim() !== '';
+      }
+    });
+
+    // Check for empty answer field and collect answers
+    if ({{{stringifyJson answer_type}}} === "multiTextInput") {
+      const answers = [];
+      let index = 0;
+      let answerInput = document.querySelector(`input[name="answer-${index}"]`);
+      while (answerInput) {
+        if(answerInput.value.trim()) {
+          answers.push(answerInput.value.trim());
+        }
+        index++;
+        answerInput = document.querySelector(`input[name="answer-${index}"]`);
+      }
+      
+      if (answers.length > 0) {
+        const answerArrayField = document.createElement('input');
+        answerArrayField.type = 'hidden';
+        answerArrayField.name = 'answer';
+        answerArrayField.value = JSON.stringify(answers);
+        e.target.appendChild(answerArrayField);
+        hasAnswer = true;
+      } else {
+        hasAnswer = false;
+      }
+    };
+    
+    if (!hasAnswer) {
+      alert('Please provide an answer before submitting.');
+      enableSubmitButton();
+      return;
+    }
 
     const timeTaken = Date.now() - startTime;
     document.getElementById('timeTaken').value = timeTaken;
@@ -96,5 +149,8 @@
     document.getElementById('pasteCount').value = pasteCount;
     document.getElementById('rightClickCount').value = rightClickCount;
     document.getElementById('inactiveTime').value = inactiveTime;
+
+    // Submit the form
+    e.target.submit();
   });
 </script>
