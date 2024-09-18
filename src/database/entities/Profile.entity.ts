@@ -72,6 +72,16 @@ export class Profile extends BaseEntity {
   tests: Test[];
 
   @ManyToMany(() => Group)
-  @JoinTable()
+  @JoinTable({
+    name: "profiles_groups",
+    joinColumn: {
+      name: "profileId",
+      referencedColumnName: "id"
+    },
+    inverseJoinColumn: {
+      name: "groupId",
+      referencedColumnName: "id"
+    },
+  })
   groups: Group[];
 }

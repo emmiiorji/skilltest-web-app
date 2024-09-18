@@ -1,5 +1,4 @@
 import { Repository } from "typeorm";
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ZodError } from 'zod';
 import { AppDataSource } from '../database/connection';
 import { Profile } from '../database/entities/Profile.entity';
@@ -65,8 +64,8 @@ class ProfileService {
 		});
 	}
 
-	async updateProfile(id: number, updateData: QueryDeepPartialEntity<Profile>) {
-		return await AppDataSource.getRepository(Profile).update(id, updateData);
+	updateProfile(id: number, groupId: number) {
+		return AppDataSource.createQueryBuilder().relation(Profile, "groups").of(id).add(groupId);	// return await AppDataSource.getRepository(Profile).update(id, updateData);
 	}
 }
 

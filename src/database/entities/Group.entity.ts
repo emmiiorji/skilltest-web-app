@@ -8,7 +8,7 @@ export class Group extends BaseEntity {
   @Column()
   name: string;
 
-  @ManyToMany(() => Test)
+  @ManyToMany(() => Test, test => test.groups)
   tests: Test[];
 
   @ManyToMany(() => Profile, profile => profile.groups)

@@ -10,11 +10,31 @@ export class Test extends BaseEntity {
   name: string;
 
   @ManyToMany(() => Profile, { nullable: true })
-  @JoinTable({name: "tests_profiles"})
+  @JoinTable({
+    name: "tests_profiles",
+    joinColumn: {
+      name: "testId",
+      referencedColumnName: "id"
+    },
+    inverseJoinColumn: {
+      name: "profileId",
+      referencedColumnName: "id"
+    }
+  })
   profiles: Profile[];
 
   @ManyToMany(() => Group, { nullable: true })
-  @JoinTable({name: "tests_groups"})
+  @JoinTable({
+    name: "tests_groups",
+    joinColumn: {
+      name: "testId",
+      referencedColumnName: "id"
+    },
+    inverseJoinColumn: {
+      name: "groupId",
+      referencedColumnName: "id"
+    }
+  })
   groups: Group[] | null;
 
   @OneToMany(() => QuestionTest, questionTest => questionTest.test)

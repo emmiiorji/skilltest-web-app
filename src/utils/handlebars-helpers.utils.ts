@@ -38,4 +38,14 @@ export function registerHandlebarsHelpers() {
       return '';
     }
   });
+
+  Handlebars.registerHelper('formatDate', function(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric'
+    });
+  });
 }
