@@ -68,5 +68,51 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
     reply.redirect("/admin/group/list");
   });
 
+  app.get("/test_result", async (request, reply) => {
+    const { group_id: groupId } = z.object({
+      group_id: z.coerce.number(),
+    }).parse(request.query);
+
+    const dataSource = await connection();
+    
+    const testResults = await dataSource.query(`
+      SELECT 
+        p.id AS user_id,
+        p.name AS user_name,
+        p.country,
+        COUNT(CASE WHEN ta.is_correct = 1 THEN 1 END) AS correct_answers,
+        COUNT(ta.id) AS total_answers,
+        GROUP_CONCAT(
+          CONCAT(
+            ta.question_id,
+            '(',
+            ta.time_taken,
+            ',',
+            ta.inactive_time,
+            ',',
+            ta.copy_count,
+            ',',
+            ta.paste_count,
+            ',',
+            ta.right_click_count,
+            ')'
+          )
+          ORDER BY ta.question_id
+          SEPARATOR ', '
+        ) AS question_details
+      FROM profile p
+      JOIN profiles_groups pg ON p.id = pg.profileId
+      JOIN answers ta ON p.id = ta.profile_id
+      WHERE pg.groupId = ?
+      GROUP BY p.id, p.name, p.country
+    `, [groupId]);
+
+    return reply.view("/admin/group/test_result", {
+      title: "Test Results",
+      testResults,
+      url: request.url
+    });
+  });
+
   done()
 }

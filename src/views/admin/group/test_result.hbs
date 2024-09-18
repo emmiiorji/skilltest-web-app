@@ -1,0 +1,112 @@
+<div class="header-container">
+  <h1>Test Results</h1>
+  {{#if testResults.length}}
+    <button id="copyButton" class="btn btn-blue">Copy Selected Rows</button>
+  {{/if}}
+</div>
+
+{{#if testResults.length}}
+  <table id="resultsTable">
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>User Name</th>
+        <th>Country</th>
+        <th>Score</th>
+        <th>Question Details</th>
+        <th>
+          <input type="checkbox" id="selectAll" style="margin-right: 0.5rem;">
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each testResults}}
+        <tr>
+          <td data-label="User ID">{{this.user_id}}</td>
+          <td data-label="User Name">{{this.user_name}}</td>
+          <td data-label="Country">{{this.country}}</td>
+          <td data-label="Score">{{this.correct_answers}} / {{this.total_answers}}</td>
+          <td data-label="Question Details">
+            <ul style="list-style-type: none; padding-left: 0;">
+              {{#each (splitQuestionDetails this.question_details) as |detail|}}
+                <li>{{detail}}</li>
+              {{/each}}
+            </ul>
+          </td>
+          <td>
+            <input type="checkbox" class="row-selector" data-row-id="{{@index}}">
+          </td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+{{else}}
+  <p style="color: #666;">No test results found for this group.</p>
+{{/if}}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const copyButton = document.getElementById('copyButton');
+    const table = document.getElementById('resultsTable');
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const rowSelectors = document.querySelectorAll('.row-selector');
+
+    selectAllCheckbox.addEventListener('change', function() {
+      rowSelectors.forEach(checkbox => {
+        checkbox.checked = this.checked;
+      });
+    });
+
+    rowSelectors.forEach(checkbox => {
+      checkbox.addEventListener('change', function() {
+        selectAllCheckbox.checked = Array.from(rowSelectors).every(cb => cb.checked);
+      });
+    });
+
+    copyButton.addEventListener('click', function() {
+      const selectedRows = document.querySelectorAll('.row-selector:checked');
+      if (selectedRows.length === 0) {
+        alert('Please select at least one row to copy.');
+        return;
+      }
+
+      let copyText = '';
+      const headers = Array.from(table.querySelectorAll('thead th')).slice(0, -1).map(th => th.textContent.trim());
+      copyText += headers.join('\t') + '\n';
+
+      selectedRows.forEach(checkbox => {
+        const row = checkbox.closest('tr');
+        const cells = Array.from(row.querySelectorAll('td')).slice(0, -1);
+        const rowData = cells.map(cell => cell.textContent.trim().replace(/\n/g, ' '));
+        copyText += rowData.join('\t') + '\n';
+      });
+
+      navigator.clipboard.writeText(copyText).then(() => {
+        copyButton.style.backgroundColor = '#4CAF50';
+        copyButton.textContent = 'Copied!';
+        setTimeout(() => {
+          copyButton.style.backgroundColor = '#3b82f6';
+          copyButton.textContent = 'Copy Selected Rows';
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+        copyButton.style.backgroundColor = '#ef4444';
+        copyButton.textContent = 'Failed to copy';
+        setTimeout(() => {
+          copyButton.style.backgroundColor = '#3b82f6';
+          copyButton.textContent = 'Copy Selected Rows';
+        }, 2000);
+      });
+    });
+  });
+</script>
+
+<style>
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  // ... other existing styles ...
+</style>
