@@ -37,7 +37,7 @@ export function testController(app: FastifyInstance, opts: any, done: () => void
           ? user.groups.every(group => group.id !== group_id)
             ? profileService.updateProfile(user.id, {groups: [...user.groups, {id: group_id}]}).then(() => user) 
             : user
-          : profileService.createProfileByLinkId(userLinkId, group_id ).then(() => user)
+          : profileService.createProfileByLinkId(userLinkId, group_id )
       ]);
 
       // Linking the user to the test and getting the templates
