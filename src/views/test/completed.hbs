@@ -1,4 +1,38 @@
-<div class="flex flex-col items-center justify-center h-screen bg-gray-100">
-  <h1 class="text-3xl font-bold mb-6">Test Completed</h1>
-  <p class="text-lg mb-8">Congratulations! You have completed the test.</p>
+<style>
+  .test-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    background-color: #f3f4f6;
+  }
+
+  .test-title {
+    font-size: 1.875rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+  }
+  .test-description {
+    font-size: 1.125rem;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .start-button {
+    background-color: #3b82f6;
+    color: white;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    text-decoration: none;
+  }
+
+  .start-button:hover {
+    background-color: #2563eb;
+  }
+</style>
+
+<div class="test-container">
+  <h1 class="test-title">Test Completed</h1>
+  <p class="test-description">Congratulations! You have completed the test.</p>
 </div>

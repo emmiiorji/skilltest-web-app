@@ -1,9 +1,8 @@
-<div class="flex flex-col md:flex-row h-screen">
-  <div class="w-full md:w-1/2 p-4 overflow-y-auto">
-    <h1 class="text-2xl font-bold mb-4">{{test.name}}</h1>
+<div class="flex-container">
+    <h1>{{test.name}}</h1>
     <div class="question-container">
-      <h2 class="text-xl mb-2 max-w-[90vw] max-h-[90vh] overflow-auto">
-        <div class="max-w-full max-h-full overflow-auto" id="question-div">
+      <h2>
+        <div id="question-div">
           {{{question}}}
         </div>
       </h2>
@@ -18,18 +17,78 @@
         <input type="hidden" name="paste_count" id="pasteCount">
         <input type="hidden" name="right_click_count" id="rightClickCount">
         <input type="hidden" name="inactive_time" id="inactiveTime">
-        <div style="margin-top: 2rem; text-align: center;">
-          <button type="submit" id="submitButton" style="background-color: #2563eb; color: white; font-weight: 600; padding: 0.75rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;">
+        <div class="submit-container">
+          <button type="submit" id="submitButton">
             Submit Answer
           </button>
         </div>
       </form>
     </div>
-  </div>
-  <div class="w-full md:w-1/2 bg-gray-100 p-4 overflow-y-auto">
-    <!-- Additional content or instructions can go here -->
-  </div>
+  
 </div>
+
+<style>
+  .flex-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: auto;
+  }
+
+  #question-div {
+    max-width: 100%;
+    max-height: 100%;
+    overflow: auto;
+  }
+
+  .submit-container {
+    margin-top: 2rem;
+    text-align: center;
+    padding: 5px;
+    @media (min-width: 768px) {
+      padding: 20px;
+    }
+  }
+
+  #submitButton {
+    background-color: #2563eb;
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  #submitButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  @media (min-width: 768px) {
+    .flex-container {
+      flex-direction: row;
+    }
+
+    .content-left, .content-right {
+      width: 50%;
+    }
+  }
+</style>
 
 <script>
   const startTime = Date.now();
