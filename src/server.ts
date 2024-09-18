@@ -80,10 +80,10 @@ server.register(fastifyView, {
   root: join(__dirname, 'views'),
   layout: 'layouts/layout',
   options: {
-    partials: {
-      header: 'partials/header.hbs',
-      footer: 'partials/footer.hbs'
-    }
+    // partials: {
+    //   header: 'partials/header.hbs',
+    //   footer: 'partials/footer.hbs'
+    // }
   },
   defaultContext: (request: FastifyRequest) => {
     return {
