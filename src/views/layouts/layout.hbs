@@ -74,6 +74,8 @@
                 margin-bottom: 10px;
                 border-radius: 8px;
                 overflow: hidden;
+                display: flex;
+                flex-wrap: wrap;
             }
 
             td {
@@ -81,6 +83,8 @@
                 position: relative;
                 padding-left: 50%;
                 text-align: right;
+                flex-basis: 100%;
+                box-sizing: border-box;
             }
 
             td:before {
@@ -93,6 +97,46 @@
                 text-align: left;
                 font-weight: bold;
             }
+
+            td[data-label="Countries"], td[data-label="Test IDs"] {
+                flex-basis: 100%;
+                text-align: left;
+                padding-left: 6px;
+            }
+
+            td[data-label="Countries"]:before, td[data-label="Test IDs"]:before {
+                position: static;
+                display: block;
+                width: 100%;
+                margin-bottom: 5px;
+            }
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        .btn-blue {
+            background-color: #3b82f6;
+        }
+
+        .btn-blue:hover {
+            background-color: #2563eb;
         }
 
         button {

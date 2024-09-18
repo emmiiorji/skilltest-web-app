@@ -1,21 +1,17 @@
-import { Repository } from "typeorm";
 import { ZodError } from 'zod';
-import { AppDataSource } from '../database/connection';
+import { connection } from '../database/connection';
 import { Profile } from '../database/entities/Profile.entity';
 import { ProfileInput, ProfileSchema } from '../database/validators/profile.validator';
 
 class ProfileService {
-	private profileRepository: Repository<Profile>;
-
-	constructor() {
-		this.profileRepository = AppDataSource.getRepository(Profile);
-	}
 
 	async createProfile(data: ProfileInput, group_id: number): Promise<Profile> {
 		try {
+			const dataSource = await connection();
+			const profileRepository = dataSource.getRepository(Profile);
 			const validatedData = ProfileSchema.parse(data);
-			const profile = this.profileRepository.create({...validatedData, groups: [{id: group_id}]});
-			await this.profileRepository.save(profile);
+			const profile = profileRepository.create({...validatedData, groups: [{id: group_id}]});
+			await profileRepository.save(profile);
 			return profile;
 		} catch (error) {
 			if (error instanceof ZodError) {
@@ -26,16 +22,20 @@ class ProfileService {
 	}
 
 	async createProfileByLinkId(userLinkId: string, group_id: number): Promise<Profile> {
-		const profile = this.profileRepository.create({
+		const dataSource = await connection();
+		const profileRepository = dataSource.getRepository(Profile);
+		const profile = profileRepository.create({
 			link: userLinkId,
 			name: `User ${userLinkId}`,
 			groups: [{id: group_id}]
 		});
-		return await this.profileRepository.save(profile);
+		return await profileRepository.save(profile);
 	}
 
 	async getProfiles(page: number, limit: number) {
-		const [profiles, total] = await this.profileRepository.findAndCount({
+		const dataSource = await connection();
+		const profileRepository = dataSource.getRepository(Profile);
+		const [profiles, total] = await profileRepository.findAndCount({
 			skip: (page - 1) * limit,
 			take: limit,
 			order: { createdAt: 'DESC' }
@@ -51,21 +51,27 @@ class ProfileService {
 	}
 
 	async getProfilesIdAndName(): Promise<{ id: number; name: string }[]> {
-		return this.profileRepository.find({
+		const dataSource = await connection();
+		const profileRepository = dataSource.getRepository(Profile);
+		return profileRepository.find({
 			select: ['id', 'name'],
 			order: { name: 'ASC' }
 		});
 	}
 
 	async getProfileByLinkId(id: string): Promise<Profile | null> {
-		return this.profileRepository.findOne({
+		const dataSource = await connection();
+		const profileRepository = dataSource.getRepository(Profile);
+		return profileRepository.findOne({
 			where: { link: id },
 			relations: ["groups"]
 		});
 	}
 
-	updateProfile(id: number, groupId: number) {
-		return AppDataSource.createQueryBuilder().relation(Profile, "groups").of(id).add(groupId);	// return await AppDataSource.getRepository(Profile).update(id, updateData);
+	async updateProfile(id: number, groupId: number) {
+		const dataSource = await connection();
+		const profileRepository = dataSource.getRepository(Profile);
+		return profileRepository.update(id, { groups: [{ id: groupId }] });
 	}
 }
 

@@ -1,57 +1,63 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { AppDataSource } from "../database/connection";
+import { connection } from "../database/connection";
 import { Group } from "../database/entities/Group.entity";
-import { Profile } from "../database/entities/Profile.entity";
-import { Test } from "../database/entities/Test.entity";
 
 export function groupController(app: FastifyInstance, opts: any, done: () => void) {
-  const groupRepo = AppDataSource.getRepository(Group);
 
   app.get("/list", async (request, reply) => {
-    const groups = await groupRepo.find({
-      select: ["id", "name", "createdAt"],
-      order: { createdAt: "DESC" }
-    });
-
-    let formattedGroups = await Promise.all(
-      groups.map(async group => ({
-        ...group,
-        ...(
-          await AppDataSource.getRepository(Profile).findAndCount({
-            relations: ["groups"],
-            select: ["id", "country"],
-            order: { country: "ASC" },
-            where: {
-              groups: {
-                id: group.id
-              }
-            }
-          }).then(res => ({
-            profile_count: res[1],
-            profile_countries: [...new Set(res[0].map((p: any) => p.country))].join(', '),
-          }))
-        ),
-        test_ids: await AppDataSource.getRepository(Test).find({
-          select: ["id"],
-          order: { id: "ASC" },
-          where: {
-            groups: {
-              id: group.id
-            }
-          }
-        }).then(res => res.map((t: any) => t.id).join(', '))
-      }))
-    );
+    const dataSource = await connection();
+    const groupRepo = dataSource.getRepository(Group);
+    // Optimized SQL query to fetch all required data in a single operation
+    const groups: {
+      id: number;
+      name: string;
+      createdAt: Date;
+      profile_count: number;
+      profile_countries: string;
+      test_ids: string;
+    }[] = await dataSource.query(`
+      -- We start with the main 'groups' table to get basic group info.
+      SELECT 
+        g.id,
+        g.name,
+        g.createdAt,
+        -- For each group, we use subqueries to fetch additional data:
+        -- Subquery to count profiles for each group (using profiles_groups join table)
+        (SELECT COUNT(*) FROM profiles_groups pg WHERE pg.groupId = g.id) as profile_count,
+        -- Subquery to get unique, comma-separated countries for each group (using profile and profiles_groups tables)
+        -- We use GROUP_CONCAT to concatenate countries and test IDs, as STRING_AGG is not available in MySQL 5.7.
+        COALESCE(
+          (SELECT GROUP_CONCAT(DISTINCT p.country ORDER BY p.country SEPARATOR ', ')
+           FROM profile p
+           JOIN profiles_groups pg ON p.id = pg.profileId
+           WHERE pg.groupId = g.id),
+          ''
+        ) as profile_countries,
+        -- Subquery to get comma-separated test IDs for each group (using tests and tests_groups tables)
+        COALESCE(
+          (SELECT GROUP_CONCAT(t.id ORDER BY t.id SEPARATOR ', ')
+           FROM tests t
+           JOIN tests_groups tg ON t.id = tg.testId
+           WHERE tg.groupId = g.id),
+          ''
+        ) as test_ids
+      FROM groups g
+      -- The result is ordered by creation date descending
+      ORDER BY g.createdAt DESC
+    `);
+    console.debug(groups.map(group => group.profile_countries))
 
     return reply.view("/admin/group/list", {
       title: "All Groups",
-      groups: formattedGroups,
+      groups,
       url: request.url
     });
   });
 
   app.post("/create", async (request, reply) => {
+    const dataSource = await connection();
+    const groupRepo = dataSource.getRepository(Group);
     const { group_id: id, group_name: name } = z.object({
       group_id: z.coerce.number(),
       group_name: z.string()  

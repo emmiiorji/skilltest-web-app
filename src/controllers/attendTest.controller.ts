@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { In, Not } from 'typeorm';
 import { z } from 'zod';
-import { AppDataSource } from '../database/connection';
+import { connection } from '../database/connection';
 import { Answer } from '../database/entities/Answer.entity';
 import { Question } from '../database/entities/Question.entity';
 import { Test } from '../database/entities/Test.entity';
@@ -10,11 +10,10 @@ import { profileService } from '../services/profile.service';
 import { checkAnswerCorrectness } from '../utils/checkAnswerCorrectness';
 
 export function attendTestController(app: FastifyInstance, opts: any, done: () => void) {
-  const answerRepo = AppDataSource.getRepository(Answer);
-  const questionRepo = AppDataSource.getRepository(Question);
 
   const checkTestExistsForUser = async (profile_id: number, test_id: number) => {
-    const testRepo = AppDataSource.getRepository(Test);
+    const dataSource = await connection();
+    const testRepo = dataSource.getRepository(Test);
     return await testRepo.findOne({ where: { id: test_id, profiles: { id: profile_id } } });
   };
 
@@ -22,6 +21,9 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
     request: FastifyRequest<{ Querystring: { start?: true, user: string; test: string } }>,
     reply: FastifyReply
   ) => {
+    const dataSource = await connection();
+    const answerRepo = dataSource.getRepository(Answer);
+    const questionRepo = dataSource.getRepository(Question);
     const { start, user: userLinkId, test: test_id } = z.object({
       start: z.string().optional().transform((value) => value === "true"),
       user: z.string(),
@@ -90,6 +92,9 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
     }>,
     reply: FastifyReply
   ) => {
+    const dataSource = await connection();
+    const answerRepo = dataSource.getRepository(Answer);
+    const questionRepo = dataSource.getRepository(Question);
     const { user: userLinkId } = z.object({
       user: z.string(),
     }).parse(request.query);
