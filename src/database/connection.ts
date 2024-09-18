@@ -1,7 +1,7 @@
 import { DataSource } from "typeorm";
 import { env } from "../env.config";
 
-export const AppDataSource = new DataSource({
+const AppDataSource = new DataSource({
   type: "mysql",
   host: env.DB_HOST,
   port: env.DB_PORT,
@@ -22,7 +22,7 @@ export const AppDataSource = new DataSource({
   },
 });
 
-export async function initializeDatabase() {
+async function initializeDatabase() {
   try {
     await AppDataSource.initialize();
     console.info("Database connection established successfully.");
@@ -30,4 +30,13 @@ export async function initializeDatabase() {
     console.error("Error connecting to the database:", error);
     throw error;
   }
+};
+
+export const connection = async () => {
+  if (AppDataSource.isInitialized) {
+    return AppDataSource;
+  };
+  await initializeDatabase();
+  console.info("Database connection established successfully.");
+  return AppDataSource;
 }

@@ -7,6 +7,7 @@
     height: 100%;
     background-color: #f3f4f6;
     max-width: 800px;
+    margin: 0 auto;
   }
 
   .test-title {
@@ -19,25 +20,12 @@
     font-size: 1.125rem;
     margin-bottom: 2rem;
   }
-
-  .start-button {
-    background-color: #3b82f6;
-    color: white;
-    font-weight: bold;
-    padding: 0.5rem 1rem;
-    border-radius: 0.25rem;
-    text-decoration: none;
-  }
-
-  .start-button:hover {
-    background-color: #2563eb;
-  }
 </style>
 
 <div class="test-container">
   <h1 class="test-title">Welcome to the Test</h1>
   <p class="test-description">Click the button below to start your test.</p>
-  <a href="/test/attend?start=true&user={{userLinkId}}&test={{test_id}}" class="start-button">
+  <a href="/test/attend?start=true&user={{userLinkId}}&test={{test_id}}" class="btn btn-blue">
     Start Test
   </a>
 </div>

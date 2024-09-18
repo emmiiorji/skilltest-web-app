@@ -8,7 +8,7 @@ import fastifyView from '@fastify/view';
 import Fastify, { FastifyRequest } from 'fastify';
 import Handlebars from 'handlebars';
 import path, { join } from 'path';
-import { initializeDatabase } from './database/connection';
+import { connection } from './database/connection';
 import { env, isProd } from './env.config';
 import adminRouter from './routes/admin.router';
 import attendTestRouter from './routes/attendTest.router';
@@ -122,7 +122,9 @@ server.register(fastifyStatic, {
 
 async function startServer() {
   try {
-    await initializeDatabase();
+    const dataSource = await connection();
+    const sqlVersion = await dataSource.query('SELECT VERSION() as version');
+    console.log('SQL Server Version:', sqlVersion[0].version);
     await server.listen({ port: env.PORT, host: "0.0.0.0" });
     server.log.info(`Server is running on http://localhost:${env.PORT}`);
   } catch (err) {
