@@ -53,14 +53,12 @@ export function testController(app: FastifyInstance, opts: any, done: () => void
 
       let attendUrl = `${env.URL}/test/attend?user=${userLinkId}&test=${test_id}`;
       attendUrl = `<a href=${attendUrl} target="_blank">${attendUrl}</a>`;
-      console.log({attendUrl});
 
       let renderedTemplate = idTemplate 
         ? idTemplate.template.replaceAll('{url}', attendUrl) 
         : firstTemplate!.template.replaceAll('{url}', attendUrl);
 
       renderedTemplate = renderedTemplate.replaceAll('{link}', attendUrl);
-      console.log({renderedTemplate});
       
       return reply.type('text/html').send(renderedTemplate);
     } catch (error) {

@@ -5,7 +5,7 @@ export const convertAnswerToArray = <T extends string | number>(answer: string):
   // Check if it's a nested array
   if (trimmed.includes('[')) {
     // Split nested arrays and parse each
-    return trimmed.split('],[').map(subArray => 
+    return trimmed.split(/\]\s*,\s*\[/).map(subArray => 
       subArray.replace(/^\[|\]$/g, '').split(',').map(item => parseItem<T>(item.trim()))
     );
   } else {

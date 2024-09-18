@@ -12,9 +12,9 @@ export class Question {
 
     @Column({
         type: "enum",
-        enum: ["textarea", "radiobutton", "multiinput"],
+        enum: ["textarea", "radiobutton", "multiinput", "multiTextInput"],
     })
-    answer_type: "textarea" | "radiobutton" | "multiinput";
+    answer_type: "textarea" | "radiobutton" | "multiinput" | "multiTextInput";
 
     @Column("text")
     answer_html: string;

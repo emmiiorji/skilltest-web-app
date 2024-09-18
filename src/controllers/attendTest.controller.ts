@@ -65,6 +65,11 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
       return reply.view('test/completed', { title: 'Test Completed', url: request.url });
     }
 
+    reply.header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate');
+    reply.header('Pragma', 'no-cache');
+    reply.header('Expires', '0');
+    reply.header('Surrogate-Control', 'no-store');
+
     return reply.view('test/attend', { 
       title: 'Take Test', 
       user_id: profile.id, 
@@ -101,7 +106,6 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
     };
 
     const {ip, ...validatedAnswer} = AnswerSchema.parse(request.body);
-    console.debug({validatedAnswer});
 
     const newAnswer = answerRepo.create({
       is_correct,

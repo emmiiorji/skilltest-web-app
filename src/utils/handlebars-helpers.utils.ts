@@ -29,4 +29,13 @@ export function registerHandlebarsHelpers() {
       return null;
     }
   });
+
+  Handlebars.registerHelper('stringifyJson', function(obj) {
+    try {
+      return JSON.stringify(obj);
+    } catch (error) {
+      console.error('Error stringifying object:', error);
+      return '';
+    }
+  });
 }
