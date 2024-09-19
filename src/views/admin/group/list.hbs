@@ -22,7 +22,10 @@
       <td data-label="Creation Date">{{formatDate this.createdAt}}</td>
       <td data-label="User Count">{{this.profile_count}}</td>
       <td data-label="Countries">{{this.profile_countries}}</td>
-      <td data-label="Test IDs">{{this.test_ids}}</td>
+      <td data-label="Test IDs">
+        {{this.test_ids}}
+        <a href="/admin/group/test_result?group_id={{this.id}}" class="btn btn-blue">View Results</a>
+      </td>
     </tr>
     {{/each}}
   </tbody>

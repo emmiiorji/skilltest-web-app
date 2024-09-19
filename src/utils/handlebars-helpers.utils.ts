@@ -48,4 +48,8 @@ export function registerHandlebarsHelpers() {
       day: 'numeric'
     });
   });
+  
+  Handlebars.registerHelper('splitQuestionDetails', function(details) {
+    return details.split(', ');
+  });
 }
