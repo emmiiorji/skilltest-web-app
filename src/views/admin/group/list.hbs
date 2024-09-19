@@ -17,15 +17,16 @@
   <tbody>
     {{#each groups}}
     <tr>
-      <td data-label="Group ID">{{this.id}}</td>
+      <td data-label="Group ID">
+        {{this.id}}
+        <br>
+        <a href="/admin/group/test_result?group_id={{this.id}}" class="view-results-link">View Results</a>
+      </td>
       <td data-label="Group Name">{{this.name}}</td>
       <td data-label="Creation Date">{{formatDate this.createdAt}}</td>
       <td data-label="User Count">{{this.profile_count}}</td>
       <td data-label="Countries">{{this.profile_countries}}</td>
-      <td data-label="Test IDs">
-        {{this.test_ids}}
-        <a href="/admin/group/test_result?group_id={{this.id}}" class="btn btn-blue">View Results</a>
-      </td>
+      <td data-label="Test IDs">{{this.test_ids}}</td>
     </tr>
     {{/each}}
   </tbody>
@@ -34,17 +35,53 @@
 <div id="createGroupModal" class="modal">
   <div class="modal-content" style="width: auto; max-width: 300px;">
     <h2>Create New Group</h2>
-    <form action="/admin/group/create" method="POST">
+    <form id="createGroupForm">
       <input type="number" name="group_id" placeholder="Group ID" required>
       <input type="text" name="group_name" placeholder="Group Name" required>
       <div style="text-align: center; margin-top: 10px;">
         <button type="submit" class="btn btn-blue">Create</button>
       </div>
     </form>
+    <div id="formMessage" style="margin-top: 10px; text-align: center;"></div>
   </div>
 </div>
 
 <script src="/js/allGroups.js"></script>
+
+<script>
+document.getElementById('createGroupForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(this);
+  const formMessage = document.getElementById('formMessage');
+
+  fetch('/admin/group/create', {
+    method: 'POST',
+    body: new URLSearchParams(formData),
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      formMessage.textContent = data.message;
+      formMessage.style.color = 'green';
+      setTimeout(() => {
+        location.reload();
+      }, 1500);
+    } else {
+      formMessage.textContent = data.message;
+      formMessage.style.color = 'red';
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    formMessage.textContent = 'An error occurred. Please try again.';
+    formMessage.style.color = 'red';
+  });
+});
+</script>
 
 <style>
   .header-container {
@@ -70,5 +107,15 @@
     padding: 20px;
     border: 1px solid #888;
     width: 80%;
+  }
+
+  .view-results-link {
+    font-size: 0.9em;
+    text-decoration: none;
+    color: #007bff;
+  }
+
+  .view-results-link:hover {
+    text-decoration: underline;
   }
 </style>
