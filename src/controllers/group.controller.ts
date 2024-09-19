@@ -77,19 +77,56 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
   });
 
   app.get("/test_result", async (request, reply) => {
-    const { group_id: groupId } = z.object({
+    const result = z.object({
       group_id: z.coerce.number(),
-    }).parse(request.query);
+      sort: z.enum(['date', 'pass', 'date,pass', 'pass,date'])
+    }).safeParse(request.query);
 
-    const dataSource = await connection();
+    let groupId: number;
+    let validSort: string;
+    let orderBy: string;
+
+    if (result.success) {
+      groupId = result.data.group_id;
+      validSort = result.data.sort;
+    } else if (result.error.issues.some(issue => issue.path.includes('sort'))) {
+      const parsedQuery = z.object({
+        group_id: z.coerce.number(),
+      }).parse(request.query);
+      groupId = parsedQuery.group_id;
+      // Redirect to the test result page with the default sort order if group_id is available
+      return reply.redirect(`/admin/group/test_result?group_id=${groupId}&sort=date,pass`);
+    } else {
+      throw result.error;
+    };
+
+    // SQL query to get the test results with proper sorting.
+    switch(validSort) {
+      case 'date':
+        orderBy = 'completion_date DESC';
+        break;
+      case 'pass':
+        orderBy = 'correct_answers DESC';
+        break;
+      case 'pass,date':
+        orderBy = 'correct_answers DESC, completion_date DESC';
+        break;
+      default:
+        orderBy = 'completion_date DESC, correct_answers DESC';
+    }
     
+    const dataSource = await connection();
     const testResults = await dataSource.query(`
       SELECT 
+        -- Basic user information
         p.id AS user_id,
         p.name AS user_name,
         p.country,
+        -- Count of correct answers for this user in this group
         COUNT(CASE WHEN ta.is_correct = 1 THEN 1 END) AS correct_answers,
+        -- Total number of answers for this user in this group
         COUNT(ta.id) AS total_answers,
+        -- Detailed information about each question answered
         GROUP_CONCAT(
           CONCAT(
             ta.question_id,
@@ -107,18 +144,26 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
           )
           ORDER BY ta.question_id
           SEPARATOR ', '
-        ) AS question_details
+        ) AS question_details,
+        -- The latest answer date, considered as the completion date
+        MAX(ta.created_at) AS completion_date
       FROM profile p
+      -- Join to get all profiles in the specified group
       JOIN profiles_groups pg ON p.id = pg.profileId
+      -- Join to get all answers for these profiles
       JOIN answers ta ON p.id = ta.profile_id
+      -- Filter for the specific group
       WHERE pg.groupId = ?
+      -- Group results by user
       GROUP BY p.id, p.name, p.country
+      ORDER BY ${orderBy}
     `, [groupId]);
 
     return reply.view("/admin/group/test_result", {
       title: "Test Results",
       testResults,
-      url: request.url
+      url: request.url,
+      currentSort: validSort
     });
   });
 
