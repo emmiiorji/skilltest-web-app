@@ -21,6 +21,12 @@ export function registerHandlebarsHelpers() {
     return Array.prototype.every.call(arguments, Boolean);
   });
 
+  Handlebars.registerHelper('or', function() {
+    const args = Array.prototype.slice.call(arguments, 0, -1);
+    console.debug('args', args);
+    return args.some(arg => arg);
+  });
+
   Handlebars.registerHelper('parseJson', function(jsonString) {
     try {
       return JSON.parse(jsonString);
