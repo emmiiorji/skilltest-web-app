@@ -56,16 +56,24 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
   });
 
   app.post("/create", async (request, reply) => {
-    const dataSource = await connection();
-    const groupRepo = dataSource.getRepository(Group);
-    const { group_id: id, group_name: name } = z.object({
-      group_id: z.coerce.number(),
-      group_name: z.string()  
-    }).parse(request.body);
-    const newGroup = groupRepo.create({ id, name });
-    await groupRepo.insert(newGroup);
-    
-    reply.redirect("/admin/group/list");
+    try {
+      const dataSource = await connection();
+      const groupRepo = dataSource.getRepository(Group);
+      const { group_id: id, group_name: name } = z.object({
+        group_id: z.coerce.number(),
+        group_name: z.string()  
+      }).parse(request.body);
+      const newGroup = groupRepo.create({ id, name });
+      await groupRepo.insert(newGroup);
+      
+      return reply.status(200).send({ success: true, message: "Group created successfully" });
+    } catch (error) {
+      console.error("Error creating group:", error);
+      return reply.status(400).send({ 
+        success: false, 
+        message: error instanceof Error ? error.message : "An error occurred while creating the group" 
+      });
+    }
   });
 
   app.get("/test_result", async (request, reply) => {
