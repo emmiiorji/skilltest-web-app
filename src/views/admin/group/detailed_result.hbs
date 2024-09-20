@@ -28,18 +28,6 @@
       box-sizing: border-box;
     }
   }
-  @media screen and (max-width: 400px) {    
-    .profile-info {
-      flex-direction: column;
-    }
-    .profile-item {
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 14px;
-    }
-  }
 </style>
 
 {{#each detailedResults}}
@@ -50,7 +38,7 @@
     </div>
     <div class="profile-item">
       <div>Link ID</div> 
-      <div>{{this.profile.linkId}}</div>
+      <a href ="/admin/profile/view?id={{this.profile.linkId}}">{{this.profile.linkId}}</a>
     </div>
     <div class="profile-item">
       <div>Name</div> 

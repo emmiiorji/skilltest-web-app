@@ -119,7 +119,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
     const testResults = await dataSource.query(`
       SELECT 
         -- Basic user information
-        p.id AS user_id,
+        p.link AS user_link_id,
         p.name AS user_name,
         p.country,
         -- Count of correct answers for this user in this group
