@@ -22,7 +22,7 @@
     <tbody>
       {{#each profiles}}
         <tr>
-          <td data-label="ID"><a href="/admin/profile/view?id={{this.link}}">{{this.link}}</a></td>
+          <td data-label="ID"><a href="/admin/profile/view?id={{this.link}}&key={{../key}}">{{this.link}}</a></td>
           <td data-label="Name">{{this.name}}</td>
           <td data-label="Email">{{this.email}}</td>
           <td data-label="Created At">{{formatDate this.createdAt}}</td>
@@ -38,10 +38,10 @@
     </div>
     <div>
       {{#if hasPrevPage}}
-        <a href="/admin/profile/list?page={{subtract currentPage 1}}" class="btn btn-blue">Previous</a>
+        <a href="/admin/profile/list?page={{subtract currentPage 1}}&key={{this.key}}" class="btn btn-blue">Previous</a>
       {{/if}}
       {{#if hasNextPage}}
-        <a href="/admin/profile/list?page={{add currentPage 1}}" class="btn btn-blue">Next</a>
+        <a href="/admin/profile/list?page={{add currentPage 1}}&key={{this.key}}" class="btn btn-blue">Next</a>
       {{/if}}
     </div>
   </div>

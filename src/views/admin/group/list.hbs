@@ -20,7 +20,7 @@
       <td data-label="Group ID">
         {{this.id}}
         <br>
-        <a href="/admin/group/test_result?group_id={{this.id}}" class="view-results-link">View Results</a>
+        <a href="/admin/group/test_result?group_id={{this.id}}&key={{../key}}" class="view-results-link">View Results</a>
       </td>
       <td data-label="Group Name">{{this.name}}</td>
       <td data-label="Creation Date">{{formatDate this.createdAt}}</td>
@@ -55,7 +55,7 @@ document.getElementById('createGroupForm').addEventListener('submit', function(e
   const formData = new FormData(this);
   const formMessage = document.getElementById('formMessage');
 
-  fetch('/admin/group/create', {
+  fetch('/admin/group/create?key={{this.key}}', {
     method: 'POST',
     body: new URLSearchParams(formData),
     headers: {

@@ -5,8 +5,7 @@ import { profileService } from '../services/profile.service';
 
 export function profileController(app: FastifyInstance, opts: any, done: () => void) {
   app.get('/list', async (request, reply) => {
-    const query = request.query as { page?: string };
-    const page = Number(query.page ?? 1);
+    const {key, page} = z.object({key: z.string(), page: z.coerce.number().optional().default(1)}).parse(request.query);
     const limit = 10; // Profiles per page
 
     try {
@@ -18,20 +17,22 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         currentPage,
         hasNextPage: currentPage < totalPages,
         hasPrevPage: currentPage > 1,
-        url: request.url
+        url: request.url,
+        key
       });
     } catch (error) {
       request.log.error(error, "Error fetching profiles");
       reply.view('admin/profile/list', {
         title: 'View Profiles',
         error: 'Failed to fetch profiles. Please try again.',
-        url: request.url
+        url: request.url,
+        key
       });
     }
   });
 
   app.get('/view', async (request, reply) => {
-    const {id: profileLinkId} = z.object({id: z.string()}).parse(request.query);
+    const {id: profileLinkId, key} = z.object({id: z.string(), key: z.string()}).parse(request.query);
     const db = await connection();
     
     const result = await db.query(`
@@ -42,13 +43,16 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         p.country, 
         p.rate AS hourlyRate, 
         p.lastActivity,
+        p.url,
         -- Use COALESCE to return an empty JSON array if no test results are found
         COALESCE(
           -- Aggregate test results into a JSON array, grouped by test_id
           JSON_ARRAYAGG(
             JSON_OBJECT(
               'test_id', test_id,
-              'answers', answers
+              'test_name', test_name,
+              'answers', answers,
+              'attended_at', attended_at
             )
           ),
           JSON_ARRAY()
@@ -59,6 +63,8 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         SELECT 
           a.profile_id,
           a.test_id,
+          t.name AS test_name,
+          MAX(a.created_at) AS attended_at,
           -- Aggregate answers for each test into a JSON array
           JSON_ARRAYAGG(
             JSON_OBJECT(
@@ -75,8 +81,10 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         FROM answers a
         -- Join with questions to get question text
         JOIN questions q ON a.question_id = q.id
+        -- Join with tests to get test name
+        JOIN tests t ON a.test_id = t.id
         -- Group by profile_id and test_id to aggregate answers for each test
-        GROUP BY a.profile_id, a.test_id
+        GROUP BY a.profile_id, a.test_id, t.name
       ) AS grouped_answers ON p.id = grouped_answers.profile_id
       -- Filter by the profile's link ID
       WHERE p.link = ?
@@ -93,7 +101,8 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
     return reply.view('admin/profile/view', {
       title: 'View Profile',
       profile,
-      testResults
+      testResults,
+      key
     });
   });
 

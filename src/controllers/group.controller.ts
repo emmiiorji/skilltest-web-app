@@ -6,8 +6,10 @@ import { Group } from "../database/entities/Group.entity";
 export function groupController(app: FastifyInstance, opts: any, done: () => void) {
 
   app.get("/list", async (request, reply) => {
+    const { key } = z.object({
+      key: z.string(),
+    }).parse(request.query);
     const dataSource = await connection();
-    const groupRepo = dataSource.getRepository(Group);
     // Optimized SQL query to fetch all required data in a single operation
     const groups: {
       id: number;
@@ -46,12 +48,12 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       -- The result is ordered by creation date descending
       ORDER BY g.createdAt DESC
     `);
-    console.debug(groups.map(group => group.profile_countries))
 
     return reply.view("/admin/group/list", {
       title: "All Groups",
       groups,
-      url: request.url
+      url: request.url,
+      key,
     });
   });
 
@@ -61,11 +63,10 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       const groupRepo = dataSource.getRepository(Group);
       const { group_id: id, group_name: name } = z.object({
         group_id: z.coerce.number(),
-        group_name: z.string()  
+        group_name: z.string(),
       }).parse(request.body);
       const newGroup = groupRepo.create({ id, name });
       await groupRepo.insert(newGroup);
-      
       return reply.status(200).send({ success: true, message: "Group created successfully" });
     } catch (error) {
       console.error("Error creating group:", error);
@@ -79,26 +80,36 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
   app.get("/test_result", async (request, reply) => {
     const result = z.object({
       group_id: z.coerce.number(),
-      sort: z.enum(['date', 'pass', 'date,pass', 'pass,date'])
+      sort: z.enum(['date', 'pass', 'date,pass', 'pass,date']),
+      test: z.coerce.number().optional(),
+      key: z.string(),
     }).safeParse(request.query);
 
     let groupId: number;
     let validSort: string;
     let orderBy: string;
+    let testId: number | undefined;
+    let key: string;
 
     if (result.success) {
       groupId = result.data.group_id;
       validSort = result.data.sort;
+      testId = result.data.test;
+      key = result.data.key;
     } else if (result.error.issues.some(issue => issue.path.includes('sort'))) {
       const parsedQuery = z.object({
         group_id: z.coerce.number(),
+        test: z.coerce.number().optional(),
+        key: z.string(),
       }).parse(request.query);
       groupId = parsedQuery.group_id;
-      // Redirect to the test result page with the default sort order if group_id is available
-      return reply.redirect(`/admin/group/test_result?group_id=${groupId}&sort=date,pass`);
+      testId = parsedQuery.test;
+      key = parsedQuery.key;
+      // Redirect to the test result page with the default sort order
+      return reply.redirect(`/admin/group/test_result?group_id=${groupId}&key=${key}&sort=date,pass${testId ? `&test_id=${testId}` : ''}`);
     } else {
       throw result.error;
-    };
+    }
 
     // SQL query to get the test results with proper sorting.
     switch(validSort) {
@@ -154,23 +165,28 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       JOIN answers ta ON p.id = ta.profile_id
       -- Filter for the specific group
       WHERE pg.groupId = ?
+      ${testId ? 'AND ta.test_id = ?' : ''}
       -- Group results by user
       GROUP BY p.id, p.name, p.country
       ORDER BY ${orderBy}
-    `, [groupId]);
+    `, testId ? [groupId, testId] : [groupId]);
 
     return reply.view("/admin/group/test_result", {
       title: "Test Results",
       testResults,
       url: request.url,
       currentSort: validSort,
-      groupId
+      groupId,
+      testId,
+      key,
     });
   });
 
   app.get("/detailed_result", async (request, reply) => {
-    const { group_id } = z.object({
+    const { group_id, test: test_id, key } = z.object({
       group_id: z.coerce.number(),
+      test: z.coerce.number().optional(),
+      key: z.string(),
     }).parse(request.query);
 
     const dataSource = await connection();
@@ -224,11 +240,12 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       LEFT JOIN tests t ON a.test_id = t.id
       WHERE 
           g.id = ? -- Parameter for group ID
+          ${test_id ? 'AND t.id = ?' : ''}
       GROUP BY 
           p.id
       ORDER BY 
           last_answer_date DESC
-    `, [group_id]);
+    `, test_id ? [group_id, test_id] : [group_id]);
 
     // Process the results
     const processedResults = detailedResults.map(result => ({
@@ -262,6 +279,8 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       title: "Detailed Test Results",
       detailedResults: processedResults,
       url: request.url,
+      groupId: group_id,
+      key,
     });
   });
 

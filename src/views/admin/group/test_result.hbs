@@ -2,7 +2,7 @@
   <h1>Test Results</h1>
   {{#if testResults.length}}
     <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
-      <a href ="/admin/group/detailed_result?group_id={{groupId}}">Detailed Result</a>
+      <a href ="/admin/group/detailed_result?group_id={{groupId}}&key={{this.key}}">Detailed Result</a>
       <button id="copyButton" class="btn btn-blue">Copy Selected Rows</button>
     </div>
   {{/if}}
@@ -34,7 +34,7 @@
     <tbody>
       {{#each testResults}}
         <tr>
-          <td data-label="User ID"><a href="/admin/profile/view?id={{this.user_link_id}}">{{this.user_link_id}}</a></td>
+          <td data-label="User ID"><a href="/admin/profile/view?id={{this.user_link_id}}&key={{../key}}">{{this.user_link_id}}</a></td>
           <td data-label="User Name">{{this.user_name}}</td>
           <td data-label="Country">{{this.country}}</td>
           <td data-label="Score">{{this.correct_answers}} / {{this.total_answers}}</td>

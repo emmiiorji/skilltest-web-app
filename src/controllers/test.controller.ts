@@ -30,14 +30,16 @@ export function testController(app: FastifyInstance, opts: any, done: () => void
       // Check if group and user exist
       let [user] = await Promise.all([
         profileService.getProfileByLinkId(userLinkId)
-          .then(user => user ?? profileService.createProfileByLinkId(userLinkId, group_id)),
+          .then(user => user ?? profileService.createProfileByLinkId(userLinkId)),
         groupService.getGroupById(group_id)
           .then(group => group ?? groupService.createGroup({ id: group_id })), 
       ]);
 
+      user = (await profileService.getProfileByLinkId(userLinkId))!;
+
       // If the user is not in the group, add relation with the group.
       if(user.groups.every(group => group.id !== group_id)) {
-        profileService.updateProfile(user.id, group_id)
+        profileService.updateProfile(user, group_id)
       }
 
       // Linking the user to the test and getting the templates

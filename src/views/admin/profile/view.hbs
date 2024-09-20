@@ -46,15 +46,36 @@
       box-sizing: border-box;
     }
   }
+
+  .summary-table {
+    width: auto;
+    margin: 0 auto 20px;
+    border-collapse: collapse;
+  }
+  .summary-table th, .summary-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+  }
+  .summary-table th {
+    background-color: #f2f2f2;
+  }
 </style>
 
 {{#if error}}
   <p class="error">{{error}}</p>
 {{else}}
+
   <div class="profile-info">
     <div class="profile-item">
       <div>Name</div>
-      <div>{{profile.name}}</div>
+      <div>
+        {{#if profile.url}}
+          <a href="https://www.upwork.com/freelancers/{{profile.url}}" target="_blank">{{profile.name}}</a>
+        {{else}}
+          {{profile.name}}
+        {{/if}}
+      </div>
     </div>
     <div class="profile-item">
       <div>Country</div>
@@ -69,6 +90,27 @@
       <div>{{formatDate profile.lastActivity}}</div>
     </div>
   </div>
+  
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>Test ID</th>
+        <th>Test Name</th>
+        <th>Correct Answers</th>
+        <th>Attended At</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each testResults}}
+        <tr>
+          <td>{{this.test_id}}</td>
+          <td>{{this.test_name}}</td>
+          <td>{{countCorrectAnswers this.answers}}/{{this.answers.length}}</td>
+          <td>{{formatDate this.attended_at}}</td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
 
   <div class="test-results">
     {{#each testResults}}
