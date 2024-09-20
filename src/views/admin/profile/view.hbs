@@ -5,9 +5,8 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    width: 100%;
+    max-width: 100%;
     margin-bottom: 20px;
-    max-width: 100vw;
     background-color: #f0f4f8;
     padding: 20px;
     border-radius: 8px;
@@ -90,7 +89,7 @@
       <div>{{formatDate profile.lastActivity}}</div>
     </div>
   </div>
-  
+
   <table class="summary-table">
     <thead>
       <tr>
@@ -103,10 +102,10 @@
     <tbody>
       {{#each testResults}}
         <tr>
-          <td>{{this.test_id}}</td>
-          <td>{{this.test_name}}</td>
-          <td>{{countCorrectAnswers this.answers}}/{{this.answers.length}}</td>
-          <td>{{formatDate this.attended_at}}</td>
+          <td data-label="Test ID">{{this.test_id}}</td>
+          <td data-label="Test Name">{{this.test_name}}</td>
+          <td data-label="Correct Answers">{{countCorrectAnswers this.answers}}/{{this.answers.length}}</td>
+          <td data-label="Attended At">{{formatDate this.attended_at}}</td>
         </tr>
       {{/each}}
     </tbody>
