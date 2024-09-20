@@ -72,7 +72,7 @@
       {{#each this.answers}}
         <tr>
           <td data-label="S. No.">{{add @index 1}}</td>
-          <td data-label="Test ID">{{this.testId}}</td>
+          <td data-label="Test ID"><a href="/admin/group/detailed_result?group_id={{../../groupId}}&test={{this.testId}}">{{this.testId}}</a></td>
           <td data-label="Question">{{{this.question}}}</td>
           <td data-label="Answer" {{#if this.isCorrect}}style="background-color: #e6ffe6;"{{/if}}>{{{this.answer}}}</td>
           <td data-label="Time">{{this.timeTaken}}</td>
