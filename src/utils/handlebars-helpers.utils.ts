@@ -58,6 +58,20 @@ export function registerHandlebarsHelpers() {
   Handlebars.registerHelper('splitQuestionDetails', function(details) {
     return details.split(', ');
   });
+
+  Handlebars.registerHelper('splitQuery', function(url) {
+    const queryString = url.split('?')[1];
+    if (!queryString) return {};
+    
+    return queryString.split('&').reduce((params: Record<string, string>, param: string) => {
+      const [key, value]: string[] = param.split('=');
+      if(!key || !value) {
+        throw new Error('Invalid query string');
+      }
+      params[decodeURIComponent(key)] = decodeURIComponent(value);
+      return params;
+    }, {});
+  });
 }
 
 export const helpers = {

@@ -5,8 +5,7 @@ import { profileService } from '../services/profile.service';
 
 export function profileController(app: FastifyInstance, opts: any, done: () => void) {
   app.get('/list', async (request, reply) => {
-    const query = request.query as { page?: string };
-    const page = Number(query.page ?? 1);
+    const {key, page} = z.object({key: z.string(), page: z.coerce.number().optional().default(1)}).parse(request.query);
     const limit = 10; // Profiles per page
 
     try {
@@ -18,20 +17,22 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         currentPage,
         hasNextPage: currentPage < totalPages,
         hasPrevPage: currentPage > 1,
-        url: request.url
+        url: request.url,
+        key
       });
     } catch (error) {
       request.log.error(error, "Error fetching profiles");
       reply.view('admin/profile/list', {
         title: 'View Profiles',
         error: 'Failed to fetch profiles. Please try again.',
-        url: request.url
+        url: request.url,
+        key
       });
     }
   });
 
   app.get('/view', async (request, reply) => {
-    const {id: profileLinkId} = z.object({id: z.string()}).parse(request.query);
+    const {id: profileLinkId, key} = z.object({id: z.string(), key: z.string()}).parse(request.query);
     const db = await connection();
     
     const result = await db.query(`
@@ -94,7 +95,8 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
     return reply.view('admin/profile/view', {
       title: 'View Profile',
       profile,
-      testResults
+      testResults,
+      key
     });
   });
 
