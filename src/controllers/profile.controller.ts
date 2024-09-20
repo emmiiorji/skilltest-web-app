@@ -42,6 +42,7 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         p.country, 
         p.rate AS hourlyRate, 
         p.lastActivity,
+        p.url,
         -- Use COALESCE to return an empty JSON array if no test results are found
         COALESCE(
           -- Aggregate test results into a JSON array, grouped by test_id

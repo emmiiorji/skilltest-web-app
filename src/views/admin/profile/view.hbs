@@ -54,7 +54,13 @@
   <div class="profile-info">
     <div class="profile-item">
       <div>Name</div>
-      <div>{{profile.name}}</div>
+      <div>
+        {{#if profile.url}}
+          <a href="https://www.upwork.com/freelancers/{{profile.url}}" target="_blank">{{profile.name}}</a>
+        {{else}}
+          {{profile.name}}
+        {{/if}}
+      </div>
     </div>
     <div class="profile-item">
       <div>Country</div>
