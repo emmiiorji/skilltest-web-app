@@ -59,3 +59,7 @@ export function registerHandlebarsHelpers() {
     return details.split(', ');
   });
 }
+
+export const helpers = {
+  add: (a: number, b: number) => a + b,
+};

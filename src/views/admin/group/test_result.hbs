@@ -1,7 +1,10 @@
 <div class="header-container">
   <h1>Test Results</h1>
   {{#if testResults.length}}
-    <button id="copyButton" class="btn btn-blue">Copy Selected Rows</button>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+      <a href ="/admin/group/detailed_result?group_id={{groupId}}">Detailed Result</a>
+      <button id="copyButton" class="btn btn-blue">Copy Selected Rows</button>
+    </div>
   {{/if}}
 </div>
 
@@ -25,7 +28,7 @@
           {{/if}}
         </th>
         <th> Question Details</th>
-        <input type="checkbox" id="selectAll" style="margin-right: 0.5rem;">
+        <th><input type="checkbox" id="selectAll" style="margin-right: 0.5rem;"></th>
       </tr>
     </thead>
     <tbody>

@@ -163,7 +163,105 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       title: "Test Results",
       testResults,
       url: request.url,
-      currentSort: validSort
+      currentSort: validSort,
+      groupId
+    });
+  });
+
+  app.get("/detailed_result", async (request, reply) => {
+    const { group_id } = z.object({
+      group_id: z.coerce.number(),
+    }).parse(request.query);
+
+    const dataSource = await connection();
+    const detailedResults: {
+      profile_id: number;
+      profile_name: string;
+      country: string;
+      hourly_rate: number;
+      link_id: string;
+      last_answer_date: Date;
+      answer_details: string;
+    }[] = await dataSource.query(`
+      -- Start with selecting from the groups table
+      SELECT 
+          p.id AS profile_id,
+          p.name AS profile_name,
+          p.country,
+          p.rate AS hourly_rate,
+          p.link AS link_id,
+          -- Get the most recent answer date for each profile
+          MAX(a.created_at) AS last_answer_date,
+          -- Collect all answers for each profile
+          GROUP_CONCAT(
+              CONCAT(
+                  a.id, '::', -- Answer ID
+                  t.id, '::', -- Test ID
+                  q.id, '::', -- Question ID
+                  q.question, '::', -- Question text
+                  a.answer, '::', -- Answer text
+                  a.time_taken, '::', -- Time taken
+                  a.paste_count, '::', -- Ctrl+V count
+                  a.copy_count, '::', -- Ctrl+C count
+                  a.right_click_count, '::', -- Right-click count
+                  a.inactive_time, "::", -- Inactive time
+                  a.is_correct
+              ) 
+              ORDER BY a.created_at DESC
+              SEPARATOR '||'
+          ) AS answer_details
+      FROM 
+          groups g
+      -- Join with profiles_groups to get all profiles in the group
+      INNER JOIN profiles_groups pg ON g.id = pg.groupId
+      -- Join with profiles to get profile details
+      INNER JOIN profile p ON pg.profileId = p.id
+      -- Inner join with answers to exclude profiles without answers
+      INNER JOIN answers a ON p.id = a.profile_id
+      -- Join with questions to get question details
+      LEFT JOIN questions q ON a.question_id = q.id
+      -- Join with tests to get test details
+      LEFT JOIN tests t ON a.test_id = t.id
+      WHERE 
+          g.id = ? -- Parameter for group ID
+      GROUP BY 
+          p.id
+      ORDER BY 
+          last_answer_date DESC
+    `, [group_id]);
+
+    // Process the results
+    const processedResults = detailedResults.map(result => ({
+      profile: {
+        id: result.profile_id,
+        name: result.profile_name,
+        country: result.country,
+        hourlyRate: result.hourly_rate,
+        linkId: result.link_id,
+        lastAnswerDate: new Date(result.last_answer_date).toLocaleString(),
+      },
+      answers: result.answer_details.split('||').map(answer => {
+        const [id, testId, questionId, question, answerText, timeTaken, ctrlV, ctrlC, rightClick, inactive, isCorrect] = answer.split('::');
+        return {
+          id: Number(id),
+          testId: Number(testId),
+          questionId: Number(questionId),
+          question,
+          answer: answerText,
+          timeTaken: Number(timeTaken),
+          ctrlV: Number(ctrlV),
+          ctrlC: Number(ctrlC),
+          rightClick: Number(rightClick),
+          inactive: Number(inactive),
+          isCorrect: isCorrect === '1' ? true : false,
+        };
+      }),
+    }));
+
+    return reply.view("/admin/group/detailed_result", {
+      title: "Detailed Test Results",
+      detailedResults: processedResults,
+      url: request.url,
     });
   });
 

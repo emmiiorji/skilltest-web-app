@@ -17,6 +17,7 @@
             background-color: white;
             border-radius: 8px;
             height: 100vh;
+            max-width: 100vw;
         }
         
         table {
@@ -26,7 +27,7 @@
             background-color: #fff;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
-            overflow: hidden;
+            overflow: auto;
             margin-top: 20px;
         }
 
@@ -58,9 +59,16 @@
             transition: background-color 0.3s ease;
         }
 
+        td img {
+            max-width: 500px;
+            max-height: 300px;
+            display: block;
+        }
+
         @media screen and (max-width: 600px) {
             table, thead, tbody, th, td, tr {
                 display: block;
+                max-width: 100vw;
             }
 
             thead tr {
@@ -85,6 +93,7 @@
                 text-align: right;
                 flex-basis: 100%;
                 box-sizing: border-box;
+                word-break: break-word;
             }
 
             td:before {
@@ -98,17 +107,21 @@
                 font-weight: bold;
             }
 
-            td[data-label="Countries"], td[data-label="Test IDs"] {
+            td[data-label="Countries"], td[data-label="Test IDs"], td[data-label="Question"] {
                 flex-basis: 100%;
                 text-align: left;
                 padding-left: 6px;
             }
 
-            td[data-label="Countries"]:before, td[data-label="Test IDs"]:before {
+            td[data-label="Countries"]:before, td[data-label="Test IDs"]:before, td[data-label="Question"]:before {
                 position: static;
                 display: block;
                 width: 100%;
                 margin-bottom: 5px;
+            }
+
+            td img {
+                max-width: 100%;
             }
         }
 
