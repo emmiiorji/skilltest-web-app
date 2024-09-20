@@ -50,7 +50,9 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
           JSON_ARRAYAGG(
             JSON_OBJECT(
               'test_id', test_id,
-              'answers', answers
+              'test_name', test_name,
+              'answers', answers,
+              'attended_at', attended_at
             )
           ),
           JSON_ARRAY()
@@ -61,6 +63,8 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         SELECT 
           a.profile_id,
           a.test_id,
+          t.name AS test_name,
+          MAX(a.created_at) AS attended_at,
           -- Aggregate answers for each test into a JSON array
           JSON_ARRAYAGG(
             JSON_OBJECT(
@@ -77,8 +81,10 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         FROM answers a
         -- Join with questions to get question text
         JOIN questions q ON a.question_id = q.id
+        -- Join with tests to get test name
+        JOIN tests t ON a.test_id = t.id
         -- Group by profile_id and test_id to aggregate answers for each test
-        GROUP BY a.profile_id, a.test_id
+        GROUP BY a.profile_id, a.test_id, t.name
       ) AS grouped_answers ON p.id = grouped_answers.profile_id
       -- Filter by the profile's link ID
       WHERE p.link = ?
