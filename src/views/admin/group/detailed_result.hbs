@@ -1,0 +1,99 @@
+<h1>{{title}}</h1>
+
+<style>
+  .profile-info {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 20px;
+    max-width: 100vw;
+  }
+  .profile-item {
+    text-align: center;
+    flex: 1 1 calc(20% - 10px);
+    margin-bottom: 10px;
+  }
+  @media screen and (max-width: 600px) {
+    .profile-info {
+      flex-direction: column;
+    }
+    .profile-item {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding: 0 10px;
+      box-sizing: border-box;
+    }
+  }
+  @media screen and (max-width: 400px) {    
+    .profile-info {
+      flex-direction: column;
+    }
+    .profile-item {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
+  }
+</style>
+
+{{#each detailedResults}}
+  <div class="profile-info">
+    <div class="profile-item">
+      <div>Last Answer Date</div> 
+      <div>{{formatDate this.profile.lastAnswerDate}}</div>
+    </div>
+    <div class="profile-item">
+      <div>Link ID</div> 
+      <div>{{this.profile.linkId}}</div>
+    </div>
+    <div class="profile-item">
+      <div>Name</div> 
+      <div>{{this.profile.name}}</div>
+    </div>
+    <div class="profile-item">
+      <div>Country</div> 
+      <div>{{this.profile.country}}</div>
+    </div>
+    <div class="profile-item">
+      <div>Hourly Rate</div> 
+      <div>{{this.profile.hourlyRate}}</div>
+    </div>
+  </div>
+
+  <table style="margin-bottom: 50px;">
+    <thead>
+      <tr>
+        <th>S. No.</th>
+        <th>Test ID</th>
+        <th>Question</th>
+        <th>Answer</th>
+        <th>Time</th>
+        <th>Ctrl+V</th>
+        <th>Ctrl+C</th>
+        <th>Right Click</th>
+        <th>Inactive</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each this.answers}}
+        <tr>
+          <td data-label="S. No.">{{add @index 1}}</td>
+          <td data-label="Test ID">{{this.testId}}</td>
+          <td data-label="Question">{{{this.question}}}</td>
+          <td data-label="Answer" {{#if this.isCorrect}}style="background-color: #e6ffe6;"{{/if}}>{{{this.answer}}}</td>
+          <td data-label="Time">{{this.timeTaken}}</td>
+          <td data-label="Ctrl+V">{{this.ctrlV}}</td>
+          <td data-label="Ctrl+C">{{this.ctrlC}}</td>
+          <td data-label="Right Click">{{this.rightClick}}</td>
+          <td data-label="Inactive">{{this.inactive}}</td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+{{/each}}
