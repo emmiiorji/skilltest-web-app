@@ -1,4 +1,6 @@
-<h1 class="text-2xl font-bold mb-4">View Profiles</h1>
+<div class="header-container">
+  <h1 class="text-2xl font-bold">View Profiles</h1>
+</div>
 
 {{#if error}}
   <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
@@ -7,30 +9,28 @@
 {{/if}}
 
 {{#if profiles.length}}
-  <div class="overflow-x-auto">
-    <table class="min-w-full bg-white">
-      <thead class="bg-gray-100">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Created At</th>
+        <th>Updated At</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each profiles}}
         <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Updated At</th>
+          <td data-label="ID"><a href="/admin/profile/view?id={{this.link}}">{{this.link}}</a></td>
+          <td data-label="Name">{{this.name}}</td>
+          <td data-label="Email">{{this.email}}</td>
+          <td data-label="Created At">{{formatDate this.createdAt}}</td>
+          <td data-label="Updated At">{{formatDate this.updatedAt}}</td>
         </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
-        {{#each profiles}}
-          <tr>
-            <td class="px-6 py-4 whitespace-nowrap">{{this.id}}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{this.name}}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{this.email}}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{this.createdAt}}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{this.updatedAt}}</td>
-          </tr>
-        {{/each}}
-      </tbody>
-    </table>
-  </div>
+      {{/each}}
+    </tbody>
+  </table>
 
   <div class="mt-4 flex justify-between items-center">
     <div>
@@ -38,13 +38,22 @@
     </div>
     <div>
       {{#if hasPrevPage}}
-        <a href="/admin/profile/list?page={{subtract currentPage 1}}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Previous</a>
+        <a href="/admin/profile/list?page={{subtract currentPage 1}}" class="btn btn-blue">Previous</a>
       {{/if}}
       {{#if hasNextPage}}
-        <a href="/admin/profile/list?page={{add currentPage 1}}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Next</a>
+        <a href="/admin/profile/list?page={{add currentPage 1}}" class="btn btn-blue">Next</a>
       {{/if}}
     </div>
   </div>
 {{else}}
   <p class="text-gray-600">No profiles found.</p>
 {{/if}}
+
+<style>
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+</style>
