@@ -55,7 +55,7 @@ document.getElementById('createGroupForm').addEventListener('submit', function(e
   const formData = new FormData(this);
   const formMessage = document.getElementById('formMessage');
 
-  fetch('/admin/group/create', {
+  fetch('/admin/group/create?key={{this.key}}', {
     method: 'POST',
     body: new URLSearchParams(formData),
     headers: {

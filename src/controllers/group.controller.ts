@@ -48,7 +48,6 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       -- The result is ordered by creation date descending
       ORDER BY g.createdAt DESC
     `);
-    console.debug(groups.map(group => group.profile_countries))
 
     return reply.view("/admin/group/list", {
       title: "All Groups",
