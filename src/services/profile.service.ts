@@ -21,13 +21,12 @@ class ProfileService {
 		}
 	}
 
-	async createProfileByLinkId(userLinkId: string, group_id: number): Promise<Profile> {
+	async createProfileByLinkId(userLinkId: string): Promise<Profile> {
 		const dataSource = await connection();
 		const profileRepository = dataSource.getRepository(Profile);
 		const profile = profileRepository.create({
 			link: userLinkId,
 			name: `User ${userLinkId}`,
-			groups: [{id: group_id}]
 		});
 		return await profileRepository.save(profile);
 	}
@@ -68,10 +67,13 @@ class ProfileService {
 		});
 	}
 
-	async updateProfile(id: number, groupId: number) {
+	async updateProfile(profile: Profile, groupId: number) {
 		const dataSource = await connection();
 		const profileRepository = dataSource.getRepository(Profile);
-		return profileRepository.update(id, { groups: [{ id: groupId }] });
+		return profileRepository.save({
+			...profile,
+			groups: [...profile.groups, {id: groupId}]
+		});
 	}
 }
 
