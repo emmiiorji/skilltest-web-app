@@ -1,4 +1,6 @@
 import { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+import { connection } from '../database/connection';
 import { profileService } from '../services/profile.service';
 
 export function profileController(app: FastifyInstance, opts: any, done: () => void) {
@@ -26,6 +28,73 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         url: request.url
       });
     }
+  });
+
+  app.get('/view', async (request, reply) => {
+    const {id: profileLinkId} = z.object({id: z.string()}).parse(request.query);
+    const db = await connection();
+    
+    const result = await db.query(`
+      -- Main query to fetch profile details and test results
+      SELECT
+        p.id,
+        p.name, 
+        p.country, 
+        p.rate AS hourlyRate, 
+        p.lastActivity,
+        -- Use COALESCE to return an empty JSON array if no test results are found
+        COALESCE(
+          -- Aggregate test results into a JSON array, grouped by test_id
+          JSON_ARRAYAGG(
+            JSON_OBJECT(
+              'test_id', test_id,
+              'answers', answers
+            )
+          ),
+          JSON_ARRAY()
+        ) AS testResults
+      FROM profile p
+      -- Left join with a subquery that groups answers by test_id
+      LEFT JOIN (
+        SELECT 
+          a.profile_id,
+          a.test_id,
+          -- Aggregate answers for each test into a JSON array
+          JSON_ARRAYAGG(
+            JSON_OBJECT(
+              'question', q.question,
+              'answer', a.answer,
+              'timeTaken', a.time_taken,
+              'ctrlV', a.paste_count,
+              'ctrlC', a.copy_count,
+              'rightClick', a.right_click_count,
+              'inactive', a.inactive_time,
+              'isCorrect', a.is_correct
+            )
+          ) AS answers
+        FROM answers a
+        -- Join with questions to get question text
+        JOIN questions q ON a.question_id = q.id
+        -- Group by profile_id and test_id to aggregate answers for each test
+        GROUP BY a.profile_id, a.test_id
+      ) AS grouped_answers ON p.id = grouped_answers.profile_id
+      -- Filter by the profile's link ID
+      WHERE p.link = ?
+      -- Group by profile id to aggregate all test results for the profile
+      GROUP BY p.id
+    `, [profileLinkId]);
+    
+    if (!result[0]) {
+      return reply.status(404).send({ error: 'Profile not found' });
+    }
+
+    const {testResults, ...profile} = result[0];
+
+    return reply.view('admin/profile/view', {
+      title: 'View Profile',
+      profile,
+      testResults
+    });
   });
 
   done();
