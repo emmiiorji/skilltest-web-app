@@ -1,6 +1,7 @@
-import { Column, Entity, JoinTable, ManyToMany } from "typeorm";
+import { Column, Entity, JoinTable, ManyToMany, OneToMany } from "typeorm";
 import { BaseEntity } from "./BaseEntity.entity";
 import { Group } from "./Group.entity";
+import { ProfileTag } from "./ProfileTag.entity";
 import { Test } from "./Test.entity";
 
 @Entity()
@@ -84,4 +85,7 @@ export class Profile extends BaseEntity {
     },
   })
   groups: Group[];
+
+  @OneToMany(() => ProfileTag, (profileTag) => profileTag.profile)
+  profileTags: ProfileTag[];
 }
