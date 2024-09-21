@@ -1,7 +1,7 @@
 import { DataSource } from "typeorm";
 import { env } from "../env.config";
 
-const AppDataSource = new DataSource({
+export const AppDataSource = new DataSource({
   type: "mysql",
   host: env.DB_HOST,
   port: env.DB_PORT,
