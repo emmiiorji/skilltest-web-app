@@ -158,7 +158,7 @@
     disableSubmitButton();
 
     // Get all possible answer inputs
-    let answerInputs = document.querySelectorAll('input[name="answer"]');
+    let answerInputs = {{{stringifyJson answer_type}}} === "textarea" ? document.querySelectorAll('textarea[name="answer"]') : document.querySelectorAll('input[name="answer"]');
     
     // Check if any answer is provided
     let hasAnswer = Array.from(answerInputs).some(input => {
