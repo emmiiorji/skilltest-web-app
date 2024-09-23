@@ -8,7 +8,6 @@ import fastifyView from '@fastify/view';
 import Fastify, { FastifyRequest } from 'fastify';
 import Handlebars from 'handlebars';
 import path, { join } from 'path';
-import { QueryFailedError } from 'typeorm';
 import { AppDataSource, connection } from './database/connection';
 import { env, isProd } from './env.config';
 import adminRouter from './routes/admin.router';
@@ -99,7 +98,8 @@ server.setErrorHandler(async function (error, request, reply) {
     request.log.error(error, "Fastify central error handler with bad status code.");
     if(!reply.sent)
     reply.status(500).send({ ok: false, error: 'Internal Server Error' });
-  } if(error instanceof QueryFailedError && error.code === "ECONNRESET") {
+  } if(error.code === "ECONNRESET") {
+    request.log.error(error, "ECONNRESET error being handled.");
     await AppDataSource.destroy();
     await connection();
     reply.redirect(request.url);
