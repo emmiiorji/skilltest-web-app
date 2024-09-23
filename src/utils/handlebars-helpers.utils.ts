@@ -23,7 +23,6 @@ export function registerHandlebarsHelpers() {
 
   Handlebars.registerHelper('or', function() {
     const args = Array.prototype.slice.call(arguments, 0, -1);
-    console.debug('args', args);
     return args.some(arg => arg);
   });
 
