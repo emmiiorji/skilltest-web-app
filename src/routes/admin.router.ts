@@ -2,10 +2,11 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { groupController } from '../controllers/group.controller';
 import { profileController } from '../controllers/profile.controller';
 import { testController } from '../controllers/test.controller';
+import { env } from '../env.config';
 
 const authenticateAdmin = async (request: FastifyRequest, reply: FastifyReply) => {
   const { key } = request.query as { key?: string };
-  if (key !== process.env.KEY) {
+  if (key !== env.KEY) {
     reply.status(401).send({ error: 'Unauthorized' });
   }
 };

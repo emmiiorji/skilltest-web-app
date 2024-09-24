@@ -3,12 +3,13 @@ import { convertAnswerToArray } from "./convertAnswerToArray";
 const checkEqualityWhenUserAnswerString = (userAnswer: string, correctAnswersArray: (string | number)[] ) => {
   // coerce to number if correctAnswer is a number
   return correctAnswersArray.some(correctAnswer => 
-    typeof correctAnswer === 'number' ? Number(userAnswer) === correctAnswer : correctAnswer == userAnswer
+    typeof correctAnswer === 'number' 
+      ? Number(userAnswer) === correctAnswer 
+      : correctAnswer.toLowerCase() === userAnswer.toLowerCase()
   );
 };
 
 const checkEqualityWhenUserAnswerArray = (userAnswer: (string | number)[], correctAnswersArray: (string | number)[]) => {
-  console.debug({userAnswer, correctAnswersArray});
   if (userAnswer.length !== correctAnswersArray.length) {
     return false;
   }
@@ -16,7 +17,9 @@ const checkEqualityWhenUserAnswerArray = (userAnswer: (string | number)[], corre
     const userValue = userAnswer[index];
     
     // coerce to number if correctAnswer is a number
-    return typeof correctAnswer === 'number' ? Number(userValue) === correctAnswer : correctAnswer == userValue;
+    return typeof correctAnswer === 'number' 
+      ? Number(userValue) === correctAnswer 
+      : correctAnswer.toString().toLowerCase() === userValue?.toString().toLowerCase();
   });
 }
 
