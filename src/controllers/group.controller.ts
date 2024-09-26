@@ -192,6 +192,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       country: string;
       hourly_rate: number;
       link_id: string;
+      url: string | null;
       last_answer_date: Date;
       answer_details: string;
     }[] = await dataSource.query(`
@@ -202,6 +203,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
           p.country,
           p.rate AS hourly_rate,
           p.link AS link_id,
+          p.url AS url,
           -- Get the most recent answer date for each profile
           MAX(a.created_at) AS last_answer_date,
           -- Collect all answers for each profile
@@ -252,6 +254,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
         hourlyRate: result.hourly_rate,
         linkId: result.link_id,
         lastAnswerDate: new Date(result.last_answer_date).toLocaleString(),
+        url: result.url,
       },
       answers: result.answer_details.split('||').map(answer => {
         const [id, testId, questionId, question, answerText, timeTaken, ctrlV, ctrlC, rightClick, inactive, isCorrect] = answer.split('::');
