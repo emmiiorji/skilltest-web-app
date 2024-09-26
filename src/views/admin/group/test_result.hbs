@@ -39,13 +39,7 @@
           <td data-label="Country">{{this.country}}</td>
           <td data-label="Score">{{this.correct_answers}} / {{this.total_answers}}</td>
           <td data-label="Date">{{formatDate this.completion_date}}</td>
-          <td data-label="Question Details">
-            <ul style="list-style-type: none; padding-left: 0;">
-              {{#each (splitQuestionDetails this.question_details) as |detail|}}
-                <li>{{detail}}</li>
-              {{/each}}
-            </ul>
-          </td>
+          <td data-label="Question Details">{{this.question_details}}</td>
           <td>
             <input type="checkbox" class="row-selector" data-row-id="{{@index}}">
           </td>
@@ -84,8 +78,8 @@
       }
 
       let copyText = '';
-      const headers = Array.from(table.querySelectorAll('thead th')).slice(0, -1).map(th => th.textContent.trim());
-      copyText += headers.join('\t') + '\n';
+      // const headers = Array.from(table.querySelectorAll('thead th')).slice(0, -1).map(th => th.textContent.trim());
+      // copyText += headers.join('\t') + '\n';
 
       selectedRows.forEach(checkbox => {
         const row = checkbox.closest('tr');

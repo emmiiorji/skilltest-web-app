@@ -150,7 +150,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
             ')'
           )
           ORDER BY ta.question_id
-          SEPARATOR ', '
+          SEPARATOR '---'
         ) AS question_details,
         -- The latest answer date, considered as the completion date
         MAX(ta.created_at) AS completion_date
