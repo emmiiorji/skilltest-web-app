@@ -78,8 +78,8 @@
       }
 
       let copyText = '';
-      const headers = Array.from(table.querySelectorAll('thead th')).slice(0, -1).map(th => th.textContent.trim());
-      copyText += headers.join('\t') + '\n';
+      // const headers = Array.from(table.querySelectorAll('thead th')).slice(0, -1).map(th => th.textContent.trim());
+      // copyText += headers.join('\t') + '\n';
 
       selectedRows.forEach(checkbox => {
         const row = checkbox.closest('tr');
