@@ -146,11 +146,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
             ',',
             ta.inactive_time,
             ',',
-            ta.copy_count,
-            ',',
-            ta.paste_count,
-            ',',
-            ta.right_click_count,
+            ta.copy_count + ta.paste_count + ta.right_click_count,
             ')'
           )
           ORDER BY ta.question_id
@@ -266,10 +262,8 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
           question,
           answer: answerText,
           timeTaken: Number(timeTaken),
-          ctrlV: Number(ctrlV),
-          ctrlC: Number(ctrlC),
-          rightClick: Number(rightClick),
           inactive: Number(inactive),
+          copyPaste: Number(ctrlV) + Number(ctrlC) + Number(rightClick),
           isCorrect: isCorrect === '1' ? true : false,
         };
       }),

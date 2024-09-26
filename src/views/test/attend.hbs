@@ -203,9 +203,18 @@
     const timeTaken = Date.now() - startTime;
     document.getElementById('timeTaken').value = Math.round(timeTaken/1000); // Time in seconds;
     document.getElementById('ip').value = ip;
-    document.getElementById('copyCount').value = copyCount;
-    document.getElementById('pasteCount').value = pasteCount;
-    document.getElementById('rightClickCount').value = rightClickCount;
+
+    // if copy used - 1, not used 0
+    // paste used - 1, not used 0
+    // right click used - 1, not used - 0
+    // so value will be from 0 to 3 max
+    // we don't need total count
+    // it will be like sum of true/false
+    // where true=1 false =0
+    // to know what he used
+    document.getElementById('copyCount').value = copyCount ? 1 : 0;
+    document.getElementById('pasteCount').value = pasteCount ? 1 : 0;
+    document.getElementById('rightClickCount').value = rightClickCount ? 1 : 0;
     document.getElementById('inactiveTime').value = Math.round(inactiveTime / 1000); // Time in seconds
 
     // Submit the form
