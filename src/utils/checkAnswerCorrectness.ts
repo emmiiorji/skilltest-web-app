@@ -5,7 +5,7 @@ const checkEqualityWhenUserAnswerString = (userAnswer: string, correctAnswersArr
   return correctAnswersArray.some(correctAnswer => 
     typeof correctAnswer === 'number' 
       ? Number(userAnswer) === correctAnswer 
-      : correctAnswer.toLowerCase() === userAnswer.toLowerCase()
+      : correctAnswer.toString().toLowerCase() === userAnswer.toString().toLowerCase()
   );
 };
 
