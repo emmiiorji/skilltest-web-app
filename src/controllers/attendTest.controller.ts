@@ -6,8 +6,23 @@ import { Answer } from '../database/entities/Answer.entity';
 import { Question } from '../database/entities/Question.entity';
 import { Test } from '../database/entities/Test.entity';
 import { AnswerSchema } from '../database/validators/answer.validation';
+import { env } from '../env.config';
 import { profileService } from '../services/profile.service';
 import { checkAnswerCorrectness } from '../utils/checkAnswerCorrectness';
+
+const decryptPayload = (encryptedPayload: string, key: string) => {
+  try {
+    const text = atob(encryptedPayload);
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+      result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return JSON.parse(result);
+  } catch (error) {
+    console.error('Decryption error:', error);
+    throw error;
+  }
+};
 
 export function attendTestController(app: FastifyInstance, opts: any, done: () => void) {
 
@@ -82,12 +97,13 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
       question_id: pendingQuestion.id,
       answer_type: pendingQuestion.answer_type,
       answer_html: pendingQuestion.answer_html,
+      result_salt: env.RESULT_SALT,
     });
   });
 
   app.post('/attend', async (
     request: FastifyRequest<{ 
-      Body: z.infer<typeof AnswerSchema> & { user_id: number; test_id: number },
+      Body: { hashed_payload: string },
       Querystring: { user: string; test: string }
     }>,
     reply: FastifyReply
@@ -95,59 +111,50 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
     const dataSource = await connection();
     const answerRepo = dataSource.getRepository(Answer);
     const questionRepo = dataSource.getRepository(Question);
-    const { user: userLinkId } = z.object({
+    const { user: userLinkId, test: testId } = z.object({
       user: z.string(),
+      test: z.string(),
     }).parse(request.query);
+
+    const profile = await profileService.getProfileByLinkId(userLinkId);
+    if (!profile) {
+      return reply.status(404).send({ error: 'Invalid URL or test not found' });
+    }
+
+    const encryptionKey = `${profile.id}${env.RESULT_SALT}`;
+    
+    let decryptedPayload;
+    try {
+      decryptedPayload = decryptPayload(request.body.hashed_payload, encryptionKey);
+    } catch (error) {
+      console.error('Failed to decrypt payload:', error);
+      return reply.status(400).send({ error: 'Invalid payload' });
+    };
+    console.debug({ decryptedPayload });
 
     const { correct: correctAnswer } = await questionRepo.findOneOrFail({ 
       select: ['correct'],
-      where: { id: request.body.question_id } 
+      where: { id: decryptedPayload.question_id } 
     });
 
-    const is_correct = checkAnswerCorrectness(request.body.answer, correctAnswer);
+    const is_correct = checkAnswerCorrectness(decryptedPayload.answer, correctAnswer);
     
-    if (typeof request.body.answer === 'object') {
-      request.body.answer = JSON.stringify(request.body.answer);
-    };
+    if (Array.isArray(decryptedPayload.answer)) {
+      decryptedPayload.answer = JSON.stringify(decryptedPayload.answer);
+    }
 
-    const {ip, ...validatedAnswer} = AnswerSchema.parse(request.body);
+    const validatedAnswer = AnswerSchema.parse(decryptedPayload);
 
     const newAnswer = answerRepo.create({
       is_correct,
-      user_agent: request.headers['user-agent'] || '',
-      ip: ip || request.ip,
+      user_agent: request.headers['trc'] as string || '',
       ...validatedAnswer,
     });
 
     await answerRepo.save(newAnswer);
 
-    return reply.redirect(`/test/attend?start=true&user=${userLinkId}&test=${validatedAnswer.test_id}`);
+    return reply.send({ success: true });
   });
 
   done();
 }
-
-/*
-When the user comes to the `/test/attend` route. 
-
-1. Check if the `test_id` is assigned to this `user_id`. If not show the user that the url is invalid.
-2. Based on the `user_id`& `test_id` get id of all the questions that has already been answered from@Answer.entity.ts.
-3. Get all the questions in the database which have not been answered already.
-4. If there no questions pending to be answered, show to user that the test is already been completed.
-4. Show the user questions one by one. 
-5. Once the user answers & clicks on submit, validate the answer via zod & update the answer in database.
-     a. check for correctness for a part with checking test results, in "correct" field we will need to have array of possible correct answers, it's for a case when 1 question can have 2 correct answers, for example like this: [[4,5,6], [6,5,4]] or ['first', 'second', 'third'] or ['Promise']
-6. Once the answer is updated, show the user the next question.
-
-Frontend instructions:
-1. Mobile optimized (add mobile layout likely separate left and right block to different rows)
-         a. left block and right block on mobile fit 100% of the width of the screen (set max width)
-2. Desktop - no vertical scroll
-         a. Set max height (if block higher like image height make it smaller)
-         b. Center content until to fit max height
-3. Show radio buttons/checkboxes/textarea based on the `answer_type` column in@Question.entity.ts.
-4. Start counting time spent on answering each question.
-5. Track right click/ctrl+c/ctrl+v/inactive time usage (Inactive time measn time when user left current browser tab)
-
-Please dont be sloppy. Implement all the backend & frontend changes completely. Dont lecture me. Make this whole feature end-to-end & double check everything to make sure everything has been considered & implemented.
-*/

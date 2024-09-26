@@ -7,16 +7,8 @@
         </div>
       </h2>
       <form id="answerForm" method="POST" action="/test/attend?user={{userLinkId}}&test={{test_id}}">
-        <input type="hidden" name="test_id" value="{{test_id}}">
-        <input type="hidden" name="question_id" value="{{question_id}}">
-        <input type="hidden" name="profile_id" value="{{user_id}}">
+        <input type="hidden" name="hashed_payload" id="hashedPayload">
         {{{answer_html}}}
-        <input type="hidden" name="time_taken" id="timeTaken">
-        <input type="hidden" name="ip" id="ip">
-        <input type="hidden" name="copy_count" id="copyCount">
-        <input type="hidden" name="paste_count" id="pasteCount">
-        <input type="hidden" name="right_click_count" id="rightClickCount">
-        <input type="hidden" name="inactive_time" id="inactiveTime">
         <div class="submit-container">
           <button type="submit" id="submitButton" class="btn btn-blue">
             Submit Answer
@@ -24,7 +16,6 @@
         </div>
       </form>
     </div>
-  
 </div>
 
 <style>
@@ -102,12 +93,11 @@
   let rightClickCount = 0;
   let ip = '';
 
-    
-    fetch("https://api.ipify.org")
-      .then(res => res.text())
-      .then((res) => {
-          ip = res
-      });
+  fetch("https://api.ipify.org")
+    .then(res => res.text())
+    .then((res) => {
+        ip = res
+    });
 
   // This is to make sure the images within the question dont overflow the question div.
   document.addEventListener('DOMContentLoaded', function() {
@@ -151,73 +141,93 @@
     submitButton.textContent = 'Submit Answer';
   };
 
-  // Handle form submission
-  document.getElementById('answerForm').addEventListener('submit', (e) => {
-    e.preventDefault(); // Prevent default form submission
+  const encryptPayload = (payload, key) => {
+    const text = JSON.stringify(payload);
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+      result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return btoa(result);
+  };
+
+  const sendRequest = async (url, data) => {
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'trc': navigator.userAgent
+      },
+      body: data
+    };
+
+    if (url.startsWith('https://localhost')) {
+      options.agent = new https.Agent({ rejectUnauthorized: false });
+    }
+
+    return fetch(url, options);
+  };
+
+  document.getElementById('answerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
     disableSubmitButton();
 
-    // Get all possible answer inputs
-    let answerInputs = {{{stringifyJson answer_type}}} === "textarea" ? document.querySelectorAll('textarea[name="answer"]') : document.querySelectorAll('input[name="answer"]');
-    
-    // Check if any answer is provided
-    let hasAnswer = Array.from(answerInputs).some(input => {
-      if (input.type === 'radio' || input.type === 'checkbox') {
-        return input.checked;
-      } else {
-        return input.value.trim() !== '';
-      }
-    });
+    let answer;
+    if ({{{stringifyJson answer_type}}} === "radiobutton") {
+      answer = document.querySelector('input[name="answer"]:checked')?.value;
+    } else if ({{{stringifyJson answer_type}}} === "multiinput") {
+      answer = Array.from(document.querySelectorAll('input[name="answer"]:checked')).map(el => el.value);
+    } else if ({{{stringifyJson answer_type}}} === "textarea") {
+      answer = document.querySelector('textarea[name="answer"]').value.trim();
+    } else if ({{{stringifyJson answer_type}}} === "multiTextInput") {
+      answer = Array.from(document.querySelectorAll('input[name^="answer-"]'))
+        .map(el => el.value.trim())
+        .filter(val => val !== '');
+    }
 
-    // Check for empty answer field and collect answers
-    if ({{{stringifyJson answer_type}}} === "multiTextInput") {
-      const answers = [];
-      let index = 0;
-      let answerInput = document.querySelector(`input[name="answer-${index}"]`);
-      while (answerInput) {
-        if(answerInput.value.trim()) {
-          answers.push(answerInput.value.trim());
-        }
-        index++;
-        answerInput = document.querySelector(`input[name="answer-${index}"]`);
-      }
-      
-      if (answers.length > 0) {
-        const answerArrayField = document.createElement('input');
-        answerArrayField.type = 'hidden';
-        answerArrayField.name = 'answer';
-        answerArrayField.value = JSON.stringify(answers);
-        e.target.appendChild(answerArrayField);
-        hasAnswer = true;
-      } else {
-        hasAnswer = false;
-      }
-    };
-    
-    if (!hasAnswer) {
+    if (!answer || (Array.isArray(answer) && answer.length === 0)) {
       alert('Please provide an answer before submitting.');
       enableSubmitButton();
       return;
-    }
+    };
 
     const timeTaken = Date.now() - startTime;
-    document.getElementById('timeTaken').value = Math.round(timeTaken/1000); // Time in seconds;
-    document.getElementById('ip').value = ip;
+    const payload = {
+      test_id: {{test_id}},
+      question_id: {{question_id}},
+      profile_id: {{user_id}},
+      answer,
+      time_taken: Math.round(timeTaken/1000),
+      ip: ip,
+      
+      // if copy used - 1, not used 0
+      // paste used - 1, not used 0
+      // right click used - 1, not used - 0
+      // so value will be from 0 to 3 max
+      // we don't need total count
+      // it will be like sum of true/false
+      // where true=1 false =0
+      // to know what he used
+      copy_count: copyCount ? 1 : 0,
+      paste_count: pasteCount ? 1 : 0,
+      right_click_count: rightClickCount ? 1 : 0,
+      inactive_time: Math.round(inactiveTime / 1000)
+    };
 
-    // if copy used - 1, not used 0
-    // paste used - 1, not used 0
-    // right click used - 1, not used - 0
-    // so value will be from 0 to 3 max
-    // we don't need total count
-    // it will be like sum of true/false
-    // where true=1 false =0
-    // to know what he used
-    document.getElementById('copyCount').value = copyCount ? 1 : 0;
-    document.getElementById('pasteCount').value = pasteCount ? 1 : 0;
-    document.getElementById('rightClickCount').value = rightClickCount ? 1 : 0;
-    document.getElementById('inactiveTime').value = Math.round(inactiveTime / 1000); // Time in seconds
-
-    // Submit the form
-    e.target.submit();
+    const encryptionKey = '{{user_id}}' + '{{result_salt}}';
+    const encryptedPayload = encryptPayload(payload, encryptionKey);
+    
+    try {
+      const response = await sendRequest(e.target.action, 'hashed_payload=' + encodeURIComponent(encryptedPayload));
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        throw new Error('Server responded with an error');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred. Please try again.');
+      enableSubmitButton();
+    }
   });
 </script>

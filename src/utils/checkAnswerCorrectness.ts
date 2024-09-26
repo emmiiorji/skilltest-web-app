@@ -28,7 +28,6 @@ export function checkAnswerCorrectness(
   correctAnswers: string
 ): boolean {
   const correctAnswersArray = convertAnswerToArray(correctAnswers);
-  console.debug({correctAnswersArray, userAnswer});
 
   // Check if correct answers array is an array of arrays.
   if (Array.isArray(correctAnswersArray[0])) {
