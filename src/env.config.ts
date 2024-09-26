@@ -16,6 +16,7 @@ const envSchema = z.object({
 	SESSION_SALT: z.string(),
 	URL: z.string().url(),
 	KEY: z.string().min(1),
+	RESULT_SALT: z.string().min(1),
 });
 
 export const env = envSchema.parse(process.env);

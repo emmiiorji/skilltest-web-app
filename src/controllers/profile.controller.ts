@@ -35,7 +35,27 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
     const {id: profileLinkId, key} = z.object({id: z.string(), key: z.string()}).parse(request.query);
     const db = await connection();
     
-    const result = await db.query(`
+    const result: {
+      id: number;
+      name: string;
+      country: string;
+      hourlyRate: number;
+      lastActivity: Date;
+      url: string;
+      testResults: Array<{
+        test_id: number;
+        test_name: string;
+        answers: Array<{
+          question: string;
+          answer: string;
+          timeTaken: number;
+          copyPaste: number;
+          inactive: number;
+          isCorrect: boolean;
+        }>;
+        attended_at: Date;
+      }>;
+    }[] = await db.query(`
       -- Main query to fetch profile details and test results
       SELECT
         p.id,
@@ -71,9 +91,7 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
               'question', q.question,
               'answer', a.answer,
               'timeTaken', a.time_taken,
-              'ctrlV', a.paste_count,
-              'ctrlC', a.copy_count,
-              'rightClick', a.right_click_count,
+              'copyPaste', a.paste_count + a.copy_count + a.right_click_count,
               'inactive', a.inactive_time,
               'isCorrect', a.is_correct
             )

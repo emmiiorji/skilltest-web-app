@@ -42,7 +42,13 @@
     </div>
     <div class="profile-item">
       <div>Name</div> 
-      <div>{{this.profile.name}}</div>
+      <div>
+        {{#if this.profile.url}}
+          <a href="https://www.upwork.com/freelancers/{{this.profile.url}}" target="_blank">{{this.profile.name}}</a>
+        {{else}}
+          {{this.profile.name}}
+        {{/if}}
+      </div>
     </div>
     <div class="profile-item">
       <div>Country</div> 
@@ -62,10 +68,8 @@
         <th>Question</th>
         <th>Answer</th>
         <th>Time</th>
-        <th>Ctrl+V</th>
-        <th>Ctrl+C</th>
-        <th>Right Click</th>
         <th>Inactive</th>
+        <th>CopyPaste</th>
       </tr>
     </thead>
     <tbody>
@@ -76,10 +80,8 @@
           <td data-label="Question">{{{this.question}}}</td>
           <td data-label="Answer" {{#if this.isCorrect}}style="background-color: #e6ffe6;"{{/if}}>{{{this.answer}}}</td>
           <td data-label="Time">{{this.timeTaken}}</td>
-          <td data-label="Ctrl+V">{{this.ctrlV}}</td>
-          <td data-label="Ctrl+C">{{this.ctrlC}}</td>
-          <td data-label="Right Click">{{this.rightClick}}</td>
           <td data-label="Inactive">{{this.inactive}}</td>
+          <td data-label="CopyPaste">{{this.copyPaste}}</td>
         </tr>
       {{/each}}
     </tbody>

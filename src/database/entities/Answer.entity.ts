@@ -45,6 +45,14 @@ export class Answer implements AnswerInput {
     @Column()
     time_taken: number;
 
+    // if copy used - 1, not used 0
+    // paste used - 1, not used 0
+    // right click used - 1, not used - 0
+    // so value will be from 0 to 3 max
+    // we don't need total count
+    // it will be like sum of true/false
+    // where true=1 false =0
+    // to know what he used
     @Column()
     copy_count: number
 

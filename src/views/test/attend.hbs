@@ -7,16 +7,12 @@
         </div>
       </h2>
       <form id="answerForm" method="POST" action="/test/attend?user={{userLinkId}}&test={{test_id}}">
-        <input type="hidden" name="test_id" value="{{test_id}}">
-        <input type="hidden" name="question_id" value="{{question_id}}">
-        <input type="hidden" name="profile_id" value="{{user_id}}">
+        <input type="hidden" name="answer_type" id="answer_type" value="{{answer_type}}">
+        <input type="hidden" name="test_id" id="test_id" value="{{test_id}}">
+        <input type="hidden" name="question_id" id="question_id" value="{{question_id}}">
+        <input type="hidden" name="user_id" id="user_id" value="{{user_id}}">
+        <input type="hidden" name="result_salt" id="result_salt" value="{{result_salt}}">
         {{{answer_html}}}
-        <input type="hidden" name="time_taken" id="timeTaken">
-        <input type="hidden" name="ip" id="ip">
-        <input type="hidden" name="copy_count" id="copyCount">
-        <input type="hidden" name="paste_count" id="pasteCount">
-        <input type="hidden" name="right_click_count" id="rightClickCount">
-        <input type="hidden" name="inactive_time" id="inactiveTime">
         <div class="submit-container">
           <button type="submit" id="submitButton" class="btn btn-blue">
             Submit Answer
@@ -24,7 +20,6 @@
         </div>
       </form>
     </div>
-  
 </div>
 
 <style>
@@ -93,122 +88,4 @@
   }
 </style>
 
-<script>
-  const startTime = Date.now();
-  let inactiveTime = 0;
-  let lastActiveTime = startTime;
-  let copyCount = 0;
-  let pasteCount = 0;
-  let rightClickCount = 0;
-  let ip = '';
-
-    
-    fetch("https://api.ipify.org")
-      .then(res => res.text())
-      .then((res) => {
-          ip = res
-      });
-
-  // This is to make sure the images within the question dont overflow the question div.
-  document.addEventListener('DOMContentLoaded', function() {
-    const questionDiv = document.getElementById('question-div');
-    const children = questionDiv.children;
-    for (let child of children) {
-      child.style.maxWidth = '100%';
-      child.style.maxHeight = '100%';
-    }
-  });
-
-  // Track inactive time
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      lastActiveTime = Date.now();
-    } else {
-      inactiveTime += Date.now() - lastActiveTime;
-    }
-  });
-
-  // Track copy, paste, and right-click events
-  document.addEventListener('copy', () => copyCount++);
-  document.addEventListener('paste', () => pasteCount++);
-  document.addEventListener('contextmenu', (e) => {
-    rightClickCount++;
-  });
-
-  const disableSubmitButton = () => {
-    const submitButton = document.getElementById('submitButton');
-    submitButton.disabled = true;
-    submitButton.style.opacity = '0.5';
-    submitButton.style.cursor = 'not-allowed';
-    submitButton.textContent = 'Submitting...';
-  };
-
-  const enableSubmitButton = () => {
-    const submitButton = document.getElementById('submitButton');
-    submitButton.disabled = false;
-    submitButton.style.opacity = '1';
-    submitButton.style.cursor = 'pointer';
-    submitButton.textContent = 'Submit Answer';
-  };
-
-  // Handle form submission
-  document.getElementById('answerForm').addEventListener('submit', (e) => {
-    e.preventDefault(); // Prevent default form submission
-
-    disableSubmitButton();
-
-    // Get all possible answer inputs
-    let answerInputs = {{{stringifyJson answer_type}}} === "textarea" ? document.querySelectorAll('textarea[name="answer"]') : document.querySelectorAll('input[name="answer"]');
-    
-    // Check if any answer is provided
-    let hasAnswer = Array.from(answerInputs).some(input => {
-      if (input.type === 'radio' || input.type === 'checkbox') {
-        return input.checked;
-      } else {
-        return input.value.trim() !== '';
-      }
-    });
-
-    // Check for empty answer field and collect answers
-    if ({{{stringifyJson answer_type}}} === "multiTextInput") {
-      const answers = [];
-      let index = 0;
-      let answerInput = document.querySelector(`input[name="answer-${index}"]`);
-      while (answerInput) {
-        if(answerInput.value.trim()) {
-          answers.push(answerInput.value.trim());
-        }
-        index++;
-        answerInput = document.querySelector(`input[name="answer-${index}"]`);
-      }
-      
-      if (answers.length > 0) {
-        const answerArrayField = document.createElement('input');
-        answerArrayField.type = 'hidden';
-        answerArrayField.name = 'answer';
-        answerArrayField.value = JSON.stringify(answers);
-        e.target.appendChild(answerArrayField);
-        hasAnswer = true;
-      } else {
-        hasAnswer = false;
-      }
-    };
-    
-    if (!hasAnswer) {
-      alert('Please provide an answer before submitting.');
-      enableSubmitButton();
-      return;
-    }
-
-    const timeTaken = Date.now() - startTime;
-    document.getElementById('timeTaken').value = Math.round(timeTaken/1000); // Time in seconds;
-    document.getElementById('ip').value = ip;
-    document.getElementById('copyCount').value = copyCount;
-    document.getElementById('pasteCount').value = pasteCount;
-    document.getElementById('rightClickCount').value = rightClickCount;
-    document.getElementById('inactiveTime').value = Math.round(inactiveTime / 1000); // Time in seconds
-
-    // Submit the form
-    e.target.submit();
-  });
-</script>
+<script src="/js/attend.js"></script>

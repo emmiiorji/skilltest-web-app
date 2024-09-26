@@ -5,7 +5,7 @@ const checkEqualityWhenUserAnswerString = (userAnswer: string, correctAnswersArr
   return correctAnswersArray.some(correctAnswer => 
     typeof correctAnswer === 'number' 
       ? Number(userAnswer) === correctAnswer 
-      : correctAnswer.toLowerCase() === userAnswer.toLowerCase()
+      : correctAnswer.toString().toLowerCase() === userAnswer.toString().toLowerCase()
   );
 };
 
@@ -28,7 +28,6 @@ export function checkAnswerCorrectness(
   correctAnswers: string
 ): boolean {
   const correctAnswersArray = convertAnswerToArray(correctAnswers);
-  console.debug({correctAnswersArray, userAnswer});
 
   // Check if correct answers array is an array of arrays.
   if (Array.isArray(correctAnswersArray[0])) {

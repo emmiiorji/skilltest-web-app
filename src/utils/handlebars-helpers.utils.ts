@@ -62,7 +62,3 @@ export function registerHandlebarsHelpers() {
     return answers.filter((answer: {isCorrect: boolean}) => answer.isCorrect).length;
   });
 }
-
-export const helpers = {
-  add: (a: number, b: number) => a + b,
-};
