@@ -28,7 +28,7 @@
           {{/if}}
         </th>
         <th> Question Details</th>
-        <th><input type="checkbox" id="selectAll" style="margin-right: 0.5rem;"></th>
+        <th><input type="checkbox" id="selectAll"></th>
       </tr>
     </thead>
     <tbody>
@@ -36,10 +36,17 @@
         <tr>
           <td data-label="User ID"><a href="/admin/profile/view?id={{this.user_link_id}}&key={{../key}}">{{this.user_link_id}}</a></td>
           <td data-label="User Name">{{this.user_name}}</td>
-          <td data-label="Country">{{this.country}}</td>
+          <td data-label="Country">{{#if this.country}}{{this.country}}{{else}}-{{/if}}</td>
           <td data-label="Score">{{this.correct_answers}} / {{this.total_answers}}</td>
           <td data-label="Date">{{formatDate this.completion_date}}</td>
-          <td data-label="Question Details">{{this.question_details}}</td>
+          <td data-label="Question Details" data-question-details='{{stringifyJson this.question_details}}'>
+            {{#each this.question_details}}
+              <span style="{{#if this.isCorrect}}background-color: #90EE90;{{/if}}">
+                {{this.answer_string}}
+              </span>
+              {{#unless @last}}<span>---</span>{{/unless}}
+            {{/each}}
+          </td>
           <td>
             <input type="checkbox" class="row-selector" data-row-id="{{@index}}">
           </td>
@@ -84,7 +91,14 @@
       selectedRows.forEach(checkbox => {
         const row = checkbox.closest('tr');
         const cells = Array.from(row.querySelectorAll('td')).slice(0, -1);
-        const rowData = cells.map(cell => cell.textContent.trim().replace(/\n/g, ' '));
+        const rowData = cells.map(cell => {
+          let text = cell.textContent.trim().replace(/\n/g, ' ');
+          if (cell.dataset.label === "Question Details") {
+            const details = JSON.parse(cell.getAttribute('data-question-details'));
+            text = details.map(detail => detail.answer_string).join("---");
+          }
+          return text;
+        });
         copyText += rowData.join('\t') + '\n';
       });
 

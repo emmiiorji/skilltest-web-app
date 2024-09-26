@@ -127,7 +127,18 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
     }
     
     const dataSource = await connection();
-    const testResults = await dataSource.query(`
+    const testResults: {
+      user_link_id: string;
+      user_name: string;
+      country: string;
+      correct_answers: number;
+      total_answers: number;
+      question_details: Array<{
+        answer_string: string;
+        isCorrect: boolean;
+      }>;
+      completion_date: Date;
+    }[] = await dataSource.query(`
       SELECT 
         -- Basic user information
         p.link AS user_link_id,
@@ -138,19 +149,20 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
         -- Total number of answers for this user in this group
         COUNT(ta.id) AS total_answers,
         -- Detailed information about each question answered
-        GROUP_CONCAT(
-          CONCAT(
-            ta.question_id,
-            '(',
-            ta.time_taken,
-            ',',
-            ta.inactive_time,
-            ',',
-            ta.copy_count + ta.paste_count + ta.right_click_count,
-            ')'
+        JSON_ARRAYAGG(
+          JSON_OBJECT(
+            'answer_string', CONCAT(
+              ta.question_id,
+              '(',
+              ta.time_taken,
+              ',',
+              ta.inactive_time,
+              ',',
+              ta.copy_count + ta.paste_count + ta.right_click_count,
+              ')'
+            ),
+            'isCorrect', ta.is_correct
           )
-          ORDER BY ta.question_id
-          SEPARATOR '---'
         ) AS question_details,
         -- The latest answer date, considered as the completion date
         MAX(ta.created_at) AS completion_date
