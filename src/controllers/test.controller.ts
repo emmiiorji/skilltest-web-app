@@ -22,6 +22,28 @@ export function testController(app: FastifyInstance, opts: any, done: () => void
 
     try {
 
+      const existingTest = await testService.isTestAssignedToUser({linkId: userLinkId, testId: test_id});
+
+      if(existingTest) {
+        return reply.type('text/html').send(`
+          <div style="
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+          ">
+            <h2 style="color: #007bff; margin-bottom: 20px;">Test Already Assigned</h2>
+            <p style="font-size: 18px; color: #495057;">
+              We already assigned this test to this user.
+            </p>
+          </div>
+        `);
+      }
+
       const test = await testService.getTestById(test_id);
       if (!test) {
         throw new Error('Test not found');

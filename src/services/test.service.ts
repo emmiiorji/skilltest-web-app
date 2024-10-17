@@ -57,6 +57,14 @@ class TestService {
         : dataSource.createQueryBuilder().relation(Test, 'groups').of(test.id).add(groupId)
     ]);
   }
+
+  async isTestAssignedToUser({linkId, testId}:{linkId: string, testId: number}) {
+    const dataSource = await connection();
+    return dataSource.getRepository(Test).exists({
+      relations: ['profiles'],
+      where: { id: testId, profiles: { link: linkId }} 
+    });
+  }
 }
 
 export const testService = new TestService();
