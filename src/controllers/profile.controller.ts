@@ -117,7 +117,7 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
     const {testResults, ...profile} = result[0];
 
     return reply.view('admin/profile/view', {
-      title: 'View Profile',
+      title: profile.name,
       profile,
       testResults,
       key
