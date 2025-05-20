@@ -77,7 +77,7 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
           ),
           JSON_ARRAY()
         ) AS testResults
-      FROM profile p
+      FROM profiles p
       -- Left join with a subquery that groups answers by test_id
       LEFT JOIN (
         SELECT 

@@ -31,7 +31,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
         -- We use GROUP_CONCAT to concatenate countries and test IDs, as STRING_AGG is not available in MySQL 5.7.
         COALESCE(
           (SELECT GROUP_CONCAT(DISTINCT p.country ORDER BY p.country SEPARATOR ', ')
-           FROM profile p
+           FROM profiles p
            JOIN profiles_groups pg ON p.id = pg.profileId
            WHERE pg.groupId = g.id),
           ''
@@ -166,7 +166,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
         ) AS question_details,
         -- The latest answer date, considered as the completion date
         MAX(ta.created_at) AS completion_date
-      FROM profile p
+      FROM profiles p
       -- Join to get all profiles in the specified group
       JOIN profiles_groups pg ON p.id = pg.profileId
       -- Join to get all answers for these profiles

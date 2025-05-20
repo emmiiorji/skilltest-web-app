@@ -4,7 +4,7 @@ import { Group } from "./Group.entity";
 import { ProfileTag } from "./ProfileTag.entity";
 import { Test } from "./Test.entity";
 
-@Entity()
+@Entity('profiles')
 export class Profile extends BaseEntity {
   @Column({
     type: 'varchar',

@@ -9,7 +9,7 @@ export class AddingExtraTables1726875113240 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE \`profile_tags\` (\`profile_id\` int NOT NULL, \`tag_id\` int NOT NULL, PRIMARY KEY (\`profile_id\`, \`tag_id\`)) ENGINE=InnoDB`);
         await queryRunner.query(`CREATE TABLE \`queries\` (\`id\` int NOT NULL AUTO_INCREMENT, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`query\` varchar(1000) NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
         await queryRunner.query(`ALTER TABLE \`links\` ADD CONSTRAINT \`FK_50fb924b8150eb60e6287c99e61\` FOREIGN KEY (\`tag_id\`) REFERENCES \`tags\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE \`profile_tags\` ADD CONSTRAINT \`FK_badb116eb5063aeadd9a2d9b6db\` FOREIGN KEY (\`profile_id\`) REFERENCES \`profile\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`profile_tags\` ADD CONSTRAINT \`FK_badb116eb5063aeadd9a2d9b6db\` FOREIGN KEY (\`profile_id\`) REFERENCES \`profiles\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE \`profile_tags\` ADD CONSTRAINT \`FK_abd812637001d08946f8c59288a\` FOREIGN KEY (\`tag_id\`) REFERENCES \`tags\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
 
