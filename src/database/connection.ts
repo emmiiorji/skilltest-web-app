@@ -37,6 +37,5 @@ export const connection = async () => {
     return AppDataSource;
   };
   await initializeDatabase();
-  console.info("Database connection established successfully.");
   return AppDataSource;
 }
