@@ -9,7 +9,7 @@
     "copy-views": "mkdir -p dist/views && cp -R src/views dist",
     "start": "ts-node src/server.ts",
     "typeorm": "typeorm-ts-node-commonjs",
-    "migration:create": "pnpm run typeorm migration:create",
+    "migration:create": "node create-migration.js",
     "migration:generate": "node generate-migration.js",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/connection.ts",
     "migration:revert": "pnpm run typeorm migration:revert -- -d src/database/connection.ts"
