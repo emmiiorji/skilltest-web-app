@@ -39,4 +39,7 @@ export class Test extends BaseEntity {
 
   @OneToMany(() => QuestionTest, questionTest => questionTest.test)
   questionTests: QuestionTest[];
+
+  @Column("json", { default: {} })
+  tracking_config: any;
 }
