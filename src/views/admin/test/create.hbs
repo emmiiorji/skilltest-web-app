@@ -1,0 +1,133 @@
+<div class="container">
+  <h1>Create Test</h1>
+  
+  <div class="form-container">
+    <div class="form-group">
+      <label for="template">Select Template:</label>
+      <select id="template" class="form-control">
+        <option value="">-- Select Template --</option>
+        {{#each templates}}
+          <option value="{{this.id}}">{{this.template}}</option>
+        {{/each}}
+      </select>
+    </div>
+    
+    <div class="form-group">
+      <label>Template Preview:</label>
+      <textarea id="templatePreview" readonly class="form-control" rows="10"></textarea>
+    </div>
+    
+    <div class="form-group">
+      <label for="freelancerInput">Freelancer URL or ID:</label>
+      <input type="text" id="freelancerInput" class="form-control" placeholder="abc123 or https://upwork.com/freelancers/~abc123">
+      <small>Parsed ID: <span id="parsedId">-</span></small>
+    </div>
+    
+    <div class="form-group">
+      <label for="groupId">Group ID:</label>
+      <input type="number" id="groupId" class="form-control" placeholder="123">
+    </div>
+    
+    <button id="generateBtn" class="btn btn-primary">Generate Test</button>
+    
+    <div id="resultContainer" style="display: none; margin-top: 20px;">
+      <h3>Generated Message:</h3>
+      <div class="alert alert-success">Copied to clipboard!</div>
+      <textarea id="generatedMessage" readonly class="form-control" rows="10"></textarea>
+      <button id="copyBtn" class="btn btn-secondary mt-2">Copy Again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const templateSelect = document.getElementById('template');
+  const templatePreview = document.getElementById('templatePreview');
+  const freelancerInput = document.getElementById('freelancerInput');
+  const parsedIdSpan = document.getElementById('parsedId');
+  const generateBtn = document.getElementById('generateBtn');
+  const resultContainer = document.getElementById('resultContainer');
+  const generatedMessage = document.getElementById('generatedMessage');
+  const copyBtn = document.getElementById('copyBtn');
+  
+  // Template selection
+  templateSelect.addEventListener('change', (e) => {
+    const selectedOption = e.target.options[e.target.selectedIndex];
+    templatePreview.value = selectedOption.value ? selectedOption.text : '';
+    updatePreview();
+  });
+  
+  // Parse freelancer ID
+  freelancerInput.addEventListener('input', (e) => {
+    let parsed = e.target.value;
+    if (e.target.value.includes('upwork.com')) {
+      const match = e.target.value.match(/~([a-zA-Z0-9]+)/);
+      parsed = match ? match[1] : e.target.value;
+    }
+    parsedIdSpan.textContent = parsed;
+    updatePreview();
+  });
+  
+  // Update preview with parsed ID
+  const updatePreview = () => {
+    const template = templatePreview.value;
+    const parsedId = parsedIdSpan.textContent;
+    if (template && parsedId && parsedId !== '-') {
+      templatePreview.value = template.replace(/{link}/g, `[ID: ${parsedId}]`);
+    }
+  };
+  
+  // Generate test
+  generateBtn.addEventListener('click', async () => {
+    const templateId = templateSelect.value;
+    const freelancerInput = document.getElementById('freelancerInput').value;
+    const groupId = document.getElementById('groupId').value;
+    
+    if (!templateId || !freelancerInput || !groupId) {
+      alert('Please fill all fields');
+      return;
+    }
+    
+    try {
+      const response = await fetch('/admin/test/create-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          template_id: templateId,
+          freelancer_input: freelancerInput,
+          group_id: groupId
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        generatedMessage.value = data.message;
+        resultContainer.style.display = 'block';
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(data.message).then(() => {
+          document.querySelector('.alert').style.display = 'block';
+          setTimeout(() => {
+            document.querySelector('.alert').style.display = 'none';
+          }, 3000);
+        });
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch (error) {
+      alert('Error: ' + error.message);
+    }
+  });
+  
+  // Copy again button
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(generatedMessage.value).then(() => {
+      document.querySelector('.alert').style.display = 'block';
+      setTimeout(() => {
+        document.querySelector('.alert').style.display = 'none';
+      }, 3000);
+    });
+  });
+});
+</script>
