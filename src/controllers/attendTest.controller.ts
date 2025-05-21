@@ -9,6 +9,7 @@ import { AnswerSchema } from '../database/validators/answer.validation';
 import { env } from '../env.config';
 import { profileService } from '../services/profile.service';
 import { checkAnswerCorrectness } from '../utils/checkAnswerCorrectness';
+import { testService } from '../services/test.service';
 
 const decryptPayload = (encryptedPayload: string, key: string) => {
   try {
@@ -87,6 +88,8 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
     reply.header('Expires', '0');
     reply.header('Surrogate-Control', 'no-store');
 
+    const test = await testService.getTestById(test_id);
+
     return reply.view('test/attend', { 
       title: 'Take Test', 
       user_id: profile.id, 
@@ -97,6 +100,7 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
       question_id: pendingQuestion.id,
       answer_type: pendingQuestion.answer_type,
       answer_html: pendingQuestion.answer_html,
+      tracking_config: test?.tracking_config || {},
       result_salt: env.RESULT_SALT,
     });
   });
@@ -143,7 +147,7 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
       decryptedPayload.answer = JSON.stringify(decryptedPayload.answer);
     }
 
-    const validatedAnswer = AnswerSchema.parse(decryptedPayload);
+    const validatedAnswer = AnswerSchema.parse({ ...decryptedPayload });
 
     const newAnswer = answerRepo.create({
       is_correct,
