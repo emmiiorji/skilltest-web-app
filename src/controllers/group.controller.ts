@@ -44,7 +44,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
            WHERE tg.groupId = g.id),
           ''
         ) as test_ids
-      FROM groups g
+      FROM \`groups\` g
       -- The result is ordered by creation date descending
       ORDER BY g.createdAt DESC
     `);
