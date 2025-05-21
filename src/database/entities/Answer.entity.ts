@@ -90,7 +90,7 @@ export class Answer implements AnswerInput {
     device_fingerprint: any;
 
     @Column({ length: 10, default: 'desktop' })
-    device_type: string;
+    device_type: "desktop" | "mobile" | "tablet";
 
     @Column("float", { default: 0 })
     time_to_first_interaction: number;
