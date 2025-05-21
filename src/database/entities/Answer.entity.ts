@@ -73,4 +73,31 @@ export class Answer implements AnswerInput {
 
     @UpdateDateColumn()
     updated_at: Date;
+
+    @Column("json", { default: [] })
+    focus_lost_events: any[];
+
+    @Column("json", { default: [] })
+    clipboard_events: any[];
+
+    @Column("float", { default: 0 })
+    pre_submit_delay: number;
+
+    @Column("json", { default: [] })
+    answer_change_events: any[];
+
+    @Column("json", { default: {} })
+    device_fingerprint: any;
+
+    @Column({ length: 10, default: 'desktop' })
+    device_type: string;
+
+    @Column("float", { default: 0 })
+    time_to_first_interaction: number;
+
+    @Column("json", { default: [] })
+    mouse_click_events: any[];
+
+    @Column("json", { default: [] })
+    keyboard_press_events: any[];
 }
