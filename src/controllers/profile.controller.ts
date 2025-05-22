@@ -65,10 +65,7 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
     // Add link property if it's missing
     if (!profile.link) {
       profile.link = profileLinkId;
-      console.log('Added missing link property to profile:', profileLinkId);
     }
-
-    console.log('Profile object:', JSON.stringify(profile));
 
     // Now get all tests associated with this profile
     const testsResult = await db.query(`
@@ -82,8 +79,6 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
       WHERE tp.profileId = ?
       GROUP BY t.id, t.name
     `, [profile.id, profile.id]);
-
-    console.log('Tests associated with profile:', JSON.stringify(testsResult));
 
     // For each test, get the answers
     const testResults = [];
@@ -153,13 +148,6 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         });
       }
     }
-
-    console.log('Processed test results:', JSON.stringify(testResults));
-
-    // Debug information
-    console.log('Profile ID:', profile.id);
-    console.log('Profile Link ID:', profileLinkId);
-    console.log('Test Results:', JSON.stringify(testResults));
 
     return reply.view('admin/profile/view', {
       title: profile.name,

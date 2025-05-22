@@ -3,6 +3,7 @@ import { BaseEntity } from "./BaseEntity.entity";
 import { Group } from "./Group.entity";
 import { Profile } from "./Profile.entity";
 import { QuestionTest } from "./QuestionTest.entity";
+import { TrackingConfig } from "../../types/tracking";
 
 @Entity("tests")
 export class Test extends BaseEntity {
@@ -41,5 +42,5 @@ export class Test extends BaseEntity {
   questionTests: QuestionTest[];
 
   @Column("json", { default: {} })
-  tracking_config: any;
+  tracking_config: TrackingConfig;
 }

@@ -6,6 +6,7 @@ import { profileService } from '../services/profile.service';
 import { groupService } from '../services/group.service';
 import { questionService } from '../services/question.service';
 import { env } from '../env.config';
+import { TrackingConfig } from '../types/tracking';
 
 export function testCreateController(app: FastifyInstance, opts: any, done: () => void) {
 
@@ -39,7 +40,7 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
         disableAnswerChangeEvents: z.boolean().optional(),
         disablePreSubmitDelay: z.boolean().optional(),
         disableTimeToFirstInteraction: z.boolean().optional()
-      }).optional().default({}),
+      }).optional().default({}) as z.ZodType<TrackingConfig>,
       questions: z.array(z.object({
         question: z.string(),
         answer_type: z.enum(["textarea", "radiobutton", "multiinput", "multiTextInput"]),
