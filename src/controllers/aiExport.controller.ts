@@ -2,60 +2,15 @@ import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { connection } from '../database/connection';
 import { convertAnswerToArray } from '../utils/convertAnswerToArray';
+import {
+  Answer,
+  AnswerChangeEvent,
+  FocusLostEvent,
+  MouseClickEvent,
+  KeyboardPressEvent
+} from '../types/tracking';
 
 export function aiExportController(app: FastifyInstance, _opts: any, done: () => void) {
-        interface AnswerChangeEvent {
-        question_id: number;
-        previous_answer: string;
-        new_answer: string;
-        timestamp: number;
-        input_type: string;
-    }
-
-    interface FocusLostEvent {
-        timestamp: number,
-        duration_ms: number,
-    }
-
-    interface MouseClickEvent {
-        timestamp: number,
-        button: string,
-        x: number,
-        y: number,
-        target: string,
-    }
-
-    interface KeyboardPressEvent {
-        timestamp: number,
-        keyType: string,
-    }
-
-    interface ClipboardEvent {
-        timestamp: number,
-        type: string,
-        content: string,
-    }
-
-    interface Answer {
-        question_id: number,
-        question: string,
-        answer: string,
-        correct: string,
-        is_correct: boolean,
-        time_taken: number,
-        inactive_time: number,
-        pre_submit_delay?: number;
-        time_to_first_interaction?: number;
-        copy_count: number;
-        paste_count: number;
-        right_click_count: number;
-        clipboard_events?: ClipboardEvent[];
-        answer_change_events?: AnswerChangeEvent[];
-        focus_lost_events?: FocusLostEvent[];
-        mouse_click_events?: MouseClickEvent[];
-        keyboard_press_events?: KeyboardPressEvent[];
-
-    }
 
   app.get('/math-json', async (request, reply) => {
     try {

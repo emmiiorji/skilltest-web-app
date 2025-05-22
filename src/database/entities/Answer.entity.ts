@@ -3,6 +3,13 @@ import { AnswerInput } from "../validators/answer.validation";
 import { Profile } from "./Profile.entity";
 import { Question } from "./Question.entity";
 import { Test } from "./Test.entity";
+import {
+    AnswerChangeEvent,
+    FocusLostEvent,
+    MouseClickEvent,
+    KeyboardPressEvent,
+    ClipboardEvent
+} from '../../types/tracking';
 
 @Entity("answers")
 export class Answer implements AnswerInput {
@@ -75,16 +82,16 @@ export class Answer implements AnswerInput {
     updated_at: Date;
 
     @Column("json", { default: [] })
-    focus_lost_events: any[];
+    focus_lost_events: FocusLostEvent[];
 
     @Column("json", { default: [] })
-    clipboard_events: any[];
+    clipboard_events: ClipboardEvent[];
 
     @Column("float", { default: 0 })
     pre_submit_delay: number;
 
     @Column("json", { default: [] })
-    answer_change_events: any[];
+    answer_change_events: AnswerChangeEvent[];
 
     @Column("json", { default: {} })
     device_fingerprint: any;
@@ -96,8 +103,8 @@ export class Answer implements AnswerInput {
     time_to_first_interaction: number;
 
     @Column("json", { default: [] })
-    mouse_click_events: any[];
+    mouse_click_events: MouseClickEvent[];
 
     @Column("json", { default: [] })
-    keyboard_press_events: any[];
+    keyboard_press_events: KeyboardPressEvent[];
 }

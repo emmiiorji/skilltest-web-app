@@ -14,6 +14,13 @@ class ProfileService {
 			await profileRepository.save(profile);
 			return profile;
 		} catch (error) {
+			if (error instanceof Error) {
+				// Check for MySQL duplicate entry error
+				if (error.message.includes('ER_DUP_ENTRY') || error.message.includes('Duplicate entry')) {
+					// Extract the field name from the error message
+					throw new Error(error.message);
+				}
+			}
 			if (error instanceof ZodError) {
 				throw error;
 			}

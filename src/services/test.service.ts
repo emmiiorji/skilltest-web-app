@@ -3,6 +3,7 @@ import { Group } from '../database/entities/Group.entity';
 import { Profile } from '../database/entities/Profile.entity';
 import { Test } from '../database/entities/Test.entity';
 import { generateRandomString } from '../utils/generateRandomString.utils';
+import { TrackingConfig } from '../types/tracking';
 
 class TestService {
 
@@ -17,7 +18,7 @@ class TestService {
   async createTest(data: {
     group_id: number;
     profile_id: number;
-    tracking_config?: Record<string, boolean>;
+    tracking_config?: TrackingConfig;
     test_name?: string;
   }): Promise<Test> {
     const dataSource = await connection();
