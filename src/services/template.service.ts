@@ -20,6 +20,21 @@ class TemplateService {
     return dataSource.getRepository(Template).save(newTemplate);
   }
 
+  async updateTemplate(id: number, templateString: string): Promise<Template> {
+    const dataSource = await connection();
+    const templateRepository = dataSource.getRepository(Template);
+
+    // Find the template
+    const template = await templateRepository.findOneBy({ id });
+    if (!template) {
+      throw new Error(`Template with ID ${id} not found`);
+    }
+
+    // Update the template
+    template.template = templateString;
+    return templateRepository.save(template);
+  }
+
   async getTemplateById(id: number): Promise<Template | null> {
     const dataSource = await connection();
     return dataSource.getRepository(Template).findOneBy({ id });
