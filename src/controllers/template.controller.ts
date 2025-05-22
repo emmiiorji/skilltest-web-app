@@ -25,7 +25,29 @@ export function templateController(app: FastifyInstance, opts: any, done: () => 
     }
   });
 
-  
+  // Get all templates
+  app.get('/list', async (request, reply) => {
+    try {
+      const { key } = z.object({
+        key: z.string(),
+      }).parse(request.query);
+
+      const templates = await templateService.getAllTemplatesIdAndName();
+
+      return reply.view('admin/template/list', {
+        title: 'Templates',
+        templates,
+        key,
+        url: request.url
+      });
+    } catch (error) {
+      request.log.error(error, "Error fetching templates");
+      return reply.status(400).send({
+        success: false,
+        error: error instanceof Error ? error.message : 'An unknown error occurred'
+      });
+    }
+  });
 
   // Show template creation form
   app.get('/create', async (request, reply) => {

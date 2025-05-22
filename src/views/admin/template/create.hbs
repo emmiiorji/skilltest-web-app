@@ -1,0 +1,161 @@
+<div class="container">
+  <h1>Create Template</h1>
+  
+  <div class="form-container">
+    <form id="createTemplateForm">
+      <div class="form-group">
+        <label for="template_content">Template Content:</label>
+        <textarea id="template_content" name="template" rows="10" class="form-control" placeholder="Enter your template content here..."></textarea>
+        <small class="form-text text-muted">
+          Use <code>{url}</code> or <code>{link}</code> as placeholders for the test URL.
+          <br>Example: "Please take this test: {url}"
+        </small>
+      </div>
+      
+      <div class="form-group">
+        <button type="submit" class="btn btn-primary">Create Template</button>
+        <a href="/admin/template/list?key={{key}}" class="btn btn-secondary">View All Templates</a>
+      </div>
+    </form>
+    
+    <div id="resultContainer" style="display: none; margin-top: 20px;">
+      <h3>Template Created Successfully!</h3>
+      <div class="alert alert-success">Template has been created and can now be used for tests.</div>
+      <div class="template-details">
+        <p><strong>Template ID:</strong> <span id="templateId"></span></p>
+        <p><strong>Template Content:</strong></p>
+        <pre id="templateContent" class="template-preview"></pre>
+      </div>
+      <div class="action-buttons">
+        <a href="/admin/test/create?key={{key}}" class="btn btn-primary">Create Test with This Template</a>
+        <a href="/admin/template/list?key={{key}}" class="btn btn-secondary">View All Templates</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('createTemplateForm');
+  const resultContainer = document.getElementById('resultContainer');
+  const templateIdSpan = document.getElementById('templateId');
+  const templateContentPre = document.getElementById('templateContent');
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const templateContent = document.getElementById('template_content').value.trim();
+    
+    if (!templateContent) {
+      alert('Please enter template content');
+      return;
+    }
+    
+    try {
+      const response = await fetch('/admin/template/create?key={{key}}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          template: templateContent
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Show result
+        templateIdSpan.textContent = data.template.id;
+        templateContentPre.textContent = data.template.template;
+        
+        // Hide form and show result
+        form.style.display = 'none';
+        resultContainer.style.display = 'block';
+      } else {
+        alert('Error: ' + (data.error || 'Failed to create template'));
+      }
+    } catch (error) {
+      alert('Error: ' + error.message);
+    }
+  });
+});
+</script>
+
+<style>
+.form-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+
+.template-preview {
+  background-color: #f1f1f1;
+  padding: 15px;
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.template-details {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+}
+
+.action-buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+}
+
+.alert {
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+</style>
