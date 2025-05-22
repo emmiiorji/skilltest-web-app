@@ -13,10 +13,10 @@ class TemplateService {
     });
   }
 
-  async createTemplate(): Promise<Template> {
+  async createTemplate(templateString?: string): Promise<Template> {
     const dataSource = await connection();
     const newTemplate = new Template();
-    newTemplate.template = generateRandomString(10);
+    newTemplate.template = templateString || generateRandomString(10);
     return dataSource.getRepository(Template).save(newTemplate);
   }
 
