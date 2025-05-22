@@ -296,13 +296,8 @@
             ? '/admin/test/export/js-json'
             : '/admin/test/export/math-json';
 
-          console.log(`Fetching for copy from: ${endpoint}?user_id=${userId}&test_id=${testId}&key=${key}`); // Debug log
-
           // Use the ID from the URL if userId is empty
           const effectiveUserId = userId || urlParams.get('id') || '';
-          if (!userId && urlParams.get('id')) {
-            console.log(`Using ID from URL for copy: ${urlParams.get('id')}`);
-          }
 
           const response = await fetch(`${endpoint}?user_id=${effectiveUserId}&test_id=${testId}&key=${key}`);
 
