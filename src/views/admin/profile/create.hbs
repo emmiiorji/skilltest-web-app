@@ -1,0 +1,185 @@
+<div class="container">
+  <h1>Create Profile</h1>
+  
+  <div class="form-container">
+    <form id="createProfileForm">
+      <div class="form-div">
+        <label for="link">Link ID (required):</label>
+        <input type="text" id="link" name="link" class="form-control" required>
+        <small class="form-text text-muted">
+          A unique identifier for the profile. For Upwork users, this is typically their Upwork ID.
+        </small>
+      </div>
+      
+      <div class="form-div">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" class="form-control">
+      </div>
+      
+      <div class="form-div">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" class="form-control">
+      </div>
+      
+      <div class="form-div">
+        <label for="country">Country:</label>
+        <input type="text" id="country" name="country" class="form-control">
+      </div>
+      
+      <div class="form-div">
+        <label for="rate">Hourly Rate ($):</label>
+        <input type="number" id="rate" name="rate" class="form-control" min="0" step="0.01">
+      </div>
+      
+      <div class="form-div">
+        <label for="url">Profile URL:</label>
+        <input type="text" id="url" name="url" class="form-control">
+        <small class="form-text text-muted">
+          For Upwork profiles, this is the part after "upwork.com/freelancers/".
+        </small>
+      </div>
+      
+      <div class="form-div">
+        <label for="group_id">Group:</label>
+        <select id="group_id" name="group_id" class="form-control" required>
+          <option value="">-- Select Group --</option>
+          {{#each groups}}
+            <option value="{{this.id}}">{{this.name}}</option>
+          {{/each}}
+        </select>
+      </div>
+      
+      <div class="form-div">
+        <button type="submit" class="btn btn-primary">Create Profile</button>
+        <a href="/admin/profile/list?key={{key}}" class="btn btn-secondary">View All Profiles</a>
+      </div>
+    </form>
+    
+    <div id="resultContainer" style="display: none; margin-top: 20px;">
+      <h3>Profile Created Successfully!</h3>
+      <div class="alert alert-success">Profile has been created and can now be used for tests.</div>
+      <div class="profile-details">
+        <p><strong>Profile ID:</strong> <span id="profileId"></span></p>
+        <p><strong>Name:</strong> <span id="profileName"></span></p>
+      </div>
+      <div class="action-buttons">
+        <a href="/admin/test/create?key={{key}}" class="btn btn-primary">Create Test for This Profile</a>
+        <a href="/admin/profile/list?key={{key}}" class="btn btn-secondary">View All Profiles</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('createProfileForm');
+  const resultContainer = document.getElementById('resultContainer');
+  const profileIdSpan = document.getElementById('profileId');
+  const profileNameSpan = document.getElementById('profileName');
+  
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    const formDataObj = {};
+    
+    formData.forEach((value, key) => {
+      formDataObj[key] = value;
+    });
+    
+    try {
+      const response = await fetch('/admin/profile/create?key={{key}}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formDataObj)
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Show result
+        profileIdSpan.textContent = data.profile.link;
+        profileNameSpan.textContent = data.profile.name;
+        
+        // Hide form and show result
+        form.style.display = 'none';
+        resultContainer.style.display = 'block';
+      } else {
+        alert('Error: ' + (data.error || 'Failed to create profile'));
+      }
+    } catch (error) {
+      alert('Error: ' + error.message);
+    }
+  });
+});
+</script>
+
+<style>
+.form-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-div {
+  margin-bottom: 20px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+
+.profile-details {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+}
+
+.action-buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+}
+
+.alert {
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+</style>

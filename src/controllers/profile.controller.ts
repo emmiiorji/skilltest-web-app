@@ -2,6 +2,8 @@ import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { connection } from '../database/connection';
 import { profileService } from '../services/profile.service';
+import { groupService } from '../services/group.service';
+import { ProfileInput } from '../database/validators/profile.validator';
 
 export function profileController(app: FastifyInstance, opts: any, done: () => void) {
   app.get('/list', async (request, reply) => {
@@ -34,7 +36,7 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
   app.get('/view', async (request, reply) => {
     const {id: profileLinkId, key} = z.object({id: z.string(), key: z.string()}).parse(request.query);
     const db = await connection();
-    
+
     const result: {
       id: number;
       name: string;
@@ -59,9 +61,9 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
       -- Main query to fetch profile details and test results
       SELECT
         p.id,
-        p.name, 
-        p.country, 
-        p.rate AS hourlyRate, 
+        p.name,
+        p.country,
+        p.rate AS hourlyRate,
         p.lastActivity,
         p.url,
         -- Use COALESCE to return an empty JSON array if no test results are found
@@ -80,7 +82,7 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
       FROM profiles p
       -- Left join with a subquery that groups answers by test_id
       LEFT JOIN (
-        SELECT 
+        SELECT
           a.profile_id,
           a.test_id,
           t.name AS test_name,
@@ -109,7 +111,7 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
       -- Group by profile id to aggregate all test results for the profile
       GROUP BY p.id
     `, [profileLinkId]);
-    
+
     if (!result[0]) {
       return reply.status(404).send({ error: 'Profile not found' });
     }
@@ -122,6 +124,90 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
       testResults,
       key
     });
+  });
+
+  // Show profile creation form
+  app.get('/create', async (request, reply) => {
+    try {
+      const { key } = z.object({
+        key: z.string(),
+      }).parse(request.query);
+
+      // Get all groups for the dropdown
+      const groups = await groupService.getAllGroupsIdAndName();
+
+      return reply.view('admin/profile/create', {
+        title: 'Create Profile',
+        groups,
+        key,
+        url: request.url
+      });
+    } catch (error) {
+      request.log.error(error, "Error loading profile creation form");
+      return reply.status(400).send({
+        success: false,
+        error: error instanceof Error ? error.message : 'An unknown error occurred'
+      });
+    }
+  });
+
+  // Create a new profile
+  app.post('/create', async (request, reply) => {
+    try {
+      // Validate the key parameter (for authentication)
+      z.object({
+        key: z.string(),
+      }).parse(request.query);
+
+      const profileData = z.object({
+        link: z.string().min(1, "Link ID is required"),
+        name: z.string().optional(),
+        email: z.string().email().optional(),
+        country: z.string().optional(),
+        rate: z.coerce.number().optional(),
+        url: z.string().optional(),
+        group_id: z.coerce.number()
+      }).parse(request.body);
+
+      // Extract group_id and create profile data object
+      const { group_id, ...profileInput } = profileData;
+
+      // Create the profile
+      const profile = await profileService.createProfile(profileInput as ProfileInput, group_id);
+
+      return reply.send({
+        success: true,
+        profile
+      });
+    } catch (error) {
+      request.log.error(error, "Error creating profile");
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      return reply.status(400).send({
+        success: false,
+        error: errorMessage
+      });
+    }
+  });
+
+  // Create a profile via AJAX (for quick creation from test form)
+  app.post('/create-ajax', async (request, reply) => {
+    try {
+      // Generate a random ID for the profile
+      const randomId = Math.random().toString(36).substring(2, 10);
+      const profile = await profileService.createProfileByLinkId(randomId);
+
+      return reply.send({
+        success: true,
+        profile
+      });
+    } catch (error) {
+      request.log.error(error, "Error creating profile via AJAX");
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      return reply.status(400).send({
+        success: false,
+        error: errorMessage
+      });
+    }
   });
 
   done();
