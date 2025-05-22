@@ -50,7 +50,8 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         p.totalHours,
         p.skills,
         p.lastActivity,
-        p.url
+        p.url,
+        p.link
       FROM profiles p
       WHERE p.link = ?
     `, [profileLinkId]);
@@ -60,6 +61,14 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
     }
 
     const profile = profileResult[0];
+
+    // Add link property if it's missing
+    if (!profile.link) {
+      profile.link = profileLinkId;
+      console.log('Added missing link property to profile:', profileLinkId);
+    }
+
+    console.log('Profile object:', JSON.stringify(profile));
 
     // Now get all tests associated with this profile
     const testsResult = await db.query(`
@@ -102,11 +111,36 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         WHERE a.test_id = ? AND a.profile_id = ?
       `, [test.test_id, profile.id]);
 
+      // Process the answers to ensure JSON fields are properly parsed
+      const processedAnswers = answersResult.map((answer: any) => {
+        try {
+          return {
+            ...answer,
+            // Parse JSON fields if they're strings
+            focusLostEvents: typeof answer.focusLostEvents === 'string' ?
+              JSON.parse(answer.focusLostEvents) : (answer.focusLostEvents || []),
+            clipboardEvents: typeof answer.clipboardEvents === 'string' ?
+              JSON.parse(answer.clipboardEvents) : (answer.clipboardEvents || []),
+            answerChangeEvents: typeof answer.answerChangeEvents === 'string' ?
+              JSON.parse(answer.answerChangeEvents) : (answer.answerChangeEvents || []),
+            deviceFingerprint: typeof answer.deviceFingerprint === 'string' ?
+              JSON.parse(answer.deviceFingerprint) : (answer.deviceFingerprint || {}),
+            mouseClickEvents: typeof answer.mouseClickEvents === 'string' ?
+              JSON.parse(answer.mouseClickEvents) : (answer.mouseClickEvents || []),
+            keyboardPressEvents: typeof answer.keyboardPressEvents === 'string' ?
+              JSON.parse(answer.keyboardPressEvents) : (answer.keyboardPressEvents || [])
+          };
+        } catch (error) {
+          console.error('Error parsing JSON fields:', error);
+          return answer; // Return original if parsing fails
+        }
+      });
+
       if (answersResult.length > 0) {
         testResults.push({
           test_id: test.test_id,
           test_name: test.test_name,
-          answers: answersResult,
+          answers: processedAnswers, // Use processed answers with parsed JSON
           attended_at: test.attended_at
         });
       } else {
@@ -130,6 +164,7 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
     return reply.view('admin/profile/view', {
       title: profile.name,
       profile,
+      profileLinkId, // Pass the original link ID from the URL
       testResults,
       key,
       url: request.url

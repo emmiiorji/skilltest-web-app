@@ -4,6 +4,7 @@ import { templateService } from '../services/template.service';
 import { testService } from '../services/test.service';
 import { profileService } from '../services/profile.service';
 import { groupService } from '../services/group.service';
+import { questionService } from '../services/question.service';
 import { env } from '../env.config';
 
 export function testCreateController(app: FastifyInstance, opts: any, done: () => void) {
@@ -24,8 +25,9 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
   });
 
   app.post('/create-link', async (request, reply) => {
-    const { template_id, freelancer_input, group_id, tracking_config } = z.object({
+    const { template_id, test_name, freelancer_input, group_id, tracking_config, questions } = z.object({
       template_id: z.string(),
+      test_name: z.string().optional(),
       freelancer_input: z.string(),
       group_id: z.string(),
       tracking_config: z.object({
@@ -37,7 +39,13 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
         disableAnswerChangeEvents: z.boolean().optional(),
         disablePreSubmitDelay: z.boolean().optional(),
         disableTimeToFirstInteraction: z.boolean().optional()
-      }).optional().default({})
+      }).optional().default({}),
+      questions: z.array(z.object({
+        question: z.string(),
+        answer_type: z.enum(["textarea", "radiobutton", "multiinput", "multiTextInput"]),
+        answer_html: z.string(),
+        correct: z.string()
+      })).optional().default([])
     }).parse(request.body);
 
     // Parse freelancer ID from input
@@ -56,8 +64,33 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
     const test = await testService.createTest({
       group_id: parseInt(group_id),
       profile_id: profile.id,
-      tracking_config
+      tracking_config,
+      test_name: test_name // Pass the custom test name
     });
+
+    // Create questions and associate them with the test
+    if (questions && questions.length > 0) {
+      for (let i = 0; i < questions.length; i++) {
+        const questionData = questions[i];
+        if (!questionData) continue;
+
+        try {
+          // Create the question
+          const question = await questionService.createQuestion({
+            question: questionData.question,
+            answer_type: questionData.answer_type,
+            answer_html: questionData.answer_html,
+            correct: questionData.correct
+          });
+
+          // Associate the question with the test
+          await questionService.addQuestionToTest(question.id, test.id, i + 1);
+        } catch (error) {
+          console.error('Error creating question:', error);
+          // Continue with other questions even if one fails
+        }
+      }
+    }
 
     // Generate link
     const template = await templateService.getTemplateById(parseInt(template_id));
@@ -68,7 +101,8 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
       success: true,
       message,
       freelancerId,
-      testUrl
+      testUrl,
+      questions_added: questions.length
     });
   });
 

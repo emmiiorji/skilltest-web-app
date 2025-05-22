@@ -18,6 +18,12 @@
     </div>
 
     <div class="form-div">
+      <label for="testName">Test Name (optional):</label>
+      <input type="text" id="testName" class="form-control" placeholder="Enter a custom test name">
+      <small>If left empty, a random name will be generated</small>
+    </div>
+
+    <div class="form-div">
       <label for="freelancerInput">Freelancer URL or ID:</label>
       <input type="text" id="freelancerInput" class="form-control" placeholder="abc123 or https://upwork.com/freelancers/~abc123">
       <small>Parsed ID: <span id="parsedId">-</span></small>
@@ -26,6 +32,14 @@
     <div class="form-div">
       <label for="groupId">Group ID:</label>
       <input type="number" id="groupId" class="form-control" placeholder="123">
+    </div>
+
+    <div class="form-div">
+      <label>Test Questions:</label>
+      <div id="questions-container">
+        <!-- Questions will be added here dynamically -->
+      </div>
+      <button type="button" id="addQuestionBtn" class="btn btn-secondary mt-2">Add Question</button>
     </div>
 
     <div class="form-div">
@@ -108,6 +122,24 @@
   padding: 5px 10px;
   font-size: 0.875rem;
 }
+
+.question-item {
+  background-color: #f8f9fa;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.remove-question {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+#questions-container {
+  margin-bottom: 10px;
+  max-height: 500px;
+  overflow-y: auto;
+}
 </style>
 
 <script>
@@ -143,6 +175,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultContainer = document.getElementById('resultContainer');
   const generatedMessage = document.getElementById('generatedMessage');
   const copyBtn = document.getElementById('copyBtn');
+  const addQuestionBtn = document.getElementById('addQuestionBtn');
+  const questionsContainer = document.getElementById('questions-container');
+
+  // Track questions
+  let questionCount = 0;
+  const questions = [];
 
   // Template selection
   templateSelect.addEventListener('change', (e) => {
@@ -174,6 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Generate test
   generateBtn.addEventListener('click', async () => {
     const templateId = templateSelect.value;
+    const testName = document.getElementById('testName').value.trim();
     const freelancerInput = document.getElementById('freelancerInput').value;
     const groupId = document.getElementById('groupId').value;
 
@@ -195,15 +234,35 @@ document.addEventListener('DOMContentLoaded', () => {
         disableTimeToFirstInteraction: !document.getElementById('trackTimeToFirstInteraction').checked
       };
 
+      // Collect questions
+      const questions = [];
+      document.querySelectorAll('.question-item').forEach(questionItem => {
+        const questionText = questionItem.querySelector('.question-text').value.trim();
+        const answerType = questionItem.querySelector('.answer-type').value;
+        const answerHtml = questionItem.querySelector('.answer-html').value.trim();
+        const correctAnswer = questionItem.querySelector('.correct-answer').value.trim();
+
+        if (questionText) {
+          questions.push({
+            question: questionText,
+            answer_type: answerType,
+            answer_html: answerHtml,
+            correct: correctAnswer
+          });
+        }
+      });
+
       const key = '{{key}}'; // Get the key from the template context
       const response = await fetch(`/admin/test/create-link?key=${key}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           template_id: templateId,
+          test_name: testName, // Add the custom test name
           freelancer_input: freelancerInput,
           group_id: groupId,
-          tracking_config: trackingConfig
+          tracking_config: trackingConfig,
+          questions: questions // Add the questions
         })
       });
 
@@ -247,6 +306,78 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Failed to copy to clipboard:', error);
       alert('Failed to copy to clipboard. Please try again.');
     });
+  });
+
+  // Add question button
+  addQuestionBtn.addEventListener('click', () => {
+    questionCount++;
+    const questionId = `question-${questionCount}`;
+
+    const questionDiv = document.createElement('div');
+    questionDiv.className = 'question-item mb-3 p-3 border rounded';
+    questionDiv.id = questionId;
+
+    questionDiv.innerHTML = `
+      <div class="form-group mb-2">
+        <label for="${questionId}-text">Question Text:</label>
+        <textarea id="${questionId}-text" class="form-control question-text" rows="2" placeholder="Enter question text"></textarea>
+      </div>
+      <div class="form-group mb-2">
+        <label for="${questionId}-type">Answer Type:</label>
+        <select id="${questionId}-type" class="form-control answer-type">
+          <option value="textarea">Text Area</option>
+          <option value="radiobutton">Radio Buttons</option>
+          <option value="multiinput">Multiple Choice</option>
+          <option value="multiTextInput">Multiple Text Inputs</option>
+        </select>
+      </div>
+      <div class="form-group mb-2 answer-html-container">
+        <label for="${questionId}-html">Answer HTML:</label>
+        <textarea id="${questionId}-html" class="form-control answer-html" rows="3" placeholder="Enter HTML for answer options"></textarea>
+        <small class="form-text text-muted">
+          For textarea: <code>&lt;textarea name="answer" class="form-control"&gt;&lt;/textarea&gt;</code><br>
+          For radiobutton: <code>&lt;div&gt;&lt;input type="radio" name="answer" value="option1"&gt; Option 1&lt;/div&gt;</code><br>
+          For multiinput: <code>&lt;div&gt;&lt;input type="checkbox" name="answer" value="option1"&gt; Option 1&lt;/div&gt;</code><br>
+          For multiTextInput: <code>&lt;div&gt;&lt;input type="text" name="answer-1" placeholder="Answer 1"&gt;&lt;/div&gt;</code>
+        </small>
+      </div>
+      <div class="form-group mb-2">
+        <label for="${questionId}-correct">Correct Answer:</label>
+        <input type="text" id="${questionId}-correct" class="form-control correct-answer" placeholder="Enter correct answer or leave blank for essay questions">
+        <small class="form-text text-muted">
+          For multiple correct answers, separate with OR (e.g., "answer1 OR answer2")
+        </small>
+      </div>
+      <button type="button" class="btn btn-danger btn-sm remove-question" data-question-id="${questionId}">Remove Question</button>
+    `;
+
+    questionsContainer.appendChild(questionDiv);
+
+    // Add event listener for remove button
+    questionDiv.querySelector('.remove-question').addEventListener('click', (e) => {
+      const questionId = e.target.getAttribute('data-question-id');
+      document.getElementById(questionId).remove();
+    });
+
+    // Add event listener for answer type change
+    questionDiv.querySelector('.answer-type').addEventListener('change', (e) => {
+      const answerType = e.target.value;
+      const answerHtmlContainer = questionDiv.querySelector('.answer-html-container');
+
+      // Show/hide answer HTML based on type
+      if (answerType === 'textarea') {
+        questionDiv.querySelector('.answer-html').value = '<textarea name="answer" class="form-control"></textarea>';
+      } else if (answerType === 'radiobutton') {
+        questionDiv.querySelector('.answer-html').value = '<div><input type="radio" name="answer" value="option1"> Option 1</div>\n<div><input type="radio" name="answer" value="option2"> Option 2</div>';
+      } else if (answerType === 'multiinput') {
+        questionDiv.querySelector('.answer-html').value = '<div><input type="checkbox" name="answer" value="option1"> Option 1</div>\n<div><input type="checkbox" name="answer" value="option2"> Option 2</div>';
+      } else if (answerType === 'multiTextInput') {
+        questionDiv.querySelector('.answer-html').value = '<div><input type="text" name="answer-1" placeholder="Answer 1"></div>\n<div><input type="text" name="answer-2" placeholder="Answer 2"></div>';
+      }
+    });
+
+    // Trigger change event to set default HTML
+    questionDiv.querySelector('.answer-type').dispatchEvent(new Event('change'));
   });
 });
 </script>

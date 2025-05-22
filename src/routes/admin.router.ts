@@ -21,6 +21,6 @@ export default async function adminRouter(fastify: FastifyInstance) {
   fastify.register(groupController, { prefix: '/group' });
   fastify.register(testController, { prefix: '/test' });
   fastify.register(testCreateController, { prefix: '/test' });
-  fastify.register(aiExportController, { prefix: '/test' });
+  fastify.register(aiExportController, { prefix: '/test/export' });
   fastify.register(templateController, { prefix: '/template' });
 }

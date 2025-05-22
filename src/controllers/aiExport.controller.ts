@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { connection } from '../database/connection';
 import { convertAnswerToArray } from '../utils/convertAnswerToArray';
 
-export function aiExportController(app: FastifyInstance, opts: any, done: () => void) {
+export function aiExportController(app: FastifyInstance, _opts: any, done: () => void) {
         interface AnswerChangeEvent {
         question_id: number;
         previous_answer: string;
@@ -16,7 +16,7 @@ export function aiExportController(app: FastifyInstance, opts: any, done: () => 
         timestamp: number,
         duration_ms: number,
     }
-    
+
     interface MouseClickEvent {
         timestamp: number,
         button: string,
@@ -57,34 +57,77 @@ export function aiExportController(app: FastifyInstance, opts: any, done: () => 
 
     }
 
-  app.get('/export/math-json', async (request, reply) => {
-    const { user_id: userLinkId, test_id, key } = z.object({
-      user_id: z.string(),
-      test_id: z.coerce.number(),
-      key: z.string()
-    }).parse(request.query);
+  app.get('/math-json', async (request, reply) => {
+    try {
+      // Log the request query for debugging
+      request.log.info(`Math JSON export request: ${JSON.stringify(request.query)}`);
 
-    const dataSource = await connection();
-    
-    // Fetch user data
-    const user = await dataSource.query(`
-      SELECT name, link FROM profile WHERE link = ?
-    `, [userLinkId]);
+      // First check if user_id exists and is not empty
+      const query = request.query as { user_id?: string, test_id?: string, key?: string };
 
-    // Fetch test data
-    const test = await dataSource.query(`
-      SELECT id, name, created_at FROM tests WHERE id = ?
-    `, [test_id]);
+      if (!query.user_id) {
+        return reply.status(400).send({
+          ok: false,
+          error: "User ID is required and cannot be empty"
+        });
+      }
+
+      let userLinkId: string;
+      let test_id: number;
+      // We need to validate the key but don't need to use it later
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      let _key: string;
+
+      try {
+        // Now validate all parameters
+        const validatedData = z.object({
+          user_id: z.string().min(1, "User ID cannot be empty"),
+          test_id: z.coerce.number(),
+          key: z.string()
+        }).parse(request.query);
+
+        userLinkId = validatedData.user_id;
+        test_id = validatedData.test_id;
+        _key = validatedData.key;
+      } catch (validationError) {
+        request.log.error(validationError, "Validation error in math-json endpoint");
+        return reply.status(400).send({
+          ok: false,
+          error: validationError instanceof z.ZodError
+            ? validationError.errors.map(e => `${e.path}: ${e.message}`).join(', ')
+            : 'Invalid request parameters'
+        });
+      }
+
+      const dataSource = await connection();
+
+      // Fetch user data
+      const user = await dataSource.query(`
+        SELECT name, link FROM profiles WHERE link = ?
+      `, [userLinkId]);
+
+      if (!user || user.length === 0) {
+        return reply.status(404).send({ ok: false, error: `User with link '${userLinkId}' not found` });
+      }
+
+      // Fetch test data
+      const test = await dataSource.query(`
+        SELECT id, name, createdAt FROM tests WHERE id = ?
+      `, [test_id]);
+
+      if (!test || test.length === 0) {
+        return reply.status(404).send({ ok: false, error: `Test with ID ${test_id} not found` });
+      }
 
     // Fetch answers with questions
     const answers = await dataSource.query(`
-      SELECT 
+      SELECT
         a.*,
         q.question,
         q.correct
       FROM answers a
       JOIN questions q ON a.question_id = q.id
-      WHERE a.profile_id = (SELECT id FROM profile WHERE link = ?)
+      WHERE a.profile_id = (SELECT id FROM profiles WHERE link = ?)
       AND a.test_id = ?
       ORDER BY a.created_at ASC
     `, [userLinkId, test_id]);
@@ -101,7 +144,7 @@ export function aiExportController(app: FastifyInstance, opts: any, done: () => 
     const questions = answers.map((a: Answer) => {
       const correctAnswersArray = convertAnswerToArray(a.correct);
       const correctAnswer = correctAnswersArray.join(' OR ');
-      
+
       return {
         id: a.question_id,
         question: a.question,
@@ -136,7 +179,7 @@ export function aiExportController(app: FastifyInstance, opts: any, done: () => 
       total_paste_actions: questions.reduce((sum: number, q: { paste_count: number }) => sum + q.paste_count, 0),
       total_right_click_actions: questions.reduce((sum: number, q: { right_click_count: number }) => sum + q.right_click_count, 0),
       total_focus_lost_count: questions.reduce((sum: number, q: { focus_lost_events: FocusLostEvent[] }) => sum + q.focus_lost_events.length, 0),
-      total_focus_lost_duration: questions.reduce((sum: number, q: { focus_lost_events: FocusLostEvent[] }) => 
+      total_focus_lost_duration: questions.reduce((sum: number, q: { focus_lost_events: FocusLostEvent[] }) =>
         sum + q.focus_lost_events.reduce((s, e) => s + e.duration_ms, 0), 0),
       total_answer_changes: questions.reduce((sum: number, q: { answer_changes: AnswerChangeEvent[] }) => sum + q.answer_changes.length, 0),
       total_mouse_clicks: questions.reduce((sum: number, q: { mouse_click_events: MouseClickEvent[] }) => sum + q.mouse_click_events.length, 0),
@@ -153,7 +196,7 @@ export function aiExportController(app: FastifyInstance, opts: any, done: () => 
       test: {
         id: test[0].id,
         name: test[0].name,
-        completed_at: test[0].created_at
+        completed_at: test[0].createdAt
       },
       device_info: deviceInfo,
       questions: questions,
@@ -161,33 +204,97 @@ export function aiExportController(app: FastifyInstance, opts: any, done: () => 
     };
 
     return reply.send(result);
+    } catch (error) {
+      request.log.error(error, "Error generating math JSON export");
+
+      // Handle different types of errors
+      if (error instanceof z.ZodError) {
+        return reply.status(400).send({
+          ok: false,
+          error: error.errors.map(e => `${e.path}: ${e.message}`).join(', ')
+        });
+      } else if (error instanceof Error) {
+        return reply.status(500).send({
+          ok: false,
+          error: error.message
+        });
+      } else {
+        return reply.status(500).send({
+          ok: false,
+          error: 'An unknown error occurred'
+        });
+      }
+    }
   });
 
-  app.get('/export/js-json', async (request, reply) => {
-    const { user_id: userLinkId, test_id, key } = z.object({
-      user_id: z.string(),
-      test_id: z.coerce.number(),
-      key: z.string()
-    }).parse(request.query);
+  app.get('/js-json', async (request, reply) => {
+    try {
+      // Log the request query for debugging
+      request.log.info(`JS JSON export request: ${JSON.stringify(request.query)}`);
 
-    const dataSource = await connection();
-    
-    // Similar queries for JS test but simpler response
-    const user = await dataSource.query(`
-      SELECT name, link FROM profile WHERE link = ?
-    `, [userLinkId]);
+      // First check if user_id exists and is not empty
+      const query = request.query as { user_id?: string, test_id?: string, key?: string };
 
-    const test = await dataSource.query(`
-      SELECT id, name, created_at FROM tests WHERE id = ?
-    `, [test_id]);
+      if (!query.user_id) {
+        return reply.status(400).send({
+          ok: false,
+          error: "User ID is required and cannot be empty"
+        });
+      }
+
+      let userLinkId: string;
+      let test_id: number;
+      // We need to validate the key but don't need to use it later
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      let _key: string;
+
+      try {
+        // Now validate all parameters
+        const validatedData = z.object({
+          user_id: z.string().min(1, "User ID cannot be empty"),
+          test_id: z.coerce.number(),
+          key: z.string()
+        }).parse(request.query);
+
+        userLinkId = validatedData.user_id;
+        test_id = validatedData.test_id;
+        _key = validatedData.key;
+      } catch (validationError) {
+        request.log.error(validationError, "Validation error in js-json endpoint");
+        return reply.status(400).send({
+          ok: false,
+          error: validationError instanceof z.ZodError
+            ? validationError.errors.map(e => `${e.path}: ${e.message}`).join(', ')
+            : 'Invalid request parameters'
+        });
+      }
+
+      const dataSource = await connection();
+
+      // Similar queries for JS test but simpler response
+      const user = await dataSource.query(`
+        SELECT name, link FROM profiles WHERE link = ?
+      `, [userLinkId]);
+
+      if (!user || user.length === 0) {
+        return reply.status(404).send({ ok: false, error: `User with link '${userLinkId}' not found` });
+      }
+
+      const test = await dataSource.query(`
+        SELECT id, name, createdAt FROM tests WHERE id = ?
+      `, [test_id]);
+
+      if (!test || test.length === 0) {
+        return reply.status(404).send({ ok: false, error: `Test with ID ${test_id} not found` });
+      }
 
     const answers = await dataSource.query(`
-      SELECT 
+      SELECT
         a.*,
         q.question
       FROM answers a
       JOIN questions q ON a.question_id = q.id
-      WHERE a.profile_id = (SELECT id FROM profile WHERE link = ?)
+      WHERE a.profile_id = (SELECT id FROM profiles WHERE link = ?)
       AND a.test_id = ?
       ORDER BY a.created_at ASC
     `, [userLinkId, test_id]);
@@ -215,7 +322,7 @@ export function aiExportController(app: FastifyInstance, opts: any, done: () => 
       total_inactive_time: questions.reduce((sum: number, q: { inactive_time: number }) => sum + q.inactive_time, 0),
       average_time_per_question: Math.round(questions.reduce((sum: number, q: { time_taken: number }) => sum + q.time_taken, 0) / questions.length),
       total_focus_lost_count: questions.reduce((sum: number, q: { focus_lost_events: FocusLostEvent[] }) => sum + q.focus_lost_events.length, 0),
-      total_focus_lost_duration: questions.reduce((sum: number, q: { focus_lost_events: FocusLostEvent[] }) => 
+      total_focus_lost_duration: questions.reduce((sum: number, q: { focus_lost_events: FocusLostEvent[] }) =>
         sum + q.focus_lost_events.reduce((s, e) => s + e.duration_ms, 0), 0),
       average_answer_length: Math.round(questions.reduce((sum: number, q: { answer_length: number }) => sum + q.answer_length, 0) / questions.length),
       average_word_count: Math.round(questions.reduce((sum: number, q: { word_count: number }) => sum + q.word_count, 0) / questions.length)
@@ -229,7 +336,7 @@ export function aiExportController(app: FastifyInstance, opts: any, done: () => 
       test: {
         id: test[0].id,
         name: test[0].name,
-        completed_at: test[0].created_at
+        completed_at: test[0].createdAt
       },
       device_info: deviceInfo,
       questions: questions,
@@ -237,6 +344,27 @@ export function aiExportController(app: FastifyInstance, opts: any, done: () => 
     };
 
     return reply.send(result);
+    } catch (error) {
+      request.log.error(error, "Error generating JS JSON export");
+
+      // Handle different types of errors
+      if (error instanceof z.ZodError) {
+        return reply.status(400).send({
+          ok: false,
+          error: error.errors.map(e => `${e.path}: ${e.message}`).join(', ')
+        });
+      } else if (error instanceof Error) {
+        return reply.status(500).send({
+          ok: false,
+          error: error.message
+        });
+      } else {
+        return reply.status(500).send({
+          ok: false,
+          error: 'An unknown error occurred'
+        });
+      }
+    }
   });
 
   done();

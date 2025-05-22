@@ -18,12 +18,13 @@ class TestService {
     group_id: number;
     profile_id: number;
     tracking_config?: Record<string, boolean>;
+    test_name?: string;
   }): Promise<Test> {
     const dataSource = await connection();
     const groupRepository = dataSource.getRepository(Group);
     const profileRepository = dataSource.getRepository(Profile);
     const testRepository = dataSource.getRepository(Test);
-    const { group_id, profile_id, tracking_config = {} } = data;
+    const { group_id, profile_id, tracking_config = {}, test_name } = data;
 
     // Fetch related entities in parallel
     const [group, profile] = await Promise.all([
@@ -33,7 +34,7 @@ class TestService {
 
     // Create and save the test
     const test = testRepository.create({
-      name: generateRandomString(9),
+      name: test_name && test_name.trim() !== '' ? test_name : generateRandomString(9),
       groups: [group],
       profiles: [profile],
       tracking_config: tracking_config // Use the provided tracking configuration

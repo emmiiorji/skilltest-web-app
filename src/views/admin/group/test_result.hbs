@@ -63,8 +63,15 @@
         <tr>
           <td data-label="User ID"><a href="/admin/profile/view?id={{this.user_link_id}}&key={{../key}}">{{this.user_link_id}}</a>
             <span class="export-icons">
-              <i class="fas fa-clipboard export-icon" title="Copy JSON" data-user="{{this.user_link_id}}" data-test="{{../testId}}"></i>
-              <i class="fas fa-download export-icon" title="Download JSON" data-user="{{this.user_link_id}}" data-test="{{../testId}}"></i>
+              {{#if this.user_link_id}}
+                <i class="fas fa-clipboard export-icon" title="Copy JSON" data-user="{{this.user_link_id}}" data-test="{{../testId}}"></i>
+                <i class="fas fa-download export-icon" title="Download JSON" data-user="{{this.user_link_id}}" data-test="{{../testId}}"></i>
+              {{else}}
+                <span title="User ID is missing, cannot export data">
+                  <i class="fas fa-clipboard export-icon disabled" style="color: #ccc; cursor: not-allowed;"></i>
+                  <i class="fas fa-download export-icon disabled" style="color: #ccc; cursor: not-allowed;"></i>
+                </span>
+              {{/if}}
             </span>
           </td>
           <td data-label="User Name">{{this.user_name}}</td>
@@ -156,38 +163,60 @@
       icon.addEventListener('click', async (e) => {
         const userId = e.target.dataset.user;
         const testId = e.target.dataset.test;
-        const key = '{{key}}';
-        
+        // Get the key from URL if available, otherwise use the template variable
+        const urlParams = new URLSearchParams(window.location.search);
+        const key = urlParams.get('key') || '{{key}}';
+
+        // Check if userId is valid
+        if (!userId) {
+          alert('Error: User ID is missing. Cannot export data.');
+          return;
+        }
+
         try {
           const response = await fetch(`/admin/test/export/math-json?user_id=${userId}&test_id=${testId}&key=${key}`);
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
           const json = await response.json();
-          
+
           await navigator.clipboard.writeText(JSON.stringify(json, null, 2));
-          
+
           // Show snackbar
           const snackbar = document.createElement('div');
           snackbar.className = 'snackbar';
           snackbar.textContent = 'JSON copied to clipboard';
           document.body.appendChild(snackbar);
-          
+
           setTimeout(() => snackbar.remove(), 3000);
         } catch (error) {
           alert('Error copying JSON: ' + error.message);
         }
       });
     });
-  
+
     // Download JSON
     document.querySelectorAll('.fa-download').forEach(icon => {
       icon.addEventListener('click', async (e) => {
         const userId = e.target.dataset.user;
         const testId = e.target.dataset.test;
-        const key = '{{key}}';
-        
+        // Get the key from URL if available, otherwise use the template variable
+        const urlParams = new URLSearchParams(window.location.search);
+        const key = urlParams.get('key') || '{{key}}';
+
+        // Check if userId is valid
+        if (!userId) {
+          alert('Error: User ID is missing. Cannot export data.');
+          return;
+        }
+
         try {
           const response = await fetch(`/admin/test/export/math-json?user_id=${userId}&test_id=${testId}&key=${key}`);
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
           const json = await response.json();
-          
+
           const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');

@@ -173,21 +173,33 @@
     overflow-y: auto;
   }
 
-  .export-icons {
+  .export-buttons {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 5px;
   }
 
-  .export-icon {
+  .btn-export {
     cursor: pointer;
-    font-size: 1.2rem;
-    color: #6c757d;
-    transition: color 0.2s;
+    padding: 5px 10px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    transition: background-color 0.2s;
   }
 
-  .export-icon:hover {
-    color: #007bff;
+  .btn-export:hover {
+    background-color: #2563eb;
+  }
+
+  .copy-json {
+    background-color: #4CAF50;
+  }
+
+  .copy-json:hover {
+    background-color: #45a049;
   }
 
   .snackbar {
@@ -257,30 +269,42 @@
       }
     };
 
-    // Add Font Awesome for the export icons
-    if (!document.querySelector('link[href*="font-awesome"]')) {
-      const fontAwesome = document.createElement('link');
-      fontAwesome.rel = 'stylesheet';
-      fontAwesome.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
-      document.head.appendChild(fontAwesome);
-    }
+    // Font Awesome is now included in the main layout
 
     // Copy JSON to clipboard
-    document.querySelectorAll('.fa-clipboard').forEach(icon => {
-      icon.addEventListener('click', async (e) => {
+    document.querySelectorAll('.copy-json').forEach(button => {
+      button.addEventListener('click', async (e) => {
         const userId = e.target.dataset.user;
         const testId = e.target.dataset.test;
-        const key = '{{key}}';
+        // Get the key from URL if available, otherwise use the template variable
+        const urlParams = new URLSearchParams(window.location.search);
+        const key = urlParams.get('key') || '{{key}}';
+
+        // Check if userId is valid
+        if (!userId) {
+          alert('Error: User ID is missing. Cannot export data.');
+          console.error('User ID is missing in data-user attribute for copy');
+          return;
+        }
 
         try {
           // Determine if it's a math or JS test based on the test name
           const testRow = e.target.closest('tr');
-          const testName = testRow.querySelector('[data-label="Test Name"]').textContent.toLowerCase();
+          const testNameCell = testRow.querySelector('[data-label="Test Name"]') || testRow.cells[1]; // Fallback to second cell
+          const testName = testNameCell.textContent.toLowerCase();
           const endpoint = testName.includes('js') || testName.includes('javascript')
             ? '/admin/test/export/js-json'
             : '/admin/test/export/math-json';
 
-          const response = await fetch(`${endpoint}?user_id=${userId}&test_id=${testId}&key=${key}`);
+          console.log(`Fetching for copy from: ${endpoint}?user_id=${userId}&test_id=${testId}&key=${key}`); // Debug log
+
+          // Use the ID from the URL if userId is empty
+          const effectiveUserId = userId || urlParams.get('id') || '';
+          if (!userId && urlParams.get('id')) {
+            console.log(`Using ID from URL for copy: ${urlParams.get('id')}`);
+          }
+
+          const response = await fetch(`${endpoint}?user_id=${effectiveUserId}&test_id=${testId}&key=${key}`);
 
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -304,22 +328,35 @@
     });
 
     // Download JSON
-    document.querySelectorAll('.fa-download').forEach(icon => {
-      icon.addEventListener('click', async (e) => {
+    document.querySelectorAll('.download-json').forEach(button => {
+      button.addEventListener('click', async (e) => {
         const userId = e.target.dataset.user;
         const testId = e.target.dataset.test;
-        const key = '{{key}}';
+        // Get the key from URL if available, otherwise use the template variable
+        const urlParams = new URLSearchParams(window.location.search);
+        const key = urlParams.get('key') || '{{key}}';
+
+        // Check if userId is valid
+        if (!userId) {
+          alert('Error: User ID is missing. Cannot export data.');
+          console.error('User ID is missing in data-user attribute');
+          return;
+        }
 
         try {
           // Determine if it's a math or JS test based on the test name
           const testRow = e.target.closest('tr');
-          const testName = testRow.querySelector('[data-label="Test Name"]').textContent.toLowerCase();
+          const testNameCell = testRow.querySelector('[data-label="Test Name"]') || testRow.cells[1]; // Fallback to second cell
+          const testName = testNameCell.textContent.toLowerCase();
           const endpoint = testName.includes('js') || testName.includes('javascript')
             ? '/admin/test/export/js-json'
             : '/admin/test/export/math-json';
           const filePrefix = testName.includes('js') || testName.includes('javascript') ? 'js' : 'math';
 
-          const response = await fetch(`${endpoint}?user_id=${userId}&test_id=${testId}&key=${key}`);
+          // Use the ID from the URL if userId is empty
+          const effectiveUserId = userId || urlParams.get('id') || '';
+
+          const response = await fetch(`${endpoint}?user_id=${effectiveUserId}&test_id=${testId}&key=${key}`);
 
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -416,9 +453,9 @@
           <td data-label="Correct Answers">{{countCorrectAnswers this.answers}}/{{this.answers.length}}</td>
           <td data-label="Attended At">{{formatDate this.attended_at}}</td>
           <td data-label="Export">
-            <div class="export-icons">
-              <i class="fas fa-clipboard export-icon" title="Copy JSON" data-user="{{../profile.link}}" data-test="{{this.test_id}}"></i>
-              <i class="fas fa-download export-icon" title="Download JSON" data-user="{{../profile.link}}" data-test="{{this.test_id}}"></i>
+            <div class="export-buttons">
+              <button class="btn-export copy-json" data-user="{{#if ../profile.link}}{{../profile.link}}{{else}}{{@root.profileLinkId}}{{/if}}" data-test="{{this.test_id}}">Copy</button>
+              <button class="btn-export download-json" data-user="{{#if ../profile.link}}{{../profile.link}}{{else}}{{@root.profileLinkId}}{{/if}}" data-test="{{this.test_id}}">Download</button>
             </div>
           </td>
         </tr>
@@ -484,8 +521,8 @@
                           <tbody>
                             {{#each this.focusLostEvents}}
                               <tr>
-                                <td>{{this.time}}s</td>
-                                <td>{{this.duration}}</td>
+                                <td>{{formatTimestamp this.timestamp}}s</td>
+                                <td>{{this.duration_ms}}</td>
                               </tr>
                             {{/each}}
                           </tbody>
@@ -512,7 +549,7 @@
                           <tbody>
                             {{#each this.clipboardEvents}}
                               <tr>
-                                <td>{{this.time}}s</td>
+                                <td>{{formatTimestamp this.timestamp}}s</td>
                                 <td>{{this.type}}</td>
                                 <td>{{this.content}}</td>
                               </tr>
@@ -541,9 +578,9 @@
                           <tbody>
                             {{#each this.answerChangeEvents}}
                               <tr>
-                                <td>{{this.time}}s</td>
-                                <td>{{this.previous}}</td>
-                                <td>{{this.new}}</td>
+                                <td>{{formatTimestamp this.timestamp}}s</td>
+                                <td>{{this.previous_answer}}</td>
+                                <td>{{this.new_answer}}</td>
                               </tr>
                             {{/each}}
                           </tbody>
@@ -571,7 +608,7 @@
                           <tbody>
                             {{#each this.mouseClickEvents}}
                               <tr>
-                                <td>{{this.time}}s</td>
+                                <td>{{formatTimestamp this.timestamp}}s</td>
                                 <td>{{this.x}}</td>
                                 <td>{{this.y}}</td>
                                 <td>{{this.button}}</td>
@@ -600,8 +637,8 @@
                           <tbody>
                             {{#each this.keyboardPressEvents}}
                               <tr>
-                                <td>{{this.time}}s</td>
-                                <td>{{this.key}}</td>
+                                <td>{{formatTimestamp this.timestamp}}s</td>
+                                <td>{{this.keyType}}</td>
                               </tr>
                             {{/each}}
                           </tbody>

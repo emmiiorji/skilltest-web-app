@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{title}}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -178,6 +179,47 @@
             flex: 1;
             padding: 0 20px;
             overflow-y: auto;
+        }
+
+        /* Export icons styling */
+        .export-icons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .export-icon {
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #3b82f6;
+            transition: color 0.2s;
+        }
+
+        .export-icon:hover {
+            color: #1d4ed8;
+        }
+
+        .snackbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            z-index: 1000;
+            animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; bottom: 0; }
+            to { opacity: 1; bottom: 20px; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; bottom: 20px; }
+            to { opacity: 0; bottom: 0; }
         }
     </style>
 </head>
