@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('createTemplate').addEventListener('click', async () => {
-    const response = await fetch('/admin/template/create-ajax', { method: 'POST' });
+    const response = await fetch('/admin/template/create', { method: 'POST' });
     const data = await response.json();
     if (data.success) {
       const templateSelect = document.getElementById('template_id');

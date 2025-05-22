@@ -25,5 +25,28 @@ export function templateController(app: FastifyInstance, opts: any, done: () => 
     }
   });
 
+  
+
+  // Show template creation form
+  app.get('/create', async (request, reply) => {
+    try {
+      const { key } = z.object({
+        key: z.string(),
+      }).parse(request.query);
+
+      return reply.view('admin/template/create', {
+        title: 'Create Template',
+        key,
+        url: request.url
+      });
+    } catch (error) {
+      request.log.error(error, "Error loading template creation form");
+      return reply.status(400).send({
+        success: false,
+        error: error instanceof Error ? error.message : 'An unknown error occurred'
+      });
+    }
+  });
+
   done();
 }
