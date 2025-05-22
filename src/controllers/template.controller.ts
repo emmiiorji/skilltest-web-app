@@ -3,6 +3,27 @@ import { templateService } from '../services/template.service';
 import { z } from 'zod';
 
 export function templateController(app: FastifyInstance, opts: any, done: () => void) {
+  // Update an existing template
+  app.patch('/:id', async (request, reply) => {
+    try {
+      const { template: templateString } = z.object({ template: z.string() }).parse(request.body);
+      const { id } = z.object({ id: z.coerce.number() }).parse(request.params)
+
+      await templateService.updateTemplate(id, templateString);
+
+      return reply.send({
+        success: true,
+        message: 'Template updated successfully'
+      });
+    } catch (error) {
+      request.log.error(error, "Error updating template");
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      return reply.status(400).send({
+        success: false,
+        error: errorMessage
+      });
+    }
+  });
 
   // Create a new template. Optionally with custom content
   app.post('/create', async (request, reply) => {
