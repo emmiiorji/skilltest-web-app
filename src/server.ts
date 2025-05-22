@@ -80,14 +80,17 @@ server.register(fastifyView, {
   root: join(__dirname, 'views'),
   layout: 'layouts/layout',
   options: {
-    // partials: {
-    //   header: 'partials/header.hbs',
-    //   footer: 'partials/footer.hbs'
-    // }
+    partials: {
+      header: 'partials/header.hbs',
+      footer: 'partials/footer.hbs'
+    }
   },
   defaultContext: (request: FastifyRequest) => {
+    // Extract key from query parameters for admin routes
+    const query = request.query as { key?: string };
     return {
-      url: request.url
+      url: request.url,
+      key: query.key || ''
     };
   }
 })
@@ -111,7 +114,7 @@ server.setErrorHandler(async function (error, request, reply) {
 });
 
 server.get('/', (request, reply) => {
-  reply.view('index', { title: 'Skill Test', 
+  reply.view('index', { title: 'Skill Test',
     url: request.url })
 });
 
