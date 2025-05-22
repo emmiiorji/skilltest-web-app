@@ -6,6 +6,7 @@ export const ProfileSchema = z.object({
   link: z.string(),
   url: z.string().optional(),
   name: z.string().optional(),
+  email: z.string().email().optional(),
   country: z.string().optional(),
   title: z.string().optional(),
   description: z.string().optional(),

@@ -37,92 +37,102 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
     const {id: profileLinkId, key} = z.object({id: z.string(), key: z.string()}).parse(request.query);
     const db = await connection();
 
-    const result: {
-      id: number;
-      name: string;
-      country: string;
-      hourlyRate: number;
-      lastActivity: Date;
-      url: string;
-      testResults: Array<{
-        test_id: number;
-        test_name: string;
-        answers: Array<{
-          question: string;
-          answer: string;
-          timeTaken: number;
-          copyPaste: number;
-          inactive: number;
-          isCorrect: boolean;
-        }>;
-        attended_at: Date;
-      }>;
-    }[] = await db.query(`
-      -- Main query to fetch profile details and test results
+    // First, get the profile information
+    const profileResult = await db.query(`
       SELECT
         p.id,
         p.name,
+        p.email,
         p.country,
+        p.title,
+        p.description,
         p.rate AS hourlyRate,
+        p.totalHours,
+        p.skills,
         p.lastActivity,
-        p.url,
-        -- Use COALESCE to return an empty JSON array if no test results are found
-        COALESCE(
-          -- Aggregate test results into a JSON array, grouped by test_id
-          JSON_ARRAYAGG(
-            JSON_OBJECT(
-              'test_id', test_id,
-              'test_name', test_name,
-              'answers', answers,
-              'attended_at', attended_at
-            )
-          ),
-          JSON_ARRAY()
-        ) AS testResults
+        p.url
       FROM profiles p
-      -- Left join with a subquery that groups answers by test_id
-      LEFT JOIN (
-        SELECT
-          a.profile_id,
-          a.test_id,
-          t.name AS test_name,
-          MAX(a.created_at) AS attended_at,
-          -- Aggregate answers for each test into a JSON array
-          JSON_ARRAYAGG(
-            JSON_OBJECT(
-              'question', q.question,
-              'answer', a.answer,
-              'timeTaken', a.time_taken,
-              'copyPaste', a.paste_count + a.copy_count + a.right_click_count,
-              'inactive', a.inactive_time,
-              'isCorrect', a.is_correct
-            )
-          ) AS answers
-        FROM answers a
-        -- Join with questions to get question text
-        JOIN questions q ON a.question_id = q.id
-        -- Join with tests to get test name
-        JOIN tests t ON a.test_id = t.id
-        -- Group by profile_id and test_id to aggregate answers for each test
-        GROUP BY a.profile_id, a.test_id, t.name
-      ) AS grouped_answers ON p.id = grouped_answers.profile_id
-      -- Filter by the profile's link ID
       WHERE p.link = ?
-      -- Group by profile id to aggregate all test results for the profile
-      GROUP BY p.id
     `, [profileLinkId]);
 
-    if (!result[0]) {
+    if (!profileResult[0]) {
       return reply.status(404).send({ error: 'Profile not found' });
     }
 
-    const {testResults, ...profile} = result[0];
+    const profile = profileResult[0];
+
+    // Now get all tests associated with this profile
+    const testsResult = await db.query(`
+      SELECT
+        t.id AS test_id,
+        t.name AS test_name,
+        MAX(a.created_at) AS attended_at
+      FROM tests t
+      JOIN tests_profiles tp ON t.id = tp.testId
+      LEFT JOIN answers a ON t.id = a.test_id AND a.profile_id = ?
+      WHERE tp.profileId = ?
+      GROUP BY t.id, t.name
+    `, [profile.id, profile.id]);
+
+    console.log('Tests associated with profile:', JSON.stringify(testsResult));
+
+    // For each test, get the answers
+    const testResults = [];
+
+    for (const test of testsResult) {
+      const answersResult = await db.query(`
+        SELECT
+          q.question,
+          a.answer,
+          a.time_taken AS timeTaken,
+          (a.paste_count + a.copy_count + a.right_click_count) AS copyPaste,
+          a.inactive_time AS inactive,
+          a.is_correct AS isCorrect,
+          a.focus_lost_events AS focusLostEvents,
+          a.clipboard_events AS clipboardEvents,
+          a.pre_submit_delay AS preSubmitDelay,
+          a.answer_change_events AS answerChangeEvents,
+          a.device_fingerprint AS deviceFingerprint,
+          a.device_type AS deviceType,
+          a.time_to_first_interaction AS timeToFirstInteraction,
+          a.mouse_click_events AS mouseClickEvents,
+          a.keyboard_press_events AS keyboardPressEvents
+        FROM answers a
+        JOIN questions q ON a.question_id = q.id
+        WHERE a.test_id = ? AND a.profile_id = ?
+      `, [test.test_id, profile.id]);
+
+      if (answersResult.length > 0) {
+        testResults.push({
+          test_id: test.test_id,
+          test_name: test.test_name,
+          answers: answersResult,
+          attended_at: test.attended_at
+        });
+      } else {
+        // Include tests even if they have no answers yet
+        testResults.push({
+          test_id: test.test_id,
+          test_name: test.test_name,
+          answers: [],
+          attended_at: null
+        });
+      }
+    }
+
+    console.log('Processed test results:', JSON.stringify(testResults));
+
+    // Debug information
+    console.log('Profile ID:', profile.id);
+    console.log('Profile Link ID:', profileLinkId);
+    console.log('Test Results:', JSON.stringify(testResults));
 
     return reply.view('admin/profile/view', {
       title: profile.name,
       profile,
       testResults,
-      key
+      key,
+      url: request.url
     });
   });
 
@@ -166,6 +176,10 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         country: z.string().optional(),
         rate: z.coerce.number().optional(),
         url: z.string().optional(),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        skills: z.string().optional(),
+        totalHours: z.coerce.number().optional(),
         group_id: z.coerce.number()
       }).parse(request.body);
 

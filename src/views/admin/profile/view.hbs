@@ -59,7 +59,290 @@
   .summary-table th {
     background-color: #f2f2f2;
   }
+
+  .description-section {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+  }
+
+  .description-section h3 {
+    margin-top: 0;
+    color: #495057;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 10px;
+  }
+
+  .description-content {
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
+
+  .tracking-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    margin-top: 5px;
+  }
+
+  .tracking-item {
+    padding: 8px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+  }
+
+  .toggle-tracking-btn {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+  }
+
+  .toggle-tracking-btn:hover {
+    background-color: #5a6268;
+  }
+
+  .tracking-details {
+    background-color: #f8f9fa;
+  }
+
+  .tracking-count {
+    font-weight: bold;
+    color: #007bff;
+    margin-right: 10px;
+  }
+
+  .toggle-details-btn {
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  .toggle-details-btn:hover {
+    background-color: #5a6268;
+  }
+
+  .tracking-details-container {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .tracking-details-table {
+    width: 100%;
+    font-size: 0.9rem;
+    margin-bottom: 0;
+    border-collapse: collapse;
+  }
+
+  .tracking-details-table th,
+  .tracking-details-table td {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    border: 1px solid #dee2e6;
+  }
+
+  .tracking-details-table th {
+    background-color: #e9ecef;
+    color: #495057;
+  }
+
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .export-icons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .export-icon {
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #6c757d;
+    transition: color 0.2s;
+  }
+
+  .export-icon:hover {
+    color: #007bff;
+  }
+
+  .snackbar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 4px;
+    z-index: 1000;
+    animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; bottom: 0; }
+    to { opacity: 1; bottom: 20px; }
+  }
+
+  @keyframes fadeOut {
+    from { opacity: 1; bottom: 20px; }
+    to { opacity: 0; bottom: 0; }
+  }
 </style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Add event listeners to all tracking toggle buttons
+    document.querySelectorAll('.toggle-tracking-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const index = this.getAttribute('data-index');
+        const trackingRow = document.getElementById(`tracking-${index}`);
+
+        if (trackingRow.style.display === 'none') {
+          trackingRow.style.display = 'table-row';
+          this.textContent = 'Hide Tracking';
+        } else {
+          trackingRow.style.display = 'none';
+          this.textContent = 'Show Tracking';
+        }
+      });
+    });
+
+    // Add event listeners to all detail toggle buttons
+    document.querySelectorAll('.toggle-details-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const targetId = this.getAttribute('data-target');
+        const detailsContainer = document.getElementById(targetId);
+
+        if (detailsContainer.style.display === 'none') {
+          detailsContainer.style.display = 'block';
+          this.textContent = 'Hide';
+        } else {
+          detailsContainer.style.display = 'none';
+          this.textContent = 'Details';
+        }
+      });
+    });
+
+    // Helper function to format JSON for display
+    window.json = function(obj) {
+      try {
+        return JSON.stringify(obj, null, 2);
+      } catch (e) {
+        return "Error formatting JSON: " + e.message;
+      }
+    };
+
+    // Add Font Awesome for the export icons
+    if (!document.querySelector('link[href*="font-awesome"]')) {
+      const fontAwesome = document.createElement('link');
+      fontAwesome.rel = 'stylesheet';
+      fontAwesome.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css';
+      document.head.appendChild(fontAwesome);
+    }
+
+    // Copy JSON to clipboard
+    document.querySelectorAll('.fa-clipboard').forEach(icon => {
+      icon.addEventListener('click', async (e) => {
+        const userId = e.target.dataset.user;
+        const testId = e.target.dataset.test;
+        const key = '{{key}}';
+
+        try {
+          // Determine if it's a math or JS test based on the test name
+          const testRow = e.target.closest('tr');
+          const testName = testRow.querySelector('[data-label="Test Name"]').textContent.toLowerCase();
+          const endpoint = testName.includes('js') || testName.includes('javascript')
+            ? '/admin/test/export/js-json'
+            : '/admin/test/export/math-json';
+
+          const response = await fetch(`${endpoint}?user_id=${userId}&test_id=${testId}&key=${key}`);
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+
+          const json = await response.json();
+
+          await navigator.clipboard.writeText(JSON.stringify(json, null, 2));
+
+          // Show snackbar
+          const snackbar = document.createElement('div');
+          snackbar.className = 'snackbar';
+          snackbar.textContent = 'JSON copied to clipboard';
+          document.body.appendChild(snackbar);
+
+          setTimeout(() => snackbar.remove(), 3000);
+        } catch (error) {
+          alert('Error copying JSON: ' + error.message);
+        }
+      });
+    });
+
+    // Download JSON
+    document.querySelectorAll('.fa-download').forEach(icon => {
+      icon.addEventListener('click', async (e) => {
+        const userId = e.target.dataset.user;
+        const testId = e.target.dataset.test;
+        const key = '{{key}}';
+
+        try {
+          // Determine if it's a math or JS test based on the test name
+          const testRow = e.target.closest('tr');
+          const testName = testRow.querySelector('[data-label="Test Name"]').textContent.toLowerCase();
+          const endpoint = testName.includes('js') || testName.includes('javascript')
+            ? '/admin/test/export/js-json'
+            : '/admin/test/export/math-json';
+          const filePrefix = testName.includes('js') || testName.includes('javascript') ? 'js' : 'math';
+
+          const response = await fetch(`${endpoint}?user_id=${userId}&test_id=${testId}&key=${key}`);
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+
+          const json = await response.json();
+
+          const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${filePrefix}-test-${userId}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } catch (error) {
+          alert('Error downloading JSON: ' + error.message);
+        }
+      });
+    });
+  });
+</script>
 
 {{#if error}}
   <p class="error">{{error}}</p>
@@ -77,6 +360,10 @@
       </div>
     </div>
     <div class="profile-item">
+      <div>Email</div>
+      <div>{{profile.email}}</div>
+    </div>
+    <div class="profile-item">
       <div>Country</div>
       <div>{{profile.country}}</div>
     </div>
@@ -85,10 +372,31 @@
       <div>${{profile.hourlyRate}}</div>
     </div>
     <div class="profile-item">
+      <div>Title</div>
+      <div>{{profile.title}}</div>
+    </div>
+    <div class="profile-item">
+      <div>Total Hours</div>
+      <div>{{profile.totalHours}}</div>
+    </div>
+    <div class="profile-item">
+      <div>Skills</div>
+      <div>{{profile.skills}}</div>
+    </div>
+    <div class="profile-item">
       <div>Last Activity</div>
       <div>{{formatDate profile.lastActivity}}</div>
     </div>
   </div>
+
+  {{#if profile.description}}
+  <div class="description-section">
+    <h3>Description</h3>
+    <div class="description-content">
+      {{profile.description}}
+    </div>
+  </div>
+  {{/if}}
 
   <table class="summary-table">
     <thead>
@@ -97,6 +405,7 @@
         <th>Test Name</th>
         <th>Correct Answers</th>
         <th>Attended At</th>
+        <th>Export</th>
       </tr>
     </thead>
     <tbody>
@@ -106,6 +415,12 @@
           <td data-label="Test Name">{{this.test_name}}</td>
           <td data-label="Correct Answers">{{countCorrectAnswers this.answers}}/{{this.answers.length}}</td>
           <td data-label="Attended At">{{formatDate this.attended_at}}</td>
+          <td data-label="Export">
+            <div class="export-icons">
+              <i class="fas fa-clipboard export-icon" title="Copy JSON" data-user="{{../profile.link}}" data-test="{{this.test_id}}"></i>
+              <i class="fas fa-download export-icon" title="Download JSON" data-user="{{../profile.link}}" data-test="{{this.test_id}}"></i>
+            </div>
+          </td>
         </tr>
       {{/each}}
     </tbody>
@@ -123,6 +438,7 @@
             <th>Time</th>
             <th>Inactive</th>
             <th>CopyPaste</th>
+            <th>Tracking</th>
           </tr>
         </thead>
         <tbody>
@@ -134,6 +450,180 @@
               <td data-label="Time">{{this.timeTaken}}</td>
               <td data-label="Inactive">{{this.inactive}}</td>
               <td data-label="CopyPaste">{{this.copyPaste}}</td>
+              <td>
+                <button class="toggle-tracking-btn" data-index="{{@../index}}-{{@index}}">Show Tracking</button>
+              </td>
+            </tr>
+            <tr class="tracking-details" id="tracking-{{@../index}}-{{@index}}" style="display: none;">
+              <td colspan="7">
+                <div class="tracking-grid">
+                  <div class="tracking-item">
+                    <strong>Device Type:</strong> {{this.deviceType}}
+                  </div>
+                  <div class="tracking-item">
+                    <strong>Time to First Interaction:</strong> {{this.timeToFirstInteraction}}s
+                  </div>
+                  <div class="tracking-item">
+                    <strong>Pre-Submit Delay:</strong> {{this.preSubmitDelay}}s
+                  </div>
+
+                  <!-- Focus Lost Events -->
+                  <div class="tracking-item">
+                    <strong>Focus Lost Events:</strong>
+                    <span class="tracking-count">{{this.focusLostEvents.length}}</span>
+                    {{#if this.focusLostEvents.length}}
+                      <button class="toggle-details-btn" data-target="focus-lost-{{@../index}}-{{@index}}">Details</button>
+                      <div class="tracking-details-container" id="focus-lost-{{@../index}}-{{@index}}" style="display: none;">
+                        <table class="tracking-details-table">
+                          <thead>
+                            <tr>
+                              <th>Time</th>
+                              <th>Duration (ms)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {{#each this.focusLostEvents}}
+                              <tr>
+                                <td>{{this.time}}s</td>
+                                <td>{{this.duration}}</td>
+                              </tr>
+                            {{/each}}
+                          </tbody>
+                        </table>
+                      </div>
+                    {{/if}}
+                  </div>
+
+                  <!-- Clipboard Events -->
+                  <div class="tracking-item">
+                    <strong>Clipboard Events:</strong>
+                    <span class="tracking-count">{{this.clipboardEvents.length}}</span>
+                    {{#if this.clipboardEvents.length}}
+                      <button class="toggle-details-btn" data-target="clipboard-{{@../index}}-{{@index}}">Details</button>
+                      <div class="tracking-details-container" id="clipboard-{{@../index}}-{{@index}}" style="display: none;">
+                        <table class="tracking-details-table">
+                          <thead>
+                            <tr>
+                              <th>Time</th>
+                              <th>Type</th>
+                              <th>Content</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {{#each this.clipboardEvents}}
+                              <tr>
+                                <td>{{this.time}}s</td>
+                                <td>{{this.type}}</td>
+                                <td>{{this.content}}</td>
+                              </tr>
+                            {{/each}}
+                          </tbody>
+                        </table>
+                      </div>
+                    {{/if}}
+                  </div>
+
+                  <!-- Answer Changes -->
+                  <div class="tracking-item">
+                    <strong>Answer Changes:</strong>
+                    <span class="tracking-count">{{this.answerChangeEvents.length}}</span>
+                    {{#if this.answerChangeEvents.length}}
+                      <button class="toggle-details-btn" data-target="answer-changes-{{@../index}}-{{@index}}">Details</button>
+                      <div class="tracking-details-container" id="answer-changes-{{@../index}}-{{@index}}" style="display: none;">
+                        <table class="tracking-details-table">
+                          <thead>
+                            <tr>
+                              <th>Time</th>
+                              <th>Previous</th>
+                              <th>New</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {{#each this.answerChangeEvents}}
+                              <tr>
+                                <td>{{this.time}}s</td>
+                                <td>{{this.previous}}</td>
+                                <td>{{this.new}}</td>
+                              </tr>
+                            {{/each}}
+                          </tbody>
+                        </table>
+                      </div>
+                    {{/if}}
+                  </div>
+
+                  <!-- Mouse Clicks -->
+                  <div class="tracking-item">
+                    <strong>Mouse Clicks:</strong>
+                    <span class="tracking-count">{{this.mouseClickEvents.length}}</span>
+                    {{#if this.mouseClickEvents.length}}
+                      <button class="toggle-details-btn" data-target="mouse-clicks-{{@../index}}-{{@index}}">Details</button>
+                      <div class="tracking-details-container" id="mouse-clicks-{{@../index}}-{{@index}}" style="display: none;">
+                        <table class="tracking-details-table">
+                          <thead>
+                            <tr>
+                              <th>Time</th>
+                              <th>X</th>
+                              <th>Y</th>
+                              <th>Button</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {{#each this.mouseClickEvents}}
+                              <tr>
+                                <td>{{this.time}}s</td>
+                                <td>{{this.x}}</td>
+                                <td>{{this.y}}</td>
+                                <td>{{this.button}}</td>
+                              </tr>
+                            {{/each}}
+                          </tbody>
+                        </table>
+                      </div>
+                    {{/if}}
+                  </div>
+
+                  <!-- Keyboard Presses -->
+                  <div class="tracking-item">
+                    <strong>Keyboard Presses:</strong>
+                    <span class="tracking-count">{{this.keyboardPressEvents.length}}</span>
+                    {{#if this.keyboardPressEvents.length}}
+                      <button class="toggle-details-btn" data-target="keyboard-presses-{{@../index}}-{{@index}}">Details</button>
+                      <div class="tracking-details-container" id="keyboard-presses-{{@../index}}-{{@index}}" style="display: none;">
+                        <table class="tracking-details-table">
+                          <thead>
+                            <tr>
+                              <th>Time</th>
+                              <th>Key</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {{#each this.keyboardPressEvents}}
+                              <tr>
+                                <td>{{this.time}}s</td>
+                                <td>{{this.key}}</td>
+                              </tr>
+                            {{/each}}
+                          </tbody>
+                        </table>
+                      </div>
+                    {{/if}}
+                  </div>
+
+                  <!-- Device Fingerprint -->
+                  <div class="tracking-item">
+                    <strong>Device Fingerprint:</strong>
+                    {{#if this.deviceFingerprint}}
+                      <button class="toggle-details-btn" data-target="device-fingerprint-{{@../index}}-{{@index}}">Details</button>
+                      <div class="tracking-details-container" id="device-fingerprint-{{@../index}}-{{@index}}" style="display: none;">
+                        <pre>{{json this.deviceFingerprint}}</pre>
+                      </div>
+                    {{else}}
+                      Not available
+                    {{/if}}
+                  </div>
+                </div>
+              </td>
             </tr>
           {{/each}}
         </tbody>

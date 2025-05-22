@@ -14,12 +14,16 @@ class TestService {
     });
   }
 
-  async createTest(data: { group_id: number; profile_id: number}): Promise<Test> {
+  async createTest(data: {
+    group_id: number;
+    profile_id: number;
+    tracking_config?: Record<string, boolean>;
+  }): Promise<Test> {
     const dataSource = await connection();
     const groupRepository = dataSource.getRepository(Group);
     const profileRepository = dataSource.getRepository(Profile);
     const testRepository = dataSource.getRepository(Test);
-    const { group_id, profile_id} = data;
+    const { group_id, profile_id, tracking_config = {} } = data;
 
     // Fetch related entities in parallel
     const [group, profile] = await Promise.all([
@@ -32,13 +36,10 @@ class TestService {
       name: generateRandomString(9),
       groups: [group],
       profiles: [profile],
+      tracking_config: tracking_config // Use the provided tracking configuration
     });
 
-    return testRepository.save({
-      name: generateRandomString(9),
-      groups: [group],
-      profiles: [profile],
-    });
+    return testRepository.save(test);
   }
 
   async getTestById(id: number): Promise<Test | null> {
@@ -62,7 +63,7 @@ class TestService {
     const dataSource = await connection();
     return dataSource.getRepository(Test).exists({
       relations: ['profiles'],
-      where: { id: testId, profiles: { link: linkId }} 
+      where: { id: testId, profiles: { link: linkId }}
     });
   }
 }

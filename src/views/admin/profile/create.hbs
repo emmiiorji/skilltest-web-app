@@ -1,6 +1,6 @@
 <div class="container">
   <h1>Create Profile</h1>
-  
+
   <div class="form-container">
     <form id="createProfileForm">
       <div class="form-div">
@@ -10,27 +10,27 @@
           A unique identifier for the profile. For Upwork users, this is typically their Upwork ID.
         </small>
       </div>
-      
+
       <div class="form-div">
         <label for="name">Name:</label>
         <input type="text" id="name" name="name" class="form-control">
       </div>
-      
+
       <div class="form-div">
         <label for="email">Email:</label>
         <input type="email" id="email" name="email" class="form-control">
       </div>
-      
+
       <div class="form-div">
         <label for="country">Country:</label>
         <input type="text" id="country" name="country" class="form-control">
       </div>
-      
+
       <div class="form-div">
         <label for="rate">Hourly Rate ($):</label>
         <input type="number" id="rate" name="rate" class="form-control" min="0" step="0.01">
       </div>
-      
+
       <div class="form-div">
         <label for="url">Profile URL:</label>
         <input type="text" id="url" name="url" class="form-control">
@@ -38,7 +38,27 @@
           For Upwork profiles, this is the part after "upwork.com/freelancers/".
         </small>
       </div>
-      
+
+      <div class="form-div">
+        <label for="title">Title/Position:</label>
+        <input type="text" id="title" name="title" class="form-control">
+      </div>
+
+      <div class="form-div">
+        <label for="description">Description:</label>
+        <textarea id="description" name="description" class="form-control" rows="3"></textarea>
+      </div>
+
+      <div class="form-div">
+        <label for="skills">Skills (comma separated):</label>
+        <input type="text" id="skills" name="skills" class="form-control">
+      </div>
+
+      <div class="form-div">
+        <label for="totalHours">Total Hours:</label>
+        <input type="number" id="totalHours" name="totalHours" class="form-control" min="0" step="0.1">
+      </div>
+
       <div class="form-div">
         <label for="group_id">Group:</label>
         <select id="group_id" name="group_id" class="form-control" required>
@@ -48,19 +68,22 @@
           {{/each}}
         </select>
       </div>
-      
+
       <div class="form-div">
         <button type="submit" class="btn btn-primary">Create Profile</button>
         <a href="/admin/profile/list?key={{key}}" class="btn btn-secondary">View All Profiles</a>
       </div>
     </form>
-    
+
     <div id="resultContainer" style="display: none; margin-top: 20px;">
       <h3>Profile Created Successfully!</h3>
       <div class="alert alert-success">Profile has been created and can now be used for tests.</div>
       <div class="profile-details">
         <p><strong>Profile ID:</strong> <span id="profileId"></span></p>
         <p><strong>Name:</strong> <span id="profileName"></span></p>
+        <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+        <p><strong>Country:</strong> <span id="profileCountry"></span></p>
+        <p><strong>Title:</strong> <span id="profileTitle"></span></p>
       </div>
       <div class="action-buttons">
         <a href="/admin/test/create?key={{key}}" class="btn btn-primary">Create Test for This Profile</a>
@@ -76,17 +99,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultContainer = document.getElementById('resultContainer');
   const profileIdSpan = document.getElementById('profileId');
   const profileNameSpan = document.getElementById('profileName');
-  
+  const profileEmailSpan = document.getElementById('profileEmail');
+  const profileCountrySpan = document.getElementById('profileCountry');
+  const profileTitleSpan = document.getElementById('profileTitle');
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const formData = new FormData(form);
     const formDataObj = {};
-    
+
     formData.forEach((value, key) => {
       formDataObj[key] = value;
     });
-    
+
     try {
       const response = await fetch('/admin/profile/create?key={{key}}', {
         method: 'POST',
@@ -95,14 +121,17 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         body: JSON.stringify(formDataObj)
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         // Show result
         profileIdSpan.textContent = data.profile.link;
-        profileNameSpan.textContent = data.profile.name;
-        
+        profileNameSpan.textContent = data.profile.name || 'Not provided';
+        profileEmailSpan.textContent = data.profile.email || 'Not provided';
+        profileCountrySpan.textContent = data.profile.country || 'Not provided';
+        profileTitleSpan.textContent = data.profile.title || 'Not provided';
+
         // Hide form and show result
         form.style.display = 'none';
         resultContainer.style.display = 'block';
@@ -119,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <style>
 .form-container {
   max-width: 800px;
-  margin: 0 auto;
+  margin: 0 auto 30px;
   padding: 20px;
   background-color: #f8f9fa;
   border-radius: 8px;

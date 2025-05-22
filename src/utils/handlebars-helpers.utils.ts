@@ -2,7 +2,7 @@ import Handlebars from 'handlebars';
 
 export function registerHandlebarsHelpers() {
   Handlebars.registerHelper('startsWith', function(str, prefix) {
-    return str.startsWith(prefix);
+    return str?.startsWith(prefix);
   });
 
   Handlebars.registerHelper('eq', function (a, b) {
@@ -55,6 +55,6 @@ export function registerHandlebarsHelpers() {
   });
 
   Handlebars.registerHelper('countCorrectAnswers', function(answers) {
-    return answers.filter((answer: {isCorrect: boolean}) => answer.isCorrect).length;
+    return answers?.filter((answer: {isCorrect: boolean}) => answer.isCorrect).length;
   });
 }

@@ -19,6 +19,9 @@ export class Profile extends BaseEntity {
   name: string;
 
   @Column({ nullable: true })
+  email: string;
+
+  @Column({ nullable: true })
   country: string;
 
   @Column({ nullable: true })
