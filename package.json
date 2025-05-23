@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --watch src -e ts,hbs src/server.ts",
-    "build": "terser src/views/test/attend.js -o src/public/js/attend.js -c -m",
+    "build": "tsc && terser src/views/test/attend.js -o src/public/js/attend.js -c -m",
     "copy-views": "mkdir -p dist/views && cp -R src/views dist",
     "start": "ts-node src/server.ts",
     "typeorm": "typeorm-ts-node-commonjs",

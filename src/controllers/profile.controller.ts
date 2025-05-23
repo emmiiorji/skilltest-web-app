@@ -67,7 +67,7 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
       profile.link = profileLinkId;
     }
 
-    // Now get all tests associated with this profile
+    // Get all tests associated with this profile
     const testsResult = await db.query(`
       SELECT
         t.id AS test_id,

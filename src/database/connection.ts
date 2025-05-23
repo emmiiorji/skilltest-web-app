@@ -9,12 +9,10 @@ export const AppDataSource = new DataSource({
   password: env.DB_PASSWORD,
   database: env.DB_NAME,
   synchronize: false,
-  logging: false, // isDev,
-  entities: ["src/database/entities/**/*.entity.ts"],
-  // entities: [Test, Group, Profile, Template],
-  migrations: ["src/database/migrations/**/*.ts"],
-  subscribers: ["src/database/subscribers/**/*.ts"],
-  // Update connection pooling options
+  logging: false,
+  entities: ["dist/database/entities/**/*.entity.js"],
+  migrations: ["dist/database/migrations/**/*.js"],
+  subscribers: ["dist/database/subscribers/**/*.js"],
   extra: {
     connectionLimit: env.DB_CONNECTION_LIMIT,
     queueLimit: 0,
@@ -30,12 +28,12 @@ async function initializeDatabase() {
     console.error("Error connecting to the database:", error);
     throw error;
   }
-};
+}
 
 export const connection = async () => {
   if (AppDataSource.isInitialized) {
     return AppDataSource;
-  };
+  }
   await initializeDatabase();
   return AppDataSource;
 }

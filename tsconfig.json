@@ -11,18 +11,18 @@
 		"useDefineForClassFields": true,
 		"lib": ["ESNext", "DOM", "DOM.Iterable"],
 		"module": "CommonJS",
-		"moduleDetection": "force",
+		"moduleResolution": "node",
 		"noUncheckedIndexedAccess": true,
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
 		"strict": true,
 		"target": "ES2022",
-		"outDir": "./dist",
-		"rootDir": "./src",
+		"outDir": "dist",
+		"rootDir": "src",
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
 		"strictPropertyInitialization": false
 	},
 	"include": ["src/**/*"],
-	"exclude": ["node_modules", "dist"]
+	"exclude": ["node_modules"]
 }
