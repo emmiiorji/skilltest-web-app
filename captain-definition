@@ -10,10 +10,22 @@
     "RUN pnpm install",
     "COPY . .",
     "RUN ls -la",
+    "# Modify build script to properly compile TypeScript and copy views",
     "RUN pnpm run build",
+    "RUN tsc",
+    "RUN pnpm run copy-views",
+    "# Set production environment",
     "ENV NODE_ENV production",
     "ENV PORT 10000",
     "EXPOSE 10000",
-    "CMD [ \"npm\", \"run\", \"start\" ]"
+    "# Create a non-root user",
+    "RUN addgroup -S appgroup && adduser -S appuser -G appgroup",
+    "RUN chown -R appuser:appgroup /usr/src/app",
+    "USER appuser",
+    "# Create a startup script that runs migrations before starting the app",
+    "RUN echo '#!/bin/sh\\npnpm run migration:run && node dist/server.js' > /usr/src/app/start.sh",
+    "RUN chmod +x /usr/src/app/start.sh",
+    "# Run the startup script",
+    "CMD [ \"/usr/src/app/start.sh\" ]"
   ]
 }
