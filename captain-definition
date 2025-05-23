@@ -2,6 +2,7 @@
   "schemaVersion": 2,
   "dockerfileLines": [
     "FROM node:lts-alpine3.20",
+    "RUN apk add --no-cache python3 make g++ git",
     "RUN mkdir -p /usr/src/app",
     "WORKDIR /usr/src/app",
     "COPY package.json pnpm-lock.yaml tsconfig.json ./",
