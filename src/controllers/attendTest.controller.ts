@@ -134,7 +134,6 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
       console.error('Failed to decrypt payload:', error);
       return reply.status(400).send({ error: 'Invalid payload' });
     };
-    console.debug({ decryptedPayload });
 
     const { correct: correctAnswer } = await questionRepo.findOneOrFail({ 
       select: ['correct'],

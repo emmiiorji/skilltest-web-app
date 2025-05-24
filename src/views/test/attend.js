@@ -15,19 +15,19 @@ const startScript = () => {
   let deviceFingerprint = {};
   let deviceType = 'desktop';
 
-  // Get tracking config
-  const trackingConfig = window.trackingConfig || {};
+  // Get tracking config (fix variable shadowing)
+  const config = window.trackingConfig || {};
 
   // Determine what to track
   const shouldTrack = {
-    focusLost: !trackingConfig.disableFocusLostEvents,
-    clipboard: !trackingConfig.disableClipboardEvents,
-    preSubmitDelay: !trackingConfig.disablePreSubmitDelay,
-    answerChanges: !trackingConfig.disableAnswerChangeEvents,
-    deviceFingerprint: !trackingConfig.disableDeviceFingerprint,
-    timeToFirstInteraction: !trackingConfig.disableTimeToFirstInteraction,
-    mouseClicks: !trackingConfig.disableMouseClickEvents,
-    keyboardPresses: !trackingConfig.disableKeyboardPressEvents
+    focusLost: !config.disableFocusLostEvents,
+    clipboard: !config.disableClipboardEvents,
+    preSubmitDelay: !config.disablePreSubmitDelay,
+    answerChanges: !config.disableAnswerChangeEvents,
+    deviceFingerprint: !config.disableDeviceFingerprint,
+    timeToFirstInteraction: !config.disableTimeToFirstInteraction,
+    mouseClicks: !config.disableMouseClickEvents,
+    keyboardPresses: !config.disableKeyboardPressEvents
   };
 
   // Get IP
@@ -40,7 +40,7 @@ const startScript = () => {
     const userAgent = navigator.userAgent.toLowerCase();
     const isMobile = /mobile|android|iphone|ipad|phone/i.test(userAgent);
     const isTablet = /tablet|ipad/i.test(userAgent);
-    
+
     if (isTablet) return 'tablet';
     if (isMobile) return 'mobile';
     return 'desktop';
@@ -50,7 +50,7 @@ const startScript = () => {
   // Focus tracking
   if (shouldTrack.focusLost) {
     let focusLostStart = null;
-    
+
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         focusLostStart = Date.now();
@@ -189,7 +189,7 @@ const startScript = () => {
 
     const trackKeypress = throttle((e) => {
       let keyType = 'other';
-      
+
       if (e.key.match(/^[a-zA-Z]$/)) keyType = 'letter';
       else if (e.key.match(/^[0-9]$/)) keyType = 'number';
       else if (e.key === 'Backspace') keyType = 'backspace';
@@ -278,9 +278,16 @@ const startScript = () => {
     }
   });
 
-  document.addEventListener('copy', () => copyCount++);
-  document.addEventListener('paste', () => pasteCount++);
-  document.addEventListener('contextmenu', () => rightClickCount++);
+  // Only track legacy clipboard events if clipboard tracking is enabled
+  if (shouldTrack.clipboard) {
+    document.addEventListener('copy', () => copyCount++);
+    document.addEventListener('paste', () => pasteCount++);
+  }
+
+  // Only track right-click if mouse tracking is enabled
+  if (shouldTrack.mouseClicks) {
+    document.addEventListener('contextmenu', () => rightClickCount++);
+  }
 
   // Form submission
   document.getElementById('answerForm').addEventListener('submit', async (e) => {
@@ -288,7 +295,7 @@ const startScript = () => {
 
     const answerType = document.querySelector('input[name="answer_type"]')?.value;
     let answer;
-    
+
     if (answerType === "radiobutton") {
       answer = document.querySelector('input[name="answer"]:checked')?.value;
     } else if (answerType === "multiinput") {
@@ -311,7 +318,7 @@ const startScript = () => {
     const userId = document.querySelector('input[name="user_id"]')?.value;
 
     const timeTaken = Date.now() - startTime;
-    
+
     // Calculate pre-submit delay
     const preSubmitDelay = shouldTrack.preSubmitDelay && lastAnswerChangeTime
       ? (Date.now() - lastAnswerChangeTime) / 1000
@@ -327,28 +334,28 @@ const startScript = () => {
       answer,
       time_taken: Math.round(timeTaken/1000),
       ip: ip,
-      
+
       // Original metrics
       copy_count: copyCount,
       paste_count: pasteCount,
       right_click_count: rightClickCount,
       inactive_time: Math.round(inactiveTime / 1000),
-      
+
       // New metrics (only if enabled)
-      ...(shouldTrack.focusLost && { focus_lost_events: limitArray(focusLostEvents) }),
-      ...(shouldTrack.clipboard && { clipboard_events: limitArray(clipboardEvents) }),
-      ...(shouldTrack.preSubmitDelay && { pre_submit_delay: preSubmitDelay }),
-      ...(shouldTrack.answerChanges && { answer_change_events: limitArray(answerChangeEvents) }),
-      ...(shouldTrack.deviceFingerprint && { device_fingerprint: deviceFingerprint }),
+      focus_lost_events: shouldTrack.focusLost ? limitArray(focusLostEvents) : [],
+      clipboard_events: shouldTrack.clipboard ? limitArray(clipboardEvents) : [],
+      pre_submit_delay: shouldTrack.preSubmitDelay ? preSubmitDelay : 0,
+      answer_change_events: shouldTrack.answerChanges ? limitArray(answerChangeEvents) : [],
+      device_fingerprint: shouldTrack.deviceFingerprint ? deviceFingerprint : {},
       device_type: deviceType, // Always include
-      ...(shouldTrack.timeToFirstInteraction && { time_to_first_interaction: firstInteractionTime ? firstInteractionTime / 1000 : 0 }),
-      ...(shouldTrack.mouseClicks && { mouse_click_events: limitArray(mouseClickEvents) }),
-      ...(shouldTrack.keyboardPresses && { keyboard_press_events: limitArray(keyboardPressEvents) })
+      time_to_first_interaction: shouldTrack.timeToFirstInteraction ? (firstInteractionTime ? firstInteractionTime / 1000 : 0) : 0,
+      mouse_click_events: shouldTrack.mouseClicks ? limitArray(mouseClickEvents) : [],
+      keyboard_press_events: shouldTrack.keyboardPresses ? limitArray(keyboardPressEvents) : []
     };
 
     const resultSalt = document.querySelector('input[name="result_salt"]')?.value;
     const encryptionKey = userId + resultSalt;
-    
+
     // Existing encryption logic
     const encryptPayload = (payload, key) => {
       const text = JSON.stringify(payload);
@@ -360,7 +367,7 @@ const startScript = () => {
     };
 
     const encryptedPayload = encryptPayload(payload, encryptionKey);
-    
+
     try {
       const response = await fetch(e.target.action, {
         method: 'POST',
