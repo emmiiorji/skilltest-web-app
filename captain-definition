@@ -16,6 +16,7 @@
     "ENV PORT=10000",
     "RUN pnpm run build",
     "RUN pnpm run copy-views",
+    "RUN pnpm run copy-public",
     "# Create a non-root user",
     "RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser",
     "RUN chown -R appuser:appgroup /usr/src/app",

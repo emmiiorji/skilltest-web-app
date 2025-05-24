@@ -30,11 +30,6 @@
     </div>
 
     <div class="form-div">
-      <label for="groupId">Group ID:</label>
-      <input type="number" id="groupId" class="form-control" placeholder="123">
-    </div>
-
-    <div class="form-div">
       <label>Test Questions:</label>
       <div id="questions-container">
         <!-- Questions will be added here dynamically -->
@@ -214,10 +209,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const templateId = templateSelect.value;
     const testName = document.getElementById('testName').value.trim();
     const freelancerInput = document.getElementById('freelancerInput').value;
-    const groupId = document.getElementById('groupId').value;
 
-    if (!templateId || !freelancerInput || !groupId) {
-      alert('Please fill all fields');
+    if (!templateId || !freelancerInput) {
+      alert('Please fill all required fields');
       return;
     }
 
@@ -260,7 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
           template_id: templateId,
           test_name: testName, // Add the custom test name
           freelancer_input: freelancerInput,
-          group_id: groupId,
           tracking_config: trackingConfig,
           questions: questions // Add the questions
         })

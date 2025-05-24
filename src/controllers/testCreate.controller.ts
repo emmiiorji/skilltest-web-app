@@ -26,11 +26,10 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
   });
 
   app.post('/create-link', async (request, reply) => {
-    const { template_id, test_name, freelancer_input, group_id, tracking_config, questions } = z.object({
+    const { template_id, test_name, freelancer_input, tracking_config, questions } = z.object({
       template_id: z.string(),
       test_name: z.string().optional(),
       freelancer_input: z.string(),
-      group_id: z.string(),
       tracking_config: z.object({
         disableFocusLostEvents: z.boolean().optional(),
         disableMouseClickEvents: z.boolean().optional(),
@@ -56,17 +55,25 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
       freelancerId = match && match[1] ? match[1] : freelancer_input;
     }
 
-    // Create test
+    // Get profile and its associated group
     const profile = await profileService.getProfileByLinkId(freelancerId);
     if (!profile) {
       return reply.status(404).send({ error: 'Profile not found' });
     }
+    
+    // Use the first group associated with the profile
+    if (!profile.groups || profile.groups.length < 1 || !profile.groups[0]) {
+      return reply.status(400).send({ error: 'Profile has no associated group' });
+    }
+    
+    const group_id = profile.groups[0].id;
 
+    // Create test with the profile's group
     const test = await testService.createTest({
-      group_id: parseInt(group_id),
+      group_id,
       profile_id: profile.id,
       tracking_config,
-      test_name: test_name // Pass the custom test name
+      test_name
     });
 
     // Create questions and associate them with the test
