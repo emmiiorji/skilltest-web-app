@@ -25,7 +25,40 @@ export class CreateAnswerAndQuestionTables1747782495882 implements MigrationInte
         `);
 
         if (answersTableExists[0].count === 0) {
-            await queryRunner.query(`CREATE TABLE \`answers\` (\`id\` int NOT NULL AUTO_INCREMENT, \`test_id\` int NOT NULL, \`question_id\` int NOT NULL, \`profile_id\` int NOT NULL, \`answer\` text NOT NULL, \`user_agent\` varchar(255) NOT NULL, \`ip\` varchar(45) NOT NULL, \`time_taken\` int NOT NULL, \`copy_count\` int NOT NULL, \`paste_count\` int NOT NULL, \`right_click_count\` int NOT NULL, \`inactive_time\` int NOT NULL, \`is_correct\` tinyint NULL, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+            // Create basic answers table with only id column
+            await queryRunner.query(`CREATE TABLE \`answers\` (\`id\` int NOT NULL AUTO_INCREMENT, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        }
+
+        // Add columns to answers table conditionally
+        const answersColumns = [
+            { name: 'test_id', definition: 'int NOT NULL' },
+            { name: 'question_id', definition: 'int NOT NULL' },
+            { name: 'profile_id', definition: 'int NOT NULL' },
+            { name: 'answer', definition: 'text NOT NULL' },
+            { name: 'user_agent', definition: 'varchar(255) NOT NULL' },
+            { name: 'ip', definition: 'varchar(45) NOT NULL' },
+            { name: 'time_taken', definition: 'int NOT NULL' },
+            { name: 'copy_count', definition: 'int NOT NULL' },
+            { name: 'paste_count', definition: 'int NOT NULL' },
+            { name: 'right_click_count', definition: 'int NOT NULL' },
+            { name: 'inactive_time', definition: 'int NOT NULL' },
+            { name: 'is_correct', definition: 'tinyint NULL' },
+            { name: 'created_at', definition: 'datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)' },
+            { name: 'updated_at', definition: 'datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)' }
+        ];
+
+        for (const column of answersColumns) {
+            const columnExists = await queryRunner.query(`
+                SELECT COUNT(*) as count
+                FROM information_schema.columns
+                WHERE table_schema = DATABASE()
+                AND table_name = 'answers'
+                AND column_name = '${column.name}'
+            `);
+
+            if (columnExists[0].count === 0) {
+                await queryRunner.query(`ALTER TABLE \`answers\` ADD COLUMN \`${column.name}\` ${column.definition}`);
+            }
         }
 
         // Check if questions table exists before creating it
@@ -37,7 +70,32 @@ export class CreateAnswerAndQuestionTables1747782495882 implements MigrationInte
         `);
 
         if (questionsTableExists[0].count === 0) {
-            await queryRunner.query(`CREATE TABLE \`questions\` (\`id\` int NOT NULL AUTO_INCREMENT, \`question\` text NOT NULL, \`answer_type\` enum ('textarea', 'radiobutton', 'multiinput', 'multiTextInput') NOT NULL, \`answer_html\` text NOT NULL, \`correct\` text NOT NULL, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+            // Create basic questions table with only id column
+            await queryRunner.query(`CREATE TABLE \`questions\` (\`id\` int NOT NULL AUTO_INCREMENT, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        }
+
+        // Add columns to questions table conditionally
+        const questionsColumns = [
+            { name: 'question', definition: 'text NOT NULL' },
+            { name: 'answer_type', definition: "enum ('textarea', 'radiobutton', 'multiinput', 'multiTextInput') NOT NULL" },
+            { name: 'answer_html', definition: 'text NOT NULL' },
+            { name: 'correct', definition: 'text NOT NULL' },
+            { name: 'created_at', definition: 'datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)' },
+            { name: 'updated_at', definition: 'datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)' }
+        ];
+
+        for (const column of questionsColumns) {
+            const columnExists = await queryRunner.query(`
+                SELECT COUNT(*) as count
+                FROM information_schema.columns
+                WHERE table_schema = DATABASE()
+                AND table_name = 'questions'
+                AND column_name = '${column.name}'
+            `);
+
+            if (columnExists[0].count === 0) {
+                await queryRunner.query(`ALTER TABLE \`questions\` ADD COLUMN \`${column.name}\` ${column.definition}`);
+            }
         }
 
         // Check if questions_tests table exists before creating it
@@ -49,7 +107,27 @@ export class CreateAnswerAndQuestionTables1747782495882 implements MigrationInte
         `);
 
         if (questionsTestsTableExists[0].count === 0) {
-            await queryRunner.query(`CREATE TABLE \`questions_tests\` (\`question_id\` int NOT NULL, \`test_id\` int NOT NULL, \`priority\` int NOT NULL, PRIMARY KEY (\`question_id\`, \`test_id\`)) ENGINE=InnoDB`);
+            // Create basic questions_tests table with composite primary key
+            await queryRunner.query(`CREATE TABLE \`questions_tests\` (\`question_id\` int NOT NULL, \`test_id\` int NOT NULL, PRIMARY KEY (\`question_id\`, \`test_id\`)) ENGINE=InnoDB`);
+        }
+
+        // Add columns to questions_tests table conditionally
+        const questionsTestsColumns = [
+            { name: 'priority', definition: 'int NOT NULL' }
+        ];
+
+        for (const column of questionsTestsColumns) {
+            const columnExists = await queryRunner.query(`
+                SELECT COUNT(*) as count
+                FROM information_schema.columns
+                WHERE table_schema = DATABASE()
+                AND table_name = 'questions_tests'
+                AND column_name = '${column.name}'
+            `);
+
+            if (columnExists[0].count === 0) {
+                await queryRunner.query(`ALTER TABLE \`questions_tests\` ADD COLUMN \`${column.name}\` ${column.definition}`);
+            }
         }
         // Check if profiles table exists before altering it
         const profilesTableExists = await queryRunner.query(`
@@ -267,11 +345,33 @@ export class CreateAnswerAndQuestionTables1747782495882 implements MigrationInte
             await queryRunner.query(`ALTER TABLE \`profiles\` CHANGE \`updatedAt\` \`updatedAt\` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`);
             await queryRunner.query(`ALTER TABLE \`profiles\` CHANGE \`createdAt\` \`createdAt\` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP`);
         }
-        // Drop tables only if they exist
-        if (questionsTestsTableExists[0].count > 0) {
-            await queryRunner.query(`DROP TABLE \`questions_tests\``);
+        // Remove columns from answers table conditionally before dropping table
+        if (answersTableExists[0].count > 0) {
+            const answersColumnsToRemove = [
+                'updated_at', 'created_at', 'is_correct', 'inactive_time', 'right_click_count',
+                'paste_count', 'copy_count', 'time_taken', 'ip', 'user_agent', 'answer',
+                'profile_id', 'question_id', 'test_id'
+            ];
+
+            for (const columnName of answersColumnsToRemove) {
+                const columnExists = await queryRunner.query(`
+                    SELECT COUNT(*) as count
+                    FROM information_schema.columns
+                    WHERE table_schema = DATABASE()
+                    AND table_name = 'answers'
+                    AND column_name = '${columnName}'
+                `);
+
+                if (columnExists[0].count > 0) {
+                    await queryRunner.query(`ALTER TABLE \`answers\` DROP COLUMN \`${columnName}\``);
+                }
+            }
+
+            // Drop the table after removing all columns except id
+            await queryRunner.query(`DROP TABLE \`answers\``);
         }
 
+        // Remove columns from questions table conditionally before dropping table
         const questionsTableExists = await queryRunner.query(`
             SELECT COUNT(*) as count
             FROM information_schema.tables
@@ -280,11 +380,48 @@ export class CreateAnswerAndQuestionTables1747782495882 implements MigrationInte
         `);
 
         if (questionsTableExists[0].count > 0) {
+            const questionsColumnsToRemove = [
+                'updated_at', 'created_at', 'correct', 'answer_html', 'answer_type', 'question'
+            ];
+
+            for (const columnName of questionsColumnsToRemove) {
+                const columnExists = await queryRunner.query(`
+                    SELECT COUNT(*) as count
+                    FROM information_schema.columns
+                    WHERE table_schema = DATABASE()
+                    AND table_name = 'questions'
+                    AND column_name = '${columnName}'
+                `);
+
+                if (columnExists[0].count > 0) {
+                    await queryRunner.query(`ALTER TABLE \`questions\` DROP COLUMN \`${columnName}\``);
+                }
+            }
+
+            // Drop the table after removing all columns except id
             await queryRunner.query(`DROP TABLE \`questions\``);
         }
 
-        if (answersTableExists[0].count > 0) {
-            await queryRunner.query(`DROP TABLE \`answers\``);
+        // Remove columns from questions_tests table conditionally before dropping table
+        if (questionsTestsTableExists[0].count > 0) {
+            const questionsTestsColumnsToRemove = ['priority'];
+
+            for (const columnName of questionsTestsColumnsToRemove) {
+                const columnExists = await queryRunner.query(`
+                    SELECT COUNT(*) as count
+                    FROM information_schema.columns
+                    WHERE table_schema = DATABASE()
+                    AND table_name = 'questions_tests'
+                    AND column_name = '${columnName}'
+                `);
+
+                if (columnExists[0].count > 0) {
+                    await queryRunner.query(`ALTER TABLE \`questions_tests\` DROP COLUMN \`${columnName}\``);
+                }
+            }
+
+            // Drop the table after removing all additional columns
+            await queryRunner.query(`DROP TABLE \`questions_tests\``);
         }
 
         // Create unique index only if it doesn't exist and profiles table exists
