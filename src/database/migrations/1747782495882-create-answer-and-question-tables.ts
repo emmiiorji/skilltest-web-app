@@ -53,7 +53,18 @@ export class CreateAnswerAndQuestionTables1747782495882 implements MigrationInte
         }
         await queryRunner.query(`ALTER TABLE \`profiles\` CHANGE \`createdAt\` \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)`);
         await queryRunner.query(`ALTER TABLE \`profiles\` CHANGE \`updatedAt\` \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)`);
-        await queryRunner.query(`ALTER TABLE \`profiles\` ADD UNIQUE INDEX \`IDX_629be5336319558dc34e55d8ab\` (\`link\`)`);
+        // Check if the unique index already exists before creating it
+        const uniqueIndexExists = await queryRunner.query(`
+            SELECT COUNT(*) as count
+            FROM information_schema.statistics
+            WHERE table_schema = DATABASE()
+            AND table_name = 'profiles'
+            AND index_name = 'IDX_629be5336319558dc34e55d8ab'
+        `);
+
+        if (uniqueIndexExists[0].count === 0) {
+            await queryRunner.query(`ALTER TABLE \`profiles\` ADD UNIQUE INDEX \`IDX_629be5336319558dc34e55d8ab\` (\`link\`)`);
+        }
         await queryRunner.query(`ALTER TABLE \`profiles\` CHANGE \`inProgress\` \`inProgress\` tinyint NULL`);
         await queryRunner.query(`ALTER TABLE \`groups\` CHANGE \`createdAt\` \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)`);
         await queryRunner.query(`ALTER TABLE \`groups\` CHANGE \`updatedAt\` \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)`);
