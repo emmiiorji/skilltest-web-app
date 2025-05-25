@@ -47,6 +47,7 @@ export class CreateAnswerAndQuestionTables1747782495882 implements MigrationInte
             { name: 'updated_at', definition: 'datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)' }
         ];
 
+        // Add columns to answers table conditionally (sequential for safety)
         for (const column of answersColumns) {
             const columnExists = await queryRunner.query(`
                 SELECT COUNT(*) as count
@@ -84,6 +85,7 @@ export class CreateAnswerAndQuestionTables1747782495882 implements MigrationInte
             { name: 'updated_at', definition: 'datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)' }
         ];
 
+        // Add columns to questions table conditionally (sequential for safety)
         for (const column of questionsColumns) {
             const columnExists = await queryRunner.query(`
                 SELECT COUNT(*) as count
