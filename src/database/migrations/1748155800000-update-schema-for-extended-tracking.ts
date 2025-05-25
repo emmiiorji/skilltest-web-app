@@ -111,7 +111,7 @@ export class UpdateSchemaForExtendedTracking1748155800000 implements MigrationIn
 
                 const testRecordsCount = parseInt(testRecordsExist[0].count);
                 if (testRecordsCount > 0) {
-                    await queryRunner.query(`UPDATE tests SET tracking_config = JSON_OBJECT() WHERE id = 1 AND EXISTS (SELECT 1 FROM tests WHERE id = 1)`);
+                    await queryRunner.query(`UPDATE tests SET tracking_config = JSON_OBJECT() WHERE id = 1`);
 
                     const config = JSON.stringify({
                         disableFocusLostEvents: true,
@@ -119,7 +119,7 @@ export class UpdateSchemaForExtendedTracking1748155800000 implements MigrationIn
                         disableKeyboardPressEvents: true,
                         disableDeviceFingerprint: true
                     });
-                    await queryRunner.query(`UPDATE tests SET tracking_config = CAST('${config}' AS JSON) WHERE id = 2 AND EXISTS (SELECT 1 FROM tests WHERE id = 2)`);
+                    await queryRunner.query(`UPDATE tests SET tracking_config = CAST('${config}' AS JSON) WHERE id = 2`);
                 }
             }
         }
