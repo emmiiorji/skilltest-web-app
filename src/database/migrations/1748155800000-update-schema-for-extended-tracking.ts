@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class UpdateSchemaForExtendedTracking1747808406326 implements MigrationInterface {
+export class UpdateSchemaForExtendedTracking1748155800000 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         // 1. Add tracking config to tests (without default value) - only if tests table exists
@@ -11,7 +11,10 @@ export class UpdateSchemaForExtendedTracking1747808406326 implements MigrationIn
             AND table_name = 'tests'
         `);
 
-        if (testsTableExists[0].count > 0) {
+        const testsTableCount = parseInt(testsTableExists[0].count);
+        console.log('Tests table exists:', testsTableCount > 0);
+
+        if (testsTableCount > 0) {
             // Check if tracking_config column already exists
             const trackingConfigExists = await queryRunner.query(`
                 SELECT COUNT(*) as count
@@ -21,15 +24,26 @@ export class UpdateSchemaForExtendedTracking1747808406326 implements MigrationIn
                 AND column_name = 'tracking_config'
             `);
 
-            if (trackingConfigExists[0].count === 0) {
+            const trackingConfigCount = parseInt(trackingConfigExists[0].count);
+            console.log('Tracking config column exists:', trackingConfigCount > 0);
+
+            if (trackingConfigCount === 0) {
+                console.log('Adding tracking_config column to tests table...');
                 await queryRunner.query(`ALTER TABLE tests ADD COLUMN tracking_config JSON NULL`);
 
                 // Set default value for all rows
+                console.log('Setting default values for tracking_config...');
                 await queryRunner.query(`UPDATE tests SET tracking_config = JSON_OBJECT()`);
 
                 // Make it NOT NULL after setting values
+                console.log('Making tracking_config NOT NULL...');
                 await queryRunner.query(`ALTER TABLE tests MODIFY COLUMN tracking_config JSON NOT NULL`);
+                console.log('Successfully added tracking_config column');
+            } else {
+                console.log('Tracking config column already exists, skipping...');
             }
+        } else {
+            console.log('Tests table does not exist, skipping tracking_config addition');
         }
 
         // 2. Add new columns to answers table - only if answers table exists
@@ -40,7 +54,8 @@ export class UpdateSchemaForExtendedTracking1747808406326 implements MigrationIn
             AND table_name = 'answers'
         `);
 
-        if (answersTableExists[0].count > 0) {
+        const answersTableCount = parseInt(answersTableExists[0].count);
+        if (answersTableCount > 0) {
             const answersColumns = [
                 { name: 'focus_lost_events', definition: 'JSON NULL', defaultValue: 'JSON_ARRAY()' },
                 { name: 'clipboard_events', definition: 'JSON NULL', defaultValue: 'JSON_ARRAY()' },
@@ -63,7 +78,8 @@ export class UpdateSchemaForExtendedTracking1747808406326 implements MigrationIn
                     AND column_name = '${column.name}'
                 `);
 
-                if (columnExists[0].count === 0) {
+                const columnCount = parseInt(columnExists[0].count);
+                if (columnCount === 0) {
                     await queryRunner.query(`ALTER TABLE answers ADD COLUMN ${column.name} ${column.definition}`);
 
                     // Set default value if specified
@@ -75,7 +91,7 @@ export class UpdateSchemaForExtendedTracking1747808406326 implements MigrationIn
         }
 
         // 3. Update tracking config for existing tests - only if tests table and column exist
-        if (testsTableExists[0].count > 0) {
+        if (testsTableCount > 0) {
             const trackingConfigExists = await queryRunner.query(`
                 SELECT COUNT(*) as count
                 FROM information_schema.columns
@@ -84,16 +100,27 @@ export class UpdateSchemaForExtendedTracking1747808406326 implements MigrationIn
                 AND column_name = 'tracking_config'
             `);
 
-            if (trackingConfigExists[0].count > 0) {
-                await queryRunner.query(`UPDATE tests SET tracking_config = JSON_OBJECT() WHERE id = 1`);
+            const trackingConfigExistsCount = parseInt(trackingConfigExists[0].count);
+            if (trackingConfigExistsCount > 0) {
+                // Check if test records exist before updating them
+                const testRecordsExist = await queryRunner.query(`
+                    SELECT COUNT(*) as count
+                    FROM tests
+                    WHERE id IN (1, 2)
+                `);
 
-                const config = JSON.stringify({
-                    disableFocusLostEvents: true,
-                    disableMouseClickEvents: true,
-                    disableKeyboardPressEvents: true,
-                    disableDeviceFingerprint: true
-                });
-                await queryRunner.query(`UPDATE tests SET tracking_config = CAST('${config}' AS JSON) WHERE id = 2`);
+                const testRecordsCount = parseInt(testRecordsExist[0].count);
+                if (testRecordsCount > 0) {
+                    await queryRunner.query(`UPDATE tests SET tracking_config = JSON_OBJECT() WHERE id = 1 AND EXISTS (SELECT 1 FROM tests WHERE id = 1)`);
+
+                    const config = JSON.stringify({
+                        disableFocusLostEvents: true,
+                        disableMouseClickEvents: true,
+                        disableKeyboardPressEvents: true,
+                        disableDeviceFingerprint: true
+                    });
+                    await queryRunner.query(`UPDATE tests SET tracking_config = CAST('${config}' AS JSON) WHERE id = 2 AND EXISTS (SELECT 1 FROM tests WHERE id = 2)`);
+                }
             }
         }
     }
@@ -107,7 +134,8 @@ export class UpdateSchemaForExtendedTracking1747808406326 implements MigrationIn
             AND table_name = 'tests'
         `);
 
-        if (testsTableExists[0].count > 0) {
+        const testsTableDownCount = parseInt(testsTableExists[0].count);
+        if (testsTableDownCount > 0) {
             // Check if tracking_config column exists before reverting and dropping
             const trackingConfigExists = await queryRunner.query(`
                 SELECT COUNT(*) as count
@@ -117,9 +145,20 @@ export class UpdateSchemaForExtendedTracking1747808406326 implements MigrationIn
                 AND column_name = 'tracking_config'
             `);
 
-            if (trackingConfigExists[0].count > 0) {
-                // Revert test config changes
-                await queryRunner.query(`UPDATE tests SET tracking_config = JSON_OBJECT() WHERE id IN (1, 2)`);
+            const trackingConfigDownCount = parseInt(trackingConfigExists[0].count);
+            if (trackingConfigDownCount > 0) {
+                // Check if test records exist before reverting them
+                const testRecordsExist = await queryRunner.query(`
+                    SELECT COUNT(*) as count
+                    FROM tests
+                    WHERE id IN (1, 2)
+                `);
+
+                const testRecordsDownCount = parseInt(testRecordsExist[0].count);
+                if (testRecordsDownCount > 0) {
+                    // Revert test config changes
+                    await queryRunner.query(`UPDATE tests SET tracking_config = JSON_OBJECT() WHERE id IN (1, 2)`);
+                }
 
                 // Remove the tracking_config column from tests
                 await queryRunner.query(`ALTER TABLE tests DROP COLUMN tracking_config`);
@@ -134,7 +173,8 @@ export class UpdateSchemaForExtendedTracking1747808406326 implements MigrationIn
             AND table_name = 'answers'
         `);
 
-        if (answersTableExists[0].count > 0) {
+        const answersTableDownCount = parseInt(answersTableExists[0].count);
+        if (answersTableDownCount > 0) {
             const columnsToRemove = [
                 'focus_lost_events', 'clipboard_events', 'pre_submit_delay',
                 'answer_change_events', 'device_fingerprint', 'device_type',
@@ -150,7 +190,8 @@ export class UpdateSchemaForExtendedTracking1747808406326 implements MigrationIn
                     AND column_name = '${columnName}'
                 `);
 
-                if (columnExists[0].count > 0) {
+                const columnDownCount = parseInt(columnExists[0].count);
+                if (columnDownCount > 0) {
                     await queryRunner.query(`ALTER TABLE answers DROP COLUMN ${columnName}`);
                 }
             }
