@@ -16,9 +16,41 @@ export class CreateAnswerAndQuestionTables1747782495882 implements MigrationInte
         if (indexExists[0].count > 0) {
             await queryRunner.query(`DROP INDEX \`link\` ON \`profiles\``);
         }
-        await queryRunner.query(`CREATE TABLE \`answers\` (\`id\` int NOT NULL AUTO_INCREMENT, \`test_id\` int NOT NULL, \`question_id\` int NOT NULL, \`profile_id\` int NOT NULL, \`answer\` text NOT NULL, \`user_agent\` varchar(255) NOT NULL, \`ip\` varchar(45) NOT NULL, \`time_taken\` int NOT NULL, \`copy_count\` int NOT NULL, \`paste_count\` int NOT NULL, \`right_click_count\` int NOT NULL, \`inactive_time\` int NOT NULL, \`is_correct\` tinyint NULL, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
-        await queryRunner.query(`CREATE TABLE \`questions\` (\`id\` int NOT NULL AUTO_INCREMENT, \`question\` text NOT NULL, \`answer_type\` enum ('textarea', 'radiobutton', 'multiinput', 'multiTextInput') NOT NULL, \`answer_html\` text NOT NULL, \`correct\` text NOT NULL, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
-        await queryRunner.query(`CREATE TABLE \`questions_tests\` (\`question_id\` int NOT NULL, \`test_id\` int NOT NULL, \`priority\` int NOT NULL, PRIMARY KEY (\`question_id\`, \`test_id\`)) ENGINE=InnoDB`);
+        // Check if answers table exists before creating it
+        const answersTableExists = await queryRunner.query(`
+            SELECT COUNT(*) as count
+            FROM information_schema.tables
+            WHERE table_schema = DATABASE()
+            AND table_name = 'answers'
+        `);
+
+        if (answersTableExists[0].count === 0) {
+            await queryRunner.query(`CREATE TABLE \`answers\` (\`id\` int NOT NULL AUTO_INCREMENT, \`test_id\` int NOT NULL, \`question_id\` int NOT NULL, \`profile_id\` int NOT NULL, \`answer\` text NOT NULL, \`user_agent\` varchar(255) NOT NULL, \`ip\` varchar(45) NOT NULL, \`time_taken\` int NOT NULL, \`copy_count\` int NOT NULL, \`paste_count\` int NOT NULL, \`right_click_count\` int NOT NULL, \`inactive_time\` int NOT NULL, \`is_correct\` tinyint NULL, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        }
+
+        // Check if questions table exists before creating it
+        const questionsTableExists = await queryRunner.query(`
+            SELECT COUNT(*) as count
+            FROM information_schema.tables
+            WHERE table_schema = DATABASE()
+            AND table_name = 'questions'
+        `);
+
+        if (questionsTableExists[0].count === 0) {
+            await queryRunner.query(`CREATE TABLE \`questions\` (\`id\` int NOT NULL AUTO_INCREMENT, \`question\` text NOT NULL, \`answer_type\` enum ('textarea', 'radiobutton', 'multiinput', 'multiTextInput') NOT NULL, \`answer_html\` text NOT NULL, \`correct\` text NOT NULL, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        }
+
+        // Check if questions_tests table exists before creating it
+        const questionsTestsTableExists = await queryRunner.query(`
+            SELECT COUNT(*) as count
+            FROM information_schema.tables
+            WHERE table_schema = DATABASE()
+            AND table_name = 'questions_tests'
+        `);
+
+        if (questionsTestsTableExists[0].count === 0) {
+            await queryRunner.query(`CREATE TABLE \`questions_tests\` (\`question_id\` int NOT NULL, \`test_id\` int NOT NULL, \`priority\` int NOT NULL, PRIMARY KEY (\`question_id\`, \`test_id\`)) ENGINE=InnoDB`);
+        }
         await queryRunner.query(`ALTER TABLE \`profiles\` CHANGE \`createdAt\` \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)`);
         await queryRunner.query(`ALTER TABLE \`profiles\` CHANGE \`updatedAt\` \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)`);
         await queryRunner.query(`ALTER TABLE \`profiles\` ADD UNIQUE INDEX \`IDX_629be5336319558dc34e55d8ab\` (\`link\`)`);
