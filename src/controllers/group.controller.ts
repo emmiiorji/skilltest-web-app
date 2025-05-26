@@ -20,7 +20,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       test_ids: string;
     }[] = await dataSource.query(`
       -- We start with the main 'groups' table to get basic group info.
-      SELECT 
+      SELECT
         g.id,
         g.name,
         g.createdAt,
@@ -31,7 +31,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
         -- We use GROUP_CONCAT to concatenate countries and test IDs, as STRING_AGG is not available in MySQL 5.7.
         COALESCE(
           (SELECT GROUP_CONCAT(DISTINCT p.country ORDER BY p.country SEPARATOR ', ')
-           FROM profiles p
+           FROM profile p
            JOIN profiles_groups pg ON p.id = pg.profileId
            WHERE pg.groupId = g.id),
           ''
@@ -70,9 +70,9 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       return reply.status(200).send({ success: true, message: "Group created successfully" });
     } catch (error) {
       console.error("Error creating group:", error);
-      return reply.status(400).send({ 
-        success: false, 
-        message: error instanceof Error ? error.message : "An error occurred while creating the group" 
+      return reply.status(400).send({
+        success: false,
+        message: error instanceof Error ? error.message : "An error occurred while creating the group"
       });
     }
   });
@@ -125,7 +125,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       default:
         orderBy = 'completion_date DESC, correct_answers DESC';
     }
-    
+
     const dataSource = await connection();
     const testResults: {
       user_link_id: string;
@@ -139,7 +139,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       }>;
       completion_date: Date;
     }[] = await dataSource.query(`
-      SELECT 
+      SELECT
         -- Basic user information
         p.link AS user_link_id,
         p.name AS user_name,
@@ -166,7 +166,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
         ) AS question_details,
         -- The latest answer date, considered as the completion date
         MAX(ta.created_at) AS completion_date
-      FROM profiles p
+      FROM profile p
       -- Join to get all profiles in the specified group
       JOIN profiles_groups pg ON p.id = pg.profileId
       -- Join to get all answers for these profiles
@@ -209,7 +209,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       answer_details: string;
     }[] = await dataSource.query(`
       -- Start with selecting from the groups table
-      SELECT 
+      SELECT
           p.id AS profile_id,
           p.name AS profile_name,
           p.country,
@@ -232,11 +232,11 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
                   a.right_click_count, '::', -- Right-click count
                   a.inactive_time, "::", -- Inactive time
                   a.is_correct
-              ) 
+              )
               ORDER BY a.created_at DESC
               SEPARATOR '||'
           ) AS answer_details
-      FROM 
+      FROM
           groups g
       -- Join with profiles_groups to get all profiles in the group
       INNER JOIN profiles_groups pg ON g.id = pg.groupId
@@ -248,12 +248,12 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       LEFT JOIN questions q ON a.question_id = q.id
       -- Join with tests to get test details
       LEFT JOIN tests t ON a.test_id = t.id
-      WHERE 
+      WHERE
           g.id = ? -- Parameter for group ID
           ${test_id ? 'AND t.id = ?' : ''}
-      GROUP BY 
+      GROUP BY
           p.id
-      ORDER BY 
+      ORDER BY
           last_answer_date DESC
     `, test_id ? [group_id, test_id] : [group_id]);
 

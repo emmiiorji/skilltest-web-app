@@ -76,7 +76,7 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
         q.correct
       FROM answers a
       JOIN questions q ON a.question_id = q.id
-      WHERE a.profile_id = (SELECT id FROM profiles WHERE link = ?)
+      WHERE a.profile_id = (SELECT id FROM profile WHERE link = ?)
       AND a.test_id = ?
       ORDER BY a.created_at ASC
     `, [userLinkId, test_id]);

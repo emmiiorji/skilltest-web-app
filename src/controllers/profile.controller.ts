@@ -52,7 +52,7 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         p.lastActivity,
         p.url,
         p.link
-      FROM profiles p
+      FROM profile p
       WHERE p.link = ?
     `, [profileLinkId]);
 
