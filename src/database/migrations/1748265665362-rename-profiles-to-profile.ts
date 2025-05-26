@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class RenameProfilesToProfile1748155900000 implements MigrationInterface {
-    name = 'RenameProfilesToProfile1748155900000'
+export class RenameProilesToProfile1748265665362 implements MigrationInterface {
+    name = 'RenameProilesToProfile1748265665362'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         console.log('=== Rename Profiles to Profile Migration ===');
