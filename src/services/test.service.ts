@@ -46,7 +46,7 @@ class TestService {
 
   async getTestById(id: number): Promise<Test | null> {
     const dataSource = await connection();
-    return dataSource.getRepository(Test).findOne({ where: { id }, relations: ['groups', 'profiles'] });
+    return dataSource.getRepository(Test).findOne({ where: { id } });
   }
 
   async linkUserAndGroupToTest(profileId: number, groupId: number, test: Test) {
