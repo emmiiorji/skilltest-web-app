@@ -34,6 +34,7 @@ class ProfileService {
 		const profile = profileRepository.create({
 			link: userLinkId,
 			name: `User ${userLinkId}`,
+			groups: [] // Initialize empty groups array
 		});
 		return await profileRepository.save(profile);
 	}

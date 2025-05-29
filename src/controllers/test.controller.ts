@@ -8,11 +8,11 @@ import { testService } from '../services/test.service';
 
 export function testController(app: FastifyInstance, opts: any, done: () => void) {
   app.get('/getlink', async (request, reply) => {
-    let { 
-      group: group_id, 
-      user: userLinkId, 
-      test: test_id, 
-      template: template_id 
+    let {
+      group: group_id,
+      user: userLinkId,
+      test: test_id,
+      template: template_id
     } = await z.object({
       group: z.coerce.number(),
       user: z.string(),
@@ -49,26 +49,24 @@ export function testController(app: FastifyInstance, opts: any, done: () => void
         throw new Error('Test not found');
       }
 
-      // Check if group and user exist
-      let [user] = await Promise.all([
+      // Get or create user and group in parallel
+      const [user, _group] = await Promise.all([
         profileService.getProfileByLinkId(userLinkId)
           .then(user => user ?? profileService.createProfileByLinkId(userLinkId)),
         groupService.getGroupById(group_id)
-          .then(group => group ?? groupService.createGroup({ id: group_id })), 
+          .then(group => group ?? groupService.createGroup({ id: group_id }))
       ]);
 
-      user = (await profileService.getProfileByLinkId(userLinkId))!;
-
-      // If the user is not in the group, add relation with the group.
-      if(user.groups.every(group => group.id !== group_id)) {
-        profileService.updateProfile(user, group_id)
+      // If the user is not in the group, add relation with the group
+      if (user.groups.every(group => group.id !== group_id)) {
+        await profileService.updateProfile(user, group_id);
       }
 
-      // Linking the user to the test and getting the templates
-      const [ idTemplate, firstTemplate ] = await Promise.all ([
+      // Link user to test and get templates in parallel
+      const [idTemplate, firstTemplate] = await Promise.all([
         template_id ? templateService.getTemplateById(template_id) : null,
         templateService.getFirstTemplate(),
-        testService.linkUserAndGroupToTest(user!.id, group_id, test),
+        testService.linkUserAndGroupToTest(user.id, group_id, test)
       ]);
 
       if (!(idTemplate || firstTemplate)) {
@@ -78,12 +76,12 @@ export function testController(app: FastifyInstance, opts: any, done: () => void
       let attendUrl = `${env.URL}/test/attend?user=${userLinkId}&test=${test_id}`;
       attendUrl = `<a href=${attendUrl} target="_blank">${attendUrl}</a>`;
 
-      let renderedTemplate = idTemplate 
-        ? idTemplate.template.replaceAll('{url}', attendUrl) 
+      let renderedTemplate = idTemplate
+        ? idTemplate.template.replaceAll('{url}', attendUrl)
         : firstTemplate!.template.replaceAll('{url}', attendUrl);
 
       renderedTemplate = renderedTemplate.replaceAll('{link}', attendUrl);
-      
+
       return reply.type('text/html').send(renderedTemplate);
     } catch (error) {
       request.log.error(error, "Error processing getlink request");

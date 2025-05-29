@@ -51,14 +51,39 @@ class TestService {
 
   async linkUserAndGroupToTest(profileId: number, groupId: number, test: Test) {
     const dataSource = await connection();
-    return Promise.all([
-      test.profiles?.some(profile => profile.id === profileId)
-        ? test
-        : dataSource.createQueryBuilder().relation(Test, 'profiles').of(test.id).add(profileId),
-      test.groups?.some(group => group.id === groupId)
-        ? test
-        : dataSource.createQueryBuilder().relation(Test, 'groups').of(test.id).add(groupId)
+
+    // Check if relationships already exist by querying the database
+    const [existingProfileRelation, existingGroupRelation] = await Promise.all([
+      dataSource.query(
+        'SELECT 1 FROM tests_profiles WHERE testId = ? AND profileId = ? LIMIT 1',
+        [test.id, profileId]
+      ),
+      dataSource.query(
+        'SELECT 1 FROM tests_groups WHERE testId = ? AND groupId = ? LIMIT 1',
+        [test.id, groupId]
+      )
     ]);
+
+    // Only add relationships that don't already exist
+    const operations = [];
+
+    if (existingProfileRelation.length === 0) {
+      operations.push(
+        dataSource.createQueryBuilder().relation(Test, 'profiles').of(test.id).add(profileId)
+      );
+    }
+
+    if (existingGroupRelation.length === 0) {
+      operations.push(
+        dataSource.createQueryBuilder().relation(Test, 'groups').of(test.id).add(groupId)
+      );
+    }
+
+    if (operations.length > 0) {
+      return Promise.all(operations);
+    }
+
+    return test;
   }
 
   async isTestAssignedToUser({linkId, testId}:{linkId: string, testId: number}) {
