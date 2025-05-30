@@ -90,11 +90,11 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
 
     const test = await testService.getTestById(test_id);
 
-    return reply.view('test/attend', { 
-      title: 'Take Test', 
-      user_id: profile.id, 
+    return reply.view('test/attend', {
+      title: 'Take Test',
+      user_id: profile.id,
       userLinkId,
-      test_id, 
+      test_id,
       url: request.url,
       question: pendingQuestion.question,
       question_id: pendingQuestion.id,
@@ -106,7 +106,7 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
   });
 
   app.post('/attend', async (
-    request: FastifyRequest<{ 
+    request: FastifyRequest<{
       Body: { hashed_payload: string },
       Querystring: { user: string; test: string }
     }>,
@@ -126,7 +126,7 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
     }
 
     const encryptionKey = `${profile.id}${env.RESULT_SALT}`;
-    
+
     let decryptedPayload;
     try {
       decryptedPayload = decryptPayload(request.body.hashed_payload, encryptionKey);
@@ -135,18 +135,73 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
       return reply.status(400).send({ error: 'Invalid payload' });
     };
 
-    const { correct: correctAnswer } = await questionRepo.findOneOrFail({ 
+    const { correct: correctAnswer } = await questionRepo.findOneOrFail({
       select: ['correct'],
-      where: { id: decryptedPayload.question_id } 
+      where: { id: decryptedPayload.question_id }
     });
 
     const is_correct = checkAnswerCorrectness(decryptedPayload.answer, correctAnswer);
-    
+
     if (Array.isArray(decryptedPayload.answer)) {
       decryptedPayload.answer = JSON.stringify(decryptedPayload.answer);
     }
 
-    const validatedAnswer = AnswerSchema.parse({ ...decryptedPayload });
+    // Validate and sanitize tracking data - only process fields that are present
+    const sanitizeTrackingData = (data: any) => {
+      if (!data || typeof data !== 'object') return {};
+
+      // Limit array sizes for performance
+      const limitArray = (arr: any[], limit = 1000) =>
+        Array.isArray(arr) ? arr.slice(0, limit) : [];
+
+      const sanitized: any = {};
+
+      // Only include fields that are present in the payload (enabled tracking)
+      if (data.focus_lost_events !== undefined) {
+        sanitized.focus_lost_events = limitArray(data.focus_lost_events);
+      }
+
+      if (data.clipboard_events !== undefined) {
+        sanitized.clipboard_events = limitArray(data.clipboard_events);
+      }
+
+      if (data.answer_change_events !== undefined) {
+        sanitized.answer_change_events = limitArray(data.answer_change_events);
+      }
+
+      if (data.mouse_click_events !== undefined) {
+        sanitized.mouse_click_events = limitArray(data.mouse_click_events);
+      }
+
+      if (data.keyboard_press_events !== undefined) {
+        sanitized.keyboard_press_events = limitArray(data.keyboard_press_events);
+      }
+
+      if (data.device_fingerprint !== undefined) {
+        sanitized.device_fingerprint = typeof data.device_fingerprint === 'object' ? data.device_fingerprint : {};
+      }
+
+      if (data.device_type !== undefined) {
+        sanitized.device_type = ['desktop', 'mobile', 'tablet'].includes(data.device_type) ? data.device_type : 'desktop';
+      }
+
+      if (data.pre_submit_delay !== undefined) {
+        sanitized.pre_submit_delay = typeof data.pre_submit_delay === 'number' ? Math.max(0, data.pre_submit_delay) : 0;
+      }
+
+      if (data.time_to_first_interaction !== undefined) {
+        sanitized.time_to_first_interaction = typeof data.time_to_first_interaction === 'number' ? Math.max(0, data.time_to_first_interaction) : 0;
+      }
+
+      return sanitized;
+    };
+
+    const trackingData = sanitizeTrackingData(decryptedPayload);
+
+    const validatedAnswer = AnswerSchema.parse({
+      ...decryptedPayload,
+      ...trackingData
+    });
 
     const newAnswer = answerRepo.create({
       is_correct,

@@ -60,19 +60,33 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
     if (!profile) {
       return reply.status(404).send({ error: 'Profile not found' });
     }
-    
+
     // Use the first group associated with the profile
     if (!profile.groups || profile.groups.length < 1 || !profile.groups[0]) {
       return reply.status(400).send({ error: 'Profile has no associated group' });
     }
-    
+
     const group_id = profile.groups[0].id;
 
-    // Create test with the profile's group
+    // Filter tracking config to only include disabled features (true values)
+    const filterTrackingConfig = (config: TrackingConfig): TrackingConfig => {
+      if (!config || typeof config !== 'object') return {};
+
+      const filtered: TrackingConfig = {};
+      Object.keys(config).forEach(key => {
+        const typedKey = key as keyof TrackingConfig;
+        if (config[typedKey] === true) {
+          filtered[typedKey] = true;
+        }
+      });
+      return filtered;
+    };
+
+    // Create test with the profile's group and filtered tracking config
     const test = await testService.createTest({
       group_id,
       profile_id: profile.id,
-      tracking_config,
+      tracking_config: filterTrackingConfig(tracking_config),
       test_name
     });
 

@@ -86,3 +86,40 @@ export interface TrackingConfig {
     disablePreSubmitDelay?: boolean;
     disableTimeToFirstInteraction?: boolean;
 }
+
+/**
+ * Base test summary statistics
+ */
+export interface BaseSummary {
+    total_questions: number;
+    total_time: number;
+    total_inactive_time: number;
+    average_time_per_question: number;
+    // Optional tracking metrics (only included if tracked)
+    total_focus_lost_count?: number;
+    total_focus_lost_duration?: number;
+}
+
+/**
+ * Math test summary statistics for AI export
+ */
+export interface MathTestSummary extends BaseSummary {
+    correct_answers: number;
+    score_percentage: number;
+    total_copy_actions: number;
+    total_paste_actions: number;
+    total_right_click_actions: number;
+    total_answer_changes?: number;
+    questions_without_changes?: number;
+    questions_with_multiple_attempts?: number;
+    total_mouse_clicks?: number;
+    total_keyboard_presses?: number;
+}
+
+/**
+ * JavaScript test summary statistics for AI export
+ */
+export interface JavaScriptTestSummary extends BaseSummary {
+    average_answer_length: number;
+    average_word_count: number;
+}
