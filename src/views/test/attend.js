@@ -28,7 +28,6 @@ const startScript = () => {
 
   // Get tracking config (fix variable shadowing)
   const config = window.trackingConfig || {};
-  console.log('Tracking Configuration', config);
 
   // Determine what to track (with browser support checks)
   const shouldTrack = {
@@ -570,7 +569,6 @@ const startScript = () => {
       return btoa(result);
     };
 
-    console.log(Object.keys('Tracked Properties', payload));
     const encryptedPayload = encryptPayload(payload, encryptionKey);
 
     try {
