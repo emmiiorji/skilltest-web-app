@@ -46,6 +46,10 @@ export const AnswerSchema = z.object({
     right_click_count: z.coerce.number().int().nonnegative(),
     inactive_time: z.coerce.number().int().nonnegative(),
 
+    // Timestamp fields
+    start_time: z.string().optional().transform((val) => val ? new Date(val) : null),
+    submit_time: z.string().optional().transform((val) => val ? new Date(val) : null),
+
     // New tracking fields - all optional and only validated if present
     focus_lost_events: z.array(FocusLostEventSchema).optional(),
     clipboard_events: z.array(ClipboardEventSchema).optional(),

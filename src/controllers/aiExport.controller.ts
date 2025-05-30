@@ -93,7 +93,7 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
 
     // Format questions data - only include tracking fields that were actually tracked
     const questions = answers.map((a: Answer) => {
-      const correctAnswersArray = convertAnswerToArray(a.correct);
+      const correctAnswersArray = convertAnswerToArray(a.correct || '');
       const correctAnswer = correctAnswersArray.join(' OR ');
 
       const questionData: any = {
@@ -106,7 +106,9 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
         inactive_time: a.inactive_time,
         copy_count: a.copy_count,
         paste_count: a.paste_count,
-        right_click_count: a.right_click_count
+        right_click_count: a.right_click_count,
+        start_time: a.start_time,
+        submit_time: a.submit_time
       };
 
       // Only include tracking fields that have data (were enabled during test)
@@ -188,6 +190,7 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
       test: {
         id: test[0].id,
         name: test[0].name,
+        created_at: test[0].createdAt,
         completed_at: test[0].createdAt
       },
       device_info: deviceInfo,
@@ -297,7 +300,9 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
         time_taken: a.time_taken,
         inactive_time: a.inactive_time,
         answer_length: a.answer.length,
-        word_count: a.answer.split(/\s+/).filter((word: string) => word.length > 0).length
+        word_count: a.answer.split(/\s+/).filter((word: string) => word.length > 0).length,
+        start_time: a.start_time,
+        submit_time: a.submit_time
       };
 
       // Only include focus events if they were tracked
@@ -333,6 +338,7 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
       test: {
         id: test[0].id,
         name: test[0].name,
+        created_at: test[0].createdAt,
         completed_at: test[0].createdAt
       },
       device_info: deviceInfo,

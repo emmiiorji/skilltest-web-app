@@ -519,6 +519,10 @@ const startScript = () => {
       right_click_count: rightClickCount,
       inactive_time: Math.round(inactiveTime / 1000),
 
+      // Timestamps
+      start_time: new Date(startTime).toISOString(),
+      submit_time: new Date().toISOString(),
+
       // Device type is always included
       device_type: deviceType
     };

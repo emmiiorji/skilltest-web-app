@@ -57,7 +57,7 @@ export interface Answer {
     question_id: number;
     question: string;
     answer: string;
-    correct: string;
+    correct?: string;
     is_correct: boolean;
     time_taken: number;
     inactive_time: number;
@@ -66,6 +66,8 @@ export interface Answer {
     copy_count: number;
     paste_count: number;
     right_click_count: number;
+    start_time?: Date | string | null;
+    submit_time?: Date | string | null;
     clipboard_events?: ClipboardEvent[];
     answer_change_events?: AnswerChangeEvent[];
     focus_lost_events?: FocusLostEvent[];

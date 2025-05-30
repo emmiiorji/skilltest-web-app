@@ -81,6 +81,12 @@ export class Answer implements AnswerInput {
     @UpdateDateColumn()
     updated_at: Date;
 
+    @Column({ type: "datetime", nullable: true })
+    start_time: Date | null;
+
+    @Column({ type: "datetime", nullable: true })
+    submit_time: Date | null;
+
     @Column("json", { default: [] })
     focus_lost_events: FocusLostEvent[];
 
