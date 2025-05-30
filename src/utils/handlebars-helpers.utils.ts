@@ -60,8 +60,8 @@ export function registerHandlebarsHelpers() {
 
   Handlebars.registerHelper('formatTimestamp', function(timestamp) {
     if (!timestamp) return '0';
-    // Convert milliseconds timestamp to seconds
-    return (timestamp / 1000).toFixed(1);
+    // convert to Date
+    return new Date(timestamp);
   });
 
   Handlebars.registerHelper('json', function(obj) {
