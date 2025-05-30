@@ -46,15 +46,16 @@ export const AnswerSchema = z.object({
     right_click_count: z.coerce.number().int().nonnegative(),
     inactive_time: z.coerce.number().int().nonnegative(),
 
-    focus_lost_events: z.array(FocusLostEventSchema).optional().default([]),
-    clipboard_events: z.array(ClipboardEventSchema).optional().default([]),
-    pre_submit_delay: z.number().optional().default(0),
-    answer_change_events: z.array(AnswerChangeEventSchema).optional().default([]),
-    device_fingerprint: z.object({}).passthrough().optional().default({}),
+    // New tracking fields - all optional and only validated if present
+    focus_lost_events: z.array(FocusLostEventSchema).optional(),
+    clipboard_events: z.array(ClipboardEventSchema).optional(),
+    pre_submit_delay: z.number().optional(),
+    answer_change_events: z.array(AnswerChangeEventSchema).optional(),
+    device_fingerprint: z.object({}).passthrough().optional(),
     device_type: z.enum(["desktop", "mobile", "tablet"]).optional().default("desktop"),
-    time_to_first_interaction: z.number().optional().default(0),
-    mouse_click_events: z.array(MouseClickEventSchema).optional().default([]),
-    keyboard_press_events: z.array(KeyboardPressEventSchema).optional().default([])
+    time_to_first_interaction: z.number().optional(),
+    mouse_click_events: z.array(MouseClickEventSchema).optional(),
+    keyboard_press_events: z.array(KeyboardPressEventSchema).optional()
 });
 
 export type AnswerInput = z.infer<typeof AnswerSchema>;

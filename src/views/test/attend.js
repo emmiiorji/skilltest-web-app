@@ -1,4 +1,15 @@
 const startScript = () => {
+  // Browser compatibility checks
+  const browserSupport = {
+    visibilityAPI: typeof document.hidden !== 'undefined',
+    clipboardAPI: typeof navigator.clipboard !== 'undefined',
+    deviceMemory: typeof navigator.deviceMemory !== 'undefined',
+    hardwareConcurrency: typeof navigator.hardwareConcurrency !== 'undefined',
+    webGL: !!window.WebGLRenderingContext,
+    audioContext: !!(window.AudioContext || window.webkitAudioContext),
+    intl: typeof Intl !== 'undefined'
+  };
+
   // Existing variables
   const startTime = Date.now();
   let lastActiveTime = startTime;
@@ -17,10 +28,11 @@ const startScript = () => {
 
   // Get tracking config (fix variable shadowing)
   const config = window.trackingConfig || {};
+  console.log('Tracking Configuration', config);
 
-  // Determine what to track
+  // Determine what to track (with browser support checks)
   const shouldTrack = {
-    focusLost: !config.disableFocusLostEvents,
+    focusLost: !config.disableFocusLostEvents && browserSupport.visibilityAPI,
     clipboard: !config.disableClipboardEvents,
     preSubmitDelay: !config.disablePreSubmitDelay,
     answerChanges: !config.disableAnswerChangeEvents,
@@ -47,11 +59,11 @@ const startScript = () => {
   };
   deviceType = detectDeviceType();
 
-  // Focus tracking
+  // Focus tracking - only initialize if enabled
   if (shouldTrack.focusLost) {
     let focusLostStart = null;
 
-    document.addEventListener('visibilitychange', () => {
+    const handleVisibilityChange = () => {
       if (document.hidden) {
         focusLostStart = Date.now();
       } else if (focusLostStart) {
@@ -61,15 +73,15 @@ const startScript = () => {
         });
         focusLostStart = null;
       }
-    });
+    };
 
-    window.addEventListener('blur', () => {
+    const handleWindowBlur = () => {
       if (!focusLostStart) {
         focusLostStart = Date.now();
       }
-    });
+    };
 
-    window.addEventListener('focus', () => {
+    const handleWindowFocus = () => {
       if (focusLostStart) {
         focusLostEvents.push({
           timestamp: focusLostStart,
@@ -77,40 +89,59 @@ const startScript = () => {
         });
         focusLostStart = null;
       }
-    });
+    };
+
+    // Only add event listeners if focus tracking is enabled
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('focus', handleWindowFocus);
   }
 
-  // Clipboard tracking with content
+  // Clipboard tracking - only initialize if enabled
   if (shouldTrack.clipboard) {
-    document.addEventListener('copy', (e) => {
-      const selection = window.getSelection().toString();
-      clipboardEvents.push({
-        timestamp: Date.now(),
-        type: 'copy',
-        content: selection.substring(0, 100) // Limit to 100 chars
-      });
-    });
+    const handleCopy = () => {
+      const selection = window.getSelection().toString().trim();
+      // Only record if there's actual content being copied
+      if (selection.length > 0) {
+        clipboardEvents.push({
+          timestamp: Date.now(),
+          type: 'copy',
+          content: selection.substring(0, 100) // Limit to 100 chars
+        });
+      }
+    };
 
-    document.addEventListener('paste', (e) => {
-      const content = e.clipboardData?.getData('text/plain') || '';
-      clipboardEvents.push({
-        timestamp: Date.now(),
-        type: 'paste',
-        content: content.substring(0, 100) // Limit to 100 chars
-      });
-    });
+    const handlePaste = (e) => {
+      const content = (e.clipboardData?.getData('text/plain') || '').trim();
+      // Only record if there's actual content being pasted
+      if (content.length > 0) {
+        clipboardEvents.push({
+          timestamp: Date.now(),
+          type: 'paste',
+          content: content.substring(0, 100) // Limit to 100 chars
+        });
+      }
+    };
 
-    document.addEventListener('cut', (e) => {
-      const selection = window.getSelection().toString();
-      clipboardEvents.push({
-        timestamp: Date.now(),
-        type: 'cut',
-        content: selection.substring(0, 100)
-      });
-    });
+    const handleCut = () => {
+      const selection = window.getSelection().toString().trim();
+      // Only record if there's actual content being cut
+      if (selection.length > 0) {
+        clipboardEvents.push({
+          timestamp: Date.now(),
+          type: 'cut',
+          content: selection.substring(0, 100)
+        });
+      }
+    };
+
+    // Only add event listeners if clipboard tracking is enabled
+    document.addEventListener('copy', handleCopy);
+    document.addEventListener('paste', handlePaste);
+    document.addEventListener('cut', handleCut);
   }
 
-  // Answer change tracking
+  // Answer change tracking - only initialize if enabled
   if (shouldTrack.answerChanges) {
     const trackAnswerChange = (input, previousValue, newValue) => {
       const questionId = document.querySelector('input[name="question_id"]').value;
@@ -124,26 +155,30 @@ const startScript = () => {
       lastAnswerChangeTime = Date.now();
     };
 
-    // Track all inputs
-    document.addEventListener('input', (e) => {
-      if (e.target.name === 'answer' || e.target.name?.startsWith('answer-')) {
+    const handleTextInput = (e) => {
+      if ((e.target.name === 'answer' || e.target.name?.startsWith('answer-')) &&
+          e.target.type !== 'radio' && e.target.type !== 'checkbox') {
         const previousValue = e.target.dataset.previousValue || '';
         trackAnswerChange(e.target, previousValue, e.target.value);
         e.target.dataset.previousValue = e.target.value;
       }
-    });
+    };
 
-    // Track radio/checkbox changes
-    document.addEventListener('change', (e) => {
-      if (e.target.type === 'radio' || e.target.type === 'checkbox') {
+    const handleRadioCheckboxChange = (e) => {
+      if ((e.target.type === 'radio' || e.target.type === 'checkbox') &&
+          (e.target.name === 'answer' || e.target.name?.startsWith('answer-'))) {
         const previousValue = e.target.dataset.previousValue || '';
         trackAnswerChange(e.target, previousValue, e.target.value);
         e.target.dataset.previousValue = e.target.value;
       }
-    });
+    };
+
+    // Only add event listeners if answer change tracking is enabled
+    document.addEventListener('input', handleTextInput);
+    document.addEventListener('change', handleRadioCheckboxChange);
   }
 
-  // Mouse click tracking
+  // Mouse click tracking - only initialize if enabled
   if (shouldTrack.mouseClicks) {
     const throttle = (func, limit) => {
       let inThrottle;
@@ -158,7 +193,7 @@ const startScript = () => {
       }
     };
 
-    const trackClick = throttle((e) => {
+    const trackClick = (e) => {
       mouseClickEvents.push({
         timestamp: Date.now(),
         button: e.button === 0 ? 'left' : e.button === 2 ? 'right' : 'middle',
@@ -166,13 +201,16 @@ const startScript = () => {
         y: e.clientY,
         target: e.target.tagName + (e.target.id ? '#' + e.target.id : '')
       });
-    }, 100); // Max 10 per second
+    };
 
-    document.addEventListener('click', trackClick);
-    document.addEventListener('contextmenu', trackClick);
+    const throttledTrackClick = throttle(trackClick, 100); // Max 10 per second
+
+    // Only add event listeners if mouse click tracking is enabled
+    document.addEventListener('click', throttledTrackClick);
+    document.addEventListener('contextmenu', throttledTrackClick);
   }
 
-  // Keyboard tracking
+  // Keyboard tracking - only initialize if enabled
   if (shouldTrack.keyboardPresses) {
     const throttle = (func, limit) => {
       let inThrottle;
@@ -187,7 +225,7 @@ const startScript = () => {
       }
     };
 
-    const trackKeypress = throttle((e) => {
+    const trackKeypress = (e) => {
       let keyType = 'other';
 
       if (e.key.match(/^[a-zA-Z]$/)) keyType = 'letter';
@@ -202,12 +240,15 @@ const startScript = () => {
         timestamp: Date.now(),
         keyType: keyType
       });
-    }, 100); // Max 10 per second
+    };
 
-    document.addEventListener('keydown', trackKeypress);
+    const throttledTrackKeypress = throttle(trackKeypress, 100); // Max 10 per second
+
+    // Only add event listener if keyboard tracking is enabled
+    document.addEventListener('keydown', throttledTrackKeypress);
   }
 
-  // Time to first interaction
+  // Time to first interaction - only initialize if enabled
   if (shouldTrack.timeToFirstInteraction) {
     const recordFirstInteraction = () => {
       if (!firstInteractionTime) {
@@ -219,6 +260,7 @@ const startScript = () => {
       }
     };
 
+    // Only add event listeners if time to first interaction tracking is enabled
     document.addEventListener('click', recordFirstInteraction);
     document.addEventListener('keydown', recordFirstInteraction);
     document.addEventListener('input', recordFirstInteraction);
@@ -226,41 +268,170 @@ const startScript = () => {
 
   // Device fingerprint
   if (shouldTrack.deviceFingerprint) {
-    // Basic fingerprint without library
-    const getBasicFingerprint = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      ctx.textBaseline = 'top';
-      ctx.font = '14px Arial';
-      ctx.fillText('fingerprint', 2, 2);
-      const canvasData = canvas.toDataURL();
+    // Comprehensive device fingerprinting
+    const getComprehensiveFingerprint = async () => {
+      const fingerprint = {};
 
-      return {
-        os: navigator.platform,
-        browser: navigator.userAgent.match(/(Chrome|Firefox|Safari|Edge)\/[\d.]+/)?.[0] || 'Unknown',
-        screenResolution: `${screen.width}x${screen.height}`,
-        colorDepth: screen.colorDepth,
-        deviceMemory: navigator.deviceMemory || 'unknown',
-        hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        language: navigator.language,
-        platform: navigator.platform,
-        cookieEnabled: navigator.cookieEnabled,
-        canvasFingerprint: canvasData.substring(0, 50) // Shortened
-      };
+      // Basic system info with modern API support
+      fingerprint.os = navigator.userAgentData?.platform || navigator.platform || 'unknown';
+      fingerprint.browser = navigator.userAgentData?.brands?.[0]?.brand ||
+                           navigator.userAgent.match(/(Chrome|Firefox|Safari|Edge)\/[\d.]+/)?.[0] || 'Unknown';
+      fingerprint.screenResolution = `${screen.width}x${screen.height}`;
+      fingerprint.colorDepth = screen.colorDepth;
+      fingerprint.deviceMemory = browserSupport.deviceMemory ? (navigator.deviceMemory || 'unknown') : 'unsupported';
+      fingerprint.hardwareConcurrency = browserSupport.hardwareConcurrency ? (navigator.hardwareConcurrency || 'unknown') : 'unsupported';
+      fingerprint.timezone = browserSupport.intl ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'unsupported';
+      fingerprint.language = navigator.language;
+      fingerprint.platform = navigator.userAgentData?.platform || navigator.platform || 'unknown';
+      fingerprint.cookieEnabled = navigator.cookieEnabled;
+
+      // Canvas fingerprint
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillText('Device fingerprint test 🔒', 2, 2);
+        fingerprint.canvasFingerprint = canvas.toDataURL().substring(0, 100);
+      } catch (e) {
+        fingerprint.canvasFingerprint = 'unavailable';
+      }
+
+      // WebGL fingerprint
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (gl) {
+          const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+          fingerprint.webglVendor = debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'unknown';
+          fingerprint.webglRenderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'unknown';
+          fingerprint.gpu = fingerprint.webglRenderer;
+        } else {
+          fingerprint.webglVendor = 'unavailable';
+          fingerprint.webglRenderer = 'unavailable';
+          fingerprint.gpu = 'unavailable';
+        }
+      } catch (e) {
+        fingerprint.webglVendor = 'error';
+        fingerprint.webglRenderer = 'error';
+        fingerprint.gpu = 'error';
+      }
+
+      // Audio context fingerprint with browser compatibility
+      if (browserSupport.audioContext) {
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          const audioContext = new AudioContextClass();
+          const oscillator = audioContext.createOscillator();
+          const analyser = audioContext.createAnalyser();
+          const gainNode = audioContext.createGain();
+
+          oscillator.type = 'triangle';
+          oscillator.frequency.setValueAtTime(10000, audioContext.currentTime);
+
+          gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+          oscillator.connect(analyser);
+          analyser.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+
+          oscillator.start(0);
+
+          // Use a timeout to allow audio processing
+          setTimeout(() => {
+            const audioData = new Float32Array(analyser.frequencyBinCount);
+            analyser.getFloatFrequencyData(audioData);
+
+            let audioFingerprint = 0;
+            for (let i = 0; i < audioData.length; i++) {
+              audioFingerprint += Math.abs(audioData[i]);
+            }
+
+            fingerprint.audioFingerprint = audioFingerprint.toString();
+
+            oscillator.stop();
+            audioContext.close();
+          }, 100);
+        } catch (error) {
+          fingerprint.audioFingerprint = 'error';
+        }
+      } else {
+        fingerprint.audioFingerprint = 'unsupported';
+      }
+
+      // Available fonts detection
+      try {
+        const baseFonts = ['monospace', 'sans-serif', 'serif'];
+        const testFonts = [
+          'Arial', 'Arial Black', 'Arial Narrow', 'Arial Rounded MT Bold',
+          'Calibri', 'Cambria', 'Comic Sans MS', 'Consolas', 'Courier',
+          'Courier New', 'Georgia', 'Helvetica', 'Impact', 'Lucida Console',
+          'Lucida Sans Unicode', 'Microsoft Sans Serif', 'MS Gothic',
+          'MS PGothic', 'MS Sans Serif', 'MS Serif', 'Palatino Linotype',
+          'Segoe UI', 'Tahoma', 'Times', 'Times New Roman', 'Trebuchet MS',
+          'Verdana', 'Wingdings'
+        ];
+
+        const testString = 'mmmmmmmmmmlli';
+        const testSize = '72px';
+        const h = document.getElementsByTagName('body')[0];
+
+        const s = document.createElement('span');
+        s.style.fontSize = testSize;
+        s.innerHTML = testString;
+        const defaultWidths = {};
+        const defaultHeights = {};
+
+        for (let i = 0; i < baseFonts.length; i++) {
+          s.style.fontFamily = baseFonts[i];
+          h.appendChild(s);
+          defaultWidths[baseFonts[i]] = s.offsetWidth;
+          defaultHeights[baseFonts[i]] = s.offsetHeight;
+          h.removeChild(s);
+        }
+
+        const availableFonts = [];
+        for (let i = 0; i < testFonts.length; i++) {
+          let detected = false;
+          for (let j = 0; j < baseFonts.length; j++) {
+            s.style.fontFamily = testFonts[i] + ',' + baseFonts[j];
+            h.appendChild(s);
+            const matched = (s.offsetWidth !== defaultWidths[baseFonts[j]] ||
+                           s.offsetHeight !== defaultHeights[baseFonts[j]]);
+            h.removeChild(s);
+            detected = detected || matched;
+          }
+          if (detected) {
+            availableFonts.push(testFonts[i]);
+          }
+        }
+
+        fingerprint.fonts = availableFonts;
+      } catch (e) {
+        fingerprint.fonts = ['detection_failed'];
+      }
+
+      return fingerprint;
     };
 
-    // If FingerprintJS is available, use it
-    if (window.Fingerprint2) {
-      Fingerprint2.get((components) => {
-        deviceFingerprint = {
-          ...getBasicFingerprint(),
-          ...Object.fromEntries(components.map(c => [c.key, c.value]))
-        };
-      });
-    } else {
-      deviceFingerprint = getBasicFingerprint();
-    }
+    // Get comprehensive fingerprint
+    getComprehensiveFingerprint().then(fp => {
+      deviceFingerprint = fp;
+    }).catch(() => {
+      // Fallback to basic fingerprint with modern API support
+      deviceFingerprint = {
+        os: navigator.userAgentData?.platform || navigator.platform || 'unknown',
+        browser: navigator.userAgentData?.brands?.[0]?.brand ||
+                navigator.userAgent.match(/(Chrome|Firefox|Safari|Edge)\/[\d.]+/)?.[0] || 'Unknown',
+        screenResolution: `${screen.width}x${screen.height}`,
+        colorDepth: screen.colorDepth,
+        deviceMemory: browserSupport.deviceMemory ? (navigator.deviceMemory || 'unknown') : 'unsupported',
+        hardwareConcurrency: browserSupport.hardwareConcurrency ? (navigator.hardwareConcurrency || 'unknown') : 'unsupported',
+        timezone: browserSupport.intl ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'unsupported',
+        language: navigator.language,
+        platform: navigator.userAgentData?.platform || navigator.platform || 'unknown',
+        error: 'comprehensive_fingerprinting_failed'
+      };
+    });
   }
 
   // Original tracking variables (backward compatibility)
@@ -270,23 +441,30 @@ const startScript = () => {
   let rightClickCount = 0;
 
   // Original event tracking (keep for backward compatibility)
-  document.addEventListener('visibilitychange', () => {
+  const handleVisibilityChangeInactive = () => {
     if (document.hidden) {
       lastActiveTime = Date.now();
     } else {
       inactiveTime += Date.now() - lastActiveTime;
     }
-  });
+  };
+
+  // Always track inactive time for backward compatibility
+  document.addEventListener('visibilitychange', handleVisibilityChangeInactive);
 
   // Only track legacy clipboard events if clipboard tracking is enabled
   if (shouldTrack.clipboard) {
-    document.addEventListener('copy', () => copyCount++);
-    document.addEventListener('paste', () => pasteCount++);
+    const handleLegacyCopy = () => copyCount++;
+    const handleLegacyPaste = () => pasteCount++;
+
+    document.addEventListener('copy', handleLegacyCopy);
+    document.addEventListener('paste', handleLegacyPaste);
   }
 
   // Only track right-click if mouse tracking is enabled
   if (shouldTrack.mouseClicks) {
-    document.addEventListener('contextmenu', () => rightClickCount++);
+    const handleLegacyRightClick = () => rightClickCount++;
+    document.addEventListener('contextmenu', handleLegacyRightClick);
   }
 
   // Form submission
@@ -327,6 +505,7 @@ const startScript = () => {
     // Limit array sizes to prevent huge payloads
     const limitArray = (arr, limit = 1000) => arr.slice(0, limit);
 
+    // Build payload with only enabled metrics
     const payload = {
       test_id: testId,
       question_id: questionId,
@@ -335,23 +514,48 @@ const startScript = () => {
       time_taken: Math.round(timeTaken/1000),
       ip: ip,
 
-      // Original metrics
+      // Original metrics (always included for backward compatibility)
       copy_count: copyCount,
       paste_count: pasteCount,
       right_click_count: rightClickCount,
       inactive_time: Math.round(inactiveTime / 1000),
 
-      // New metrics (only if enabled)
-      focus_lost_events: shouldTrack.focusLost ? limitArray(focusLostEvents) : [],
-      clipboard_events: shouldTrack.clipboard ? limitArray(clipboardEvents) : [],
-      pre_submit_delay: shouldTrack.preSubmitDelay ? preSubmitDelay : 0,
-      answer_change_events: shouldTrack.answerChanges ? limitArray(answerChangeEvents) : [],
-      device_fingerprint: shouldTrack.deviceFingerprint ? deviceFingerprint : {},
-      device_type: deviceType, // Always include
-      time_to_first_interaction: shouldTrack.timeToFirstInteraction ? (firstInteractionTime ? firstInteractionTime / 1000 : 0) : 0,
-      mouse_click_events: shouldTrack.mouseClicks ? limitArray(mouseClickEvents) : [],
-      keyboard_press_events: shouldTrack.keyboardPresses ? limitArray(keyboardPressEvents) : []
+      // Device type is always included
+      device_type: deviceType
     };
+
+    // Only add enabled tracking metrics to payload
+    if (shouldTrack.focusLost) {
+      payload.focus_lost_events = limitArray(focusLostEvents);
+    }
+
+    if (shouldTrack.clipboard) {
+      payload.clipboard_events = limitArray(clipboardEvents);
+    }
+
+    if (shouldTrack.preSubmitDelay) {
+      payload.pre_submit_delay = preSubmitDelay;
+    }
+
+    if (shouldTrack.answerChanges) {
+      payload.answer_change_events = limitArray(answerChangeEvents);
+    }
+
+    if (shouldTrack.deviceFingerprint) {
+      payload.device_fingerprint = deviceFingerprint;
+    }
+
+    if (shouldTrack.timeToFirstInteraction) {
+      payload.time_to_first_interaction = firstInteractionTime ? firstInteractionTime / 1000 : 0;
+    }
+
+    if (shouldTrack.mouseClicks) {
+      payload.mouse_click_events = limitArray(mouseClickEvents);
+    }
+
+    if (shouldTrack.keyboardPresses) {
+      payload.keyboard_press_events = limitArray(keyboardPressEvents);
+    }
 
     const resultSalt = document.querySelector('input[name="result_salt"]')?.value;
     const encryptionKey = userId + resultSalt;
@@ -366,6 +570,7 @@ const startScript = () => {
       return btoa(result);
     };
 
+    console.log(Object.keys('Tracked Properties', payload));
     const encryptedPayload = encryptPayload(payload, encryptionKey);
 
     try {
