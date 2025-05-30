@@ -108,6 +108,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       // Redirect to the test result page with the default sort order
       return reply.redirect(`/admin/group/test_result?group_id=${groupId}&key=${key}&sort=date,pass${testId ? `&test_id=${testId}` : ''}`);
     } else {
+
       throw result.error;
     }
 
@@ -237,7 +238,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
               SEPARATOR '||'
           ) AS answer_details
       FROM
-          groups g
+          \`groups\` g
       -- Join with profiles_groups to get all profiles in the group
       INNER JOIN profiles_groups pg ON g.id = pg.groupId
       -- Join with profiles to get profile details
