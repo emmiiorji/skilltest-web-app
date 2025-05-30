@@ -241,5 +241,42 @@
     align-items: center;
     margin-bottom: 20px;
   }
-  // ... other existing styles ...
+
+  .export-icons {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 10px;
+    gap: 8px;
+  }
+
+  .export-icon {
+    cursor: pointer;
+    color: #007bff;
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+  }
+
+  .export-icon:hover {
+    color: #0056b3;
+  }
+
+  .export-icon.disabled {
+    color: #ccc !important;
+    cursor: not-allowed !important;
+  }
+
+  .snackbar {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #333;
+    color: white;
+    padding: 15px;
+    border-radius: 4px;
+    z-index: 1000;
+  }
 </style>

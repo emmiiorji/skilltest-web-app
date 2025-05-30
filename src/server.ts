@@ -57,10 +57,10 @@ server.register(fastifyHelmet, {
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'"], // Consider removing 'unsafe-inline' if possible
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
       imgSrc: ["'self'", "data:", "https://siteimages.b-cdn.net"],
       connectSrc: ["'self'", "https://api.ipify.org"],
-      fontSrc: ["'self'"],
+      fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"],

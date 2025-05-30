@@ -71,6 +71,7 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
       });
     }
 
+
     const pendingQuestion = await questionRepo.findOne({
       relations: ["questionTests"],
       where: {
