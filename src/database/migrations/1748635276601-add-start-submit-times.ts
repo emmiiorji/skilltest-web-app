@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class AddStartSubmitTimes1748277581566 implements MigrationInterface {
-    name = 'AddStartSubmitTimes1748277581566'
+export class AddStartSubmitTimes1748635276601 implements MigrationInterface {
+    name = 'AddStartSubmitTimes1748635276601'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         // Add start_time column to answers table

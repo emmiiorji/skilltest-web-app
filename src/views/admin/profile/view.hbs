@@ -626,7 +626,8 @@
                           <thead>
                             <tr>
                               <th>Time</th>
-                              <th>Key</th>
+                              <th>Key Type</th>
+                              <th>Key Pressed</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -634,6 +635,7 @@
                               <tr>
                                 <td>{{formatTimestamp this.timestamp}}s</td>
                                 <td>{{this.keyType}}</td>
+                                <td>{{this.key}}</td>
                               </tr>
                             {{/each}}
                           </tbody>

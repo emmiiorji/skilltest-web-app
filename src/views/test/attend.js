@@ -237,7 +237,8 @@ const startScript = () => {
 
       keyboardPressEvents.push({
         timestamp: Date.now(),
-        keyType: keyType
+        keyType: keyType,
+        key: e.key // Record the actual key pressed
       });
     };
 

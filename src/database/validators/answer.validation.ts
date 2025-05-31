@@ -31,7 +31,8 @@ const MouseClickEventSchema = z.object({
 
 const KeyboardPressEventSchema = z.object({
     timestamp: z.number(),
-    keyType: z.string()
+    keyType: z.string(),
+    key: z.string() // The actual key/letter pressed
 });
 
 export const AnswerSchema = z.object({

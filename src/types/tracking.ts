@@ -39,6 +39,7 @@ export interface MouseClickEvent {
 export interface KeyboardPressEvent {
     timestamp: number;
     keyType: string;
+    key: string; // The actual key/letter pressed (e.g., 'a', 'Enter', 'Shift')
 }
 
 /**
