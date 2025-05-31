@@ -63,8 +63,8 @@
       <div>Link ID</div> 
       <a href ="/admin/profile/view?id={{this.profile.linkId}}&key={{../key}}">{{this.profile.linkId}}</a>
       <span class="export-icons">
-        <i class="fas fa-clipboard export-icon" title="Copy JSON" data-user="{{this.profile.linkId}}" data-test="{{../testId}}"></i>
-        <i class="fas fa-download export-icon" title="Download JSON" data-user="{{this.profile.linkId}}" data-test="{{../testId}}"></i>
+        <i class="fas fa-clipboard export-icon" title="Copy JSON" data-user="{{this.profile.linkId}}" data-test="{{#if ../testId}}{{../testId}}{{else if this.answers.[0]}}{{this.answers.[0].testId}}{{/if}}" data-test-names="{{this.testNames}}"></i>
+        <i class="fas fa-download export-icon" title="Download JSON" data-user="{{this.profile.linkId}}" data-test="{{#if ../testId}}{{../testId}}{{else if this.answers.[0]}}{{this.answers.[0].testId}}{{/if}}" data-test-names="{{this.testNames}}"></i>
       </span>
     </div>
     <div class="profile-item">
@@ -122,20 +122,34 @@
       icon.addEventListener('click', async (e) => {
         const userId = e.target.dataset.user;
         const testId = e.target.dataset.test;
+        const testNames = e.target.dataset.testNames || '';
         const key = '{{key}}';
-        
+        console.log('Copy - userId:', userId, 'testId:', testId, 'testNames:', testNames);
+
+        console.log('Copy - userId:', userId, 'testId:', testId, 'testNames:', testNames);
+
+        if (!testId) {
+          alert('No test ID available for export');
+          return;
+        }
+
         try {
-          const response = await fetch(`/admin/test/export/js-json?user_id=${userId}&test_id=${testId}&key=${key}`);
+          // Determine if it's a math or JS test based on the test names
+          const endpoint = testNames.toLowerCase().includes('js') || testNames.toLowerCase().includes('javascript')
+            ? '/admin/test/export/js-json'
+            : '/admin/test/export/math-json';
+
+          const response = await fetch(`${endpoint}?user_id=${userId}&test_id=${testId}&key=${key}`);
           const json = await response.json();
-          
+
           await navigator.clipboard.writeText(JSON.stringify(json, null, 2));
-          
+
           // Show snackbar
           const snackbar = document.createElement('div');
           snackbar.className = 'snackbar';
           snackbar.textContent = 'JSON copied to clipboard';
           document.body.appendChild(snackbar);
-          
+
           setTimeout(() => snackbar.remove(), 3000);
         } catch (error) {
           alert('Error copying JSON: ' + error.message);
@@ -148,17 +162,31 @@
       icon.addEventListener('click', async (e) => {
         const userId = e.target.dataset.user;
         const testId = e.target.dataset.test;
+        const testNames = e.target.dataset.testNames || '';
         const key = '{{key}}';
-        
+
+        console.log('Download - userId:', userId, 'testId:', testId, 'testNames:', testNames);
+
+        if (!testId) {
+          alert('No test ID available for export');
+          return;
+        }
+
         try {
-          const response = await fetch(`/admin/test/export/js-json?user_id=${userId}&test_id=${testId}&key=${key}`);
+          // Determine if it's a math or JS test based on the test names
+          const endpoint = testNames.toLowerCase().includes('js') || testNames.toLowerCase().includes('javascript')
+            ? '/admin/test/export/js-json'
+            : '/admin/test/export/math-json';
+          const filePrefix = testNames.toLowerCase().includes('js') || testNames.toLowerCase().includes('javascript') ? 'js' : 'math';
+
+          const response = await fetch(`${endpoint}?user_id=${userId}&test_id=${testId}&key=${key}`);
           const json = await response.json();
-          
+
           const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `js-test-${userId}.json`;
+          a.download = `${filePrefix}-test-${userId}.json`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);

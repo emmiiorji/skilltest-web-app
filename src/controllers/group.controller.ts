@@ -137,8 +137,10 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       question_details: Array<{
         answer_string: string;
         isCorrect: boolean;
+        test_id: number;
       }>;
       completion_date: Date;
+      test_names: string;
     }[] = await dataSource.query(`
       SELECT
         -- Basic user information
@@ -162,16 +164,25 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
               ta.copy_count + ta.paste_count + ta.right_click_count,
               ')'
             ),
-            'isCorrect', ta.is_correct
+            'isCorrect', ta.is_correct,
+            'test_id', ta.test_id
           )
         ) AS question_details,
         -- The latest answer date, considered as the completion date
-        MAX(ta.created_at) AS completion_date
+        MAX(ta.created_at) AS completion_date,
+        -- Collect unique test names for each profile
+        GROUP_CONCAT(
+            DISTINCT t.name
+            ORDER BY t.name
+            SEPARATOR ', '
+        ) AS test_names
       FROM profile p
       -- Join to get all profiles in the specified group
       JOIN profiles_groups pg ON p.id = pg.profileId
       -- Join to get all answers for these profiles
       JOIN answers ta ON p.id = ta.profile_id
+      -- Join with tests to get test details
+      LEFT JOIN tests t ON ta.test_id = t.id
       -- Filter for the specific group
       WHERE pg.groupId = ?
       ${testId ? 'AND ta.test_id = ?' : ''}
@@ -208,6 +219,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       url: string | null;
       last_answer_date: Date;
       answer_details: string;
+      test_names: string;
     }[] = await dataSource.query(`
       -- Start with selecting from the groups table
       SELECT
@@ -236,7 +248,13 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
               )
               ORDER BY a.created_at DESC
               SEPARATOR '||'
-          ) AS answer_details
+          ) AS answer_details,
+          -- Collect unique test names for each profile
+          GROUP_CONCAT(
+              DISTINCT t.name
+              ORDER BY t.name
+              SEPARATOR ', '
+          ) AS test_names
       FROM
           \`groups\` g
       -- Join with profiles_groups to get all profiles in the group
@@ -269,6 +287,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
         lastAnswerDate: new Date(result.last_answer_date).toLocaleString(),
         url: result.url,
       },
+      testNames: result.test_names, // Add test names to the result
       answers: result.answer_details.split('||').map(answer => {
         const [id, testId, questionId, question, answerText, timeTaken, ctrlV, ctrlC, rightClick, inactive, isCorrect] = answer.split('::');
         return {
@@ -290,6 +309,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       detailedResults: processedResults,
       url: request.url,
       groupId: group_id,
+      testId: test_id, // Pass the test_id to the template
       key,
     });
   });

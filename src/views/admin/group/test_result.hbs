@@ -64,8 +64,8 @@
           <td data-label="User ID"><a href="/admin/profile/view?id={{this.user_link_id}}&key={{../key}}">{{this.user_link_id}}</a>
             <span class="export-icons">
               {{#if this.user_link_id}}
-                <i class="fas fa-clipboard export-icon" title="Copy JSON" data-user="{{this.user_link_id}}" data-test="{{../testId}}"></i>
-                <i class="fas fa-download export-icon" title="Download JSON" data-user="{{this.user_link_id}}" data-test="{{../testId}}"></i>
+                <i class="fas fa-clipboard export-icon" title="Copy JSON" data-user="{{this.user_link_id}}" data-test="{{#if ../testId}}{{../testId}}{{else if this.question_details.[0]}}{{this.question_details.[0].test_id}}{{/if}}" data-test-names="{{this.test_names}}"></i>
+                <i class="fas fa-download export-icon" title="Download JSON" data-user="{{this.user_link_id}}" data-test="{{#if ../testId}}{{../testId}}{{else if this.question_details.[0]}}{{this.question_details.[0].test_id}}{{/if}}" data-test-names="{{this.test_names}}"></i>
               {{else}}
                 <span title="User ID is missing, cannot export data">
                   <i class="fas fa-clipboard export-icon disabled" style="color: #ccc; cursor: not-allowed;"></i>
@@ -163,9 +163,12 @@
       icon.addEventListener('click', async (e) => {
         const userId = e.target.dataset.user;
         const testId = e.target.dataset.test;
+        const testNames = e.target.dataset.testNames || '';
         // Get the key from URL if available, otherwise use the template variable
         const urlParams = new URLSearchParams(window.location.search);
         const key = urlParams.get('key') || '{{key}}';
+
+        console.log('Copy - userId:', userId, 'testId:', testId, 'testNames:', testNames);
 
         // Check if userId is valid
         if (!userId) {
@@ -173,8 +176,18 @@
           return;
         }
 
+        if (!testId) {
+          alert('No test ID available for export');
+          return;
+        }
+
         try {
-          const response = await fetch(`/admin/test/export/math-json?user_id=${userId}&test_id=${testId}&key=${key}`);
+          // Determine if it's a math or JS test based on the test names
+          const endpoint = testNames.toLowerCase().includes('js') || testNames.toLowerCase().includes('javascript')
+            ? '/admin/test/export/js-json'
+            : '/admin/test/export/math-json';
+
+          const response = await fetch(`${endpoint}?user_id=${userId}&test_id=${testId}&key=${key}`);
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
           }
@@ -200,9 +213,12 @@
       icon.addEventListener('click', async (e) => {
         const userId = e.target.dataset.user;
         const testId = e.target.dataset.test;
+        const testNames = e.target.dataset.testNames || '';
         // Get the key from URL if available, otherwise use the template variable
         const urlParams = new URLSearchParams(window.location.search);
         const key = urlParams.get('key') || '{{key}}';
+
+        console.log('Download - userId:', userId, 'testId:', testId, 'testNames:', testNames);
 
         // Check if userId is valid
         if (!userId) {
@@ -210,8 +226,19 @@
           return;
         }
 
+        if (!testId) {
+          alert('No test ID available for export');
+          return;
+        }
+
         try {
-          const response = await fetch(`/admin/test/export/math-json?user_id=${userId}&test_id=${testId}&key=${key}`);
+          // Determine if it's a math or JS test based on the test names
+          const endpoint = testNames.toLowerCase().includes('js') || testNames.toLowerCase().includes('javascript')
+            ? '/admin/test/export/js-json'
+            : '/admin/test/export/math-json';
+          const filePrefix = testNames.toLowerCase().includes('js') || testNames.toLowerCase().includes('javascript') ? 'js' : 'math';
+
+          const response = await fetch(`${endpoint}?user_id=${userId}&test_id=${testId}&key=${key}`);
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
           }
@@ -221,7 +248,7 @@
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `math-test-${userId}.json`;
+          a.download = `${filePrefix}-test-${userId}.json`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);

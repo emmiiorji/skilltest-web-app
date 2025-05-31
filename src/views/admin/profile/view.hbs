@@ -516,7 +516,7 @@
                           <tbody>
                             {{#each this.focusLostEvents}}
                               <tr>
-                                <td>{{formatTimestamp this.timestamp}}s</td>
+                                <td>{{formatTimestamp this.timestamp}}</td>
                                 <td>{{this.duration_ms}}</td>
                               </tr>
                             {{/each}}
@@ -544,7 +544,7 @@
                           <tbody>
                             {{#each this.clipboardEvents}}
                               <tr>
-                                <td>{{formatTimestamp this.timestamp}}s</td>
+                                <td>{{formatTimestamp this.timestamp}}</td>
                                 <td>{{this.type}}</td>
                                 <td>{{this.content}}</td>
                               </tr>
@@ -573,7 +573,7 @@
                           <tbody>
                             {{#each this.answerChangeEvents}}
                               <tr>
-                                <td>{{formatTimestamp this.timestamp}}s</td>
+                                <td>{{formatTimestamp this.timestamp}}</td>
                                 <td>{{this.previous_answer}}</td>
                                 <td>{{this.new_answer}}</td>
                               </tr>
@@ -603,7 +603,7 @@
                           <tbody>
                             {{#each this.mouseClickEvents}}
                               <tr>
-                                <td>{{formatTimestamp this.timestamp}}s</td>
+                                <td>{{formatTimestamp this.timestamp}}</td>
                                 <td>{{this.x}}</td>
                                 <td>{{this.y}}</td>
                                 <td>{{this.button}}</td>
@@ -633,7 +633,7 @@
                           <tbody>
                             {{#each this.keyboardPressEvents}}
                               <tr>
-                                <td>{{formatTimestamp this.timestamp}}s</td>
+                                <td>{{formatTimestamp this.timestamp}}</td>
                                 <td>{{this.keyType}}</td>
                                 <td>{{this.key}}</td>
                               </tr>
