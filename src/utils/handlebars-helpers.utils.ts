@@ -60,8 +60,9 @@ export function registerHandlebarsHelpers() {
 
   Handlebars.registerHelper('formatTimestamp', function(timestamp) {
     if (!timestamp) return '0';
-    // convert to Date
-    return new Date(timestamp);
+  
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-GB');
   });
 
   Handlebars.registerHelper('json', function(obj) {
