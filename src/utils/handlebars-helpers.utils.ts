@@ -62,7 +62,7 @@ export function registerHandlebarsHelpers() {
     if (!timestamp) return '0';
   
     const date = new Date(timestamp);
-    return date.toLocaleString('en-GB');
+    return date.toLocaleTimeString('en-GB');
   });
 
   Handlebars.registerHelper('json', function(obj) {
