@@ -1,8 +1,8 @@
 import { Column, Entity, JoinTable, ManyToMany, OneToMany } from "typeorm";
 import { BaseEntity } from "./BaseEntity.entity";
 import { Group } from "./Group.entity";
-import { Profile } from "./Profile.entity";
 import { QuestionTest } from "./QuestionTest.entity";
+import { TestProfile } from "./TestProfile.entity";
 import { TrackingConfig } from "../../types/tracking";
 
 @Entity("tests")
@@ -10,19 +10,8 @@ export class Test extends BaseEntity {
   @Column()
   name: string;
 
-  @ManyToMany(() => Profile, { nullable: true })
-  @JoinTable({
-    name: "tests_profiles",
-    joinColumn: {
-      name: "testId",
-      referencedColumnName: "id"
-    },
-    inverseJoinColumn: {
-      name: "profileId",
-      referencedColumnName: "id"
-    }
-  })
-  profiles: Profile[];
+  @OneToMany(() => TestProfile, testProfile => testProfile.test)
+  testProfiles: TestProfile[];
 
   @ManyToMany(() => Group, { nullable: true })
   @JoinTable({

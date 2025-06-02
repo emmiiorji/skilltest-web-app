@@ -2,7 +2,7 @@ import { Column, Entity, JoinTable, ManyToMany, OneToMany } from "typeorm";
 import { BaseEntity } from "./BaseEntity.entity";
 import { Group } from "./Group.entity";
 import { ProfileTag } from "./ProfileTag.entity";
-import { Test } from "./Test.entity";
+import { TestProfile } from "./TestProfile.entity";
 
 @Entity('profile')
 export class Profile extends BaseEntity {
@@ -72,8 +72,8 @@ export class Profile extends BaseEntity {
   @Column("text", { nullable: true })
   process: string;
 
-  @ManyToMany(() => Test)
-  tests: Test[];
+  @OneToMany(() => TestProfile, testProfile => testProfile.profile)
+  testProfiles: TestProfile[];
 
   @ManyToMany(() => Group)
   @JoinTable({

@@ -72,12 +72,13 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
       SELECT
         t.id AS test_id,
         t.name AS test_name,
+        tp.test_start_time,
         MAX(a.created_at) AS attended_at
       FROM tests t
       JOIN tests_profiles tp ON t.id = tp.testId
       LEFT JOIN answers a ON t.id = a.test_id AND a.profile_id = ?
       WHERE tp.profileId = ?
-      GROUP BY t.id, t.name
+      GROUP BY t.id, t.name, tp.test_start_time
     `, [profile.id, profile.id]);
 
     // For each test, get the answers
@@ -135,6 +136,7 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         testResults.push({
           test_id: test.test_id,
           test_name: test.test_name,
+          test_start_time: test.test_start_time,
           answers: processedAnswers, // Use processed answers with parsed JSON
           attended_at: test.attended_at
         });
@@ -143,6 +145,7 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
         testResults.push({
           test_id: test.test_id,
           test_name: test.test_name,
+          test_start_time: test.test_start_time,
           answers: [],
           attended_at: null
         });

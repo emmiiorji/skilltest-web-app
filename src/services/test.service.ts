@@ -2,6 +2,7 @@ import { connection } from '../database/connection';
 import { Group } from '../database/entities/Group.entity';
 import { Profile } from '../database/entities/Profile.entity';
 import { Test } from '../database/entities/Test.entity';
+import { TestProfile } from '../database/entities/TestProfile.entity';
 import { generateRandomString } from '../utils/generateRandomString.utils';
 import { TrackingConfig } from '../types/tracking';
 
@@ -25,10 +26,11 @@ class TestService {
     const groupRepository = dataSource.getRepository(Group);
     const profileRepository = dataSource.getRepository(Profile);
     const testRepository = dataSource.getRepository(Test);
+    const testProfileRepository = dataSource.getRepository(TestProfile);
     const { group_id, profile_id, tracking_config = {}, test_name } = data;
 
     // Fetch related entities in parallel
-    const [group, profile] = await Promise.all([
+    const [group] = await Promise.all([
       groupRepository.findOneOrFail({ where: { id: group_id } }),
       profileRepository.findOneOrFail({ where: { id: profile_id } }),
     ]);
@@ -37,11 +39,21 @@ class TestService {
     const test = testRepository.create({
       name: test_name && test_name.trim() !== '' ? test_name : generateRandomString(9),
       groups: [group],
-      profiles: [profile],
       tracking_config: tracking_config // Use the provided tracking configuration
     });
 
-    return testRepository.save(test);
+    const savedTest = await testRepository.save(test);
+
+    // Create the TestProfile relationship
+    const testProfile = testProfileRepository.create({
+      testId: savedTest.id,
+      profileId: profile_id,
+      test_start_time: null // Will be set when first answer is submitted
+    });
+
+    await testProfileRepository.save(testProfile);
+
+    return savedTest;
   }
 
   async getTestById(id: number): Promise<Test | null> {
@@ -51,13 +63,13 @@ class TestService {
 
   async linkUserAndGroupToTest(profileId: number, groupId: number, test: Test) {
     const dataSource = await connection();
+    const testProfileRepository = dataSource.getRepository(TestProfile);
 
     // Check if relationships already exist by querying the database
     const [existingProfileRelation, existingGroupRelation] = await Promise.all([
-      dataSource.query(
-        'SELECT 1 FROM tests_profiles WHERE testId = ? AND profileId = ? LIMIT 1',
-        [test.id, profileId]
-      ),
+      testProfileRepository.findOne({
+        where: { testId: test.id, profileId: profileId }
+      }),
       dataSource.query(
         'SELECT 1 FROM tests_groups WHERE testId = ? AND groupId = ? LIMIT 1',
         [test.id, groupId]
@@ -67,10 +79,13 @@ class TestService {
     // Only add relationships that don't already exist
     const operations = [];
 
-    if (existingProfileRelation.length === 0) {
-      operations.push(
-        dataSource.createQueryBuilder().relation(Test, 'profiles').of(test.id).add(profileId)
-      );
+    if (!existingProfileRelation) {
+      const testProfile = testProfileRepository.create({
+        testId: test.id,
+        profileId: profileId,
+        test_start_time: null
+      });
+      operations.push(testProfileRepository.save(testProfile));
     }
 
     if (existingGroupRelation.length === 0) {
@@ -88,10 +103,36 @@ class TestService {
 
   async isTestAssignedToUser({linkId, testId}:{linkId: string, testId: number}) {
     const dataSource = await connection();
-    return dataSource.getRepository(Test).exists({
-      relations: ['profiles'],
-      where: { id: testId, profiles: { link: linkId }}
+    const testProfileRepository = dataSource.getRepository(TestProfile);
+
+    // First get the profile by linkId
+    const profileRepository = dataSource.getRepository(Profile);
+    const profile = await profileRepository.findOne({ where: { link: linkId } });
+
+    if (!profile) {
+      return false;
+    }
+
+    // Check if TestProfile relationship exists
+    const testProfile = await testProfileRepository.findOne({
+      where: { testId: testId, profileId: profile.id }
     });
+
+    return !!testProfile;
+  }
+
+  async updateTestStartTime(testId: number, profileId: number, startTime: Date) {
+    const dataSource = await connection();
+    const testProfileRepository = dataSource.getRepository(TestProfile);
+
+    const testProfile = await testProfileRepository.findOne({
+      where: { testId, profileId }
+    });
+
+    if (testProfile && !testProfile.test_start_time) {
+      testProfile.test_start_time = startTime;
+      await testProfileRepository.save(testProfile);
+    }
   }
 }
 

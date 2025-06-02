@@ -61,10 +61,13 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
         return reply.status(404).send({ ok: false, error: `User with link '${userLinkId}' not found` });
       }
 
-      // Fetch test data
+      // Fetch test data with test_start_time from tests_profiles
       const test = await dataSource.query(`
-        SELECT id, name, createdAt FROM tests WHERE id = ?
-      `, [test_id]);
+        SELECT t.id, t.name, t.createdAt, tp.test_start_time
+        FROM tests t
+        LEFT JOIN tests_profiles tp ON t.id = tp.testId AND tp.profileId = (SELECT id FROM profile WHERE link = ?)
+        WHERE t.id = ?
+      `, [userLinkId, test_id]);
 
       if (!test || test.length === 0) {
         return reply.status(404).send({ ok: false, error: `Test with ID ${test_id} not found` });
@@ -182,6 +185,15 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
       summary.total_keyboard_presses = questionsWithKeyboardEvents.reduce((sum: number, q: any) => sum + q.keyboard_press_events.length, 0);
     }
 
+    // Calculate completed_at as the latest submit_time from answers
+    const completedAt = answers.length > 0
+      ? answers.reduce((latest: Date | null, answer: any) => {
+          if (!answer.submit_time) return latest;
+          const submitTime = new Date(answer.submit_time);
+          return !latest || submitTime > latest ? submitTime : latest;
+        }, null)
+      : null;
+
     const result = {
       user: {
         name: user[0].name,
@@ -191,7 +203,8 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
         id: test[0].id,
         name: test[0].name,
         created_at: test[0].createdAt,
-        completed_at: test[0].createdAt
+        completed_at: completedAt,
+        test_start_time: test[0].test_start_time
       },
       device_info: deviceInfo,
       questions: questions,
@@ -268,8 +281,11 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
       }
 
       const test = await dataSource.query(`
-        SELECT id, name, createdAt FROM tests WHERE id = ?
-      `, [test_id]);
+        SELECT t.id, t.name, t.createdAt, tp.test_start_time
+        FROM tests t
+        LEFT JOIN tests_profiles tp ON t.id = tp.testId AND tp.profileId = (SELECT id FROM profile WHERE link = ?)
+        WHERE t.id = ?
+      `, [userLinkId, test_id]);
 
       if (!test || test.length === 0) {
         return reply.status(404).send({ ok: false, error: `Test with ID ${test_id} not found` });
@@ -330,6 +346,15 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
         sum + q.focus_lost_events.reduce((s: number, e: FocusLostEvent) => s + e.duration_ms, 0), 0);
     }
 
+    // Calculate completed_at as the latest submit_time from answers
+    const completedAt = answers.length > 0
+      ? answers.reduce((latest: Date | null, answer: any) => {
+          if (!answer.submit_time) return latest;
+          const submitTime = new Date(answer.submit_time);
+          return !latest || submitTime > latest ? submitTime : latest;
+        }, null)
+      : null;
+
     const result = {
       user: {
         name: user[0].name,
@@ -339,7 +364,8 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
         id: test[0].id,
         name: test[0].name,
         created_at: test[0].createdAt,
-        completed_at: test[0].createdAt
+        completed_at: completedAt,
+        test_start_time: test[0].test_start_time
       },
       device_info: deviceInfo,
       questions: questions,

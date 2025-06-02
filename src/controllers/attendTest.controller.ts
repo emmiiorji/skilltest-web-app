@@ -5,6 +5,7 @@ import { connection } from '../database/connection';
 import { Answer } from '../database/entities/Answer.entity';
 import { Question } from '../database/entities/Question.entity';
 import { Test } from '../database/entities/Test.entity';
+import { TestProfile } from '../database/entities/TestProfile.entity';
 import { AnswerSchema } from '../database/validators/answer.validation';
 import { env } from '../env.config';
 import { profileService } from '../services/profile.service';
@@ -29,8 +30,10 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
 
   const checkTestExistsForUser = async (profile_id: number, test_id: number) => {
     const dataSource = await connection();
-    const testRepo = dataSource.getRepository(Test);
-    return await testRepo.findOne({ where: { id: test_id, profiles: { id: profile_id } } });
+    const testProfileRepo = dataSource.getRepository(TestProfile);
+    return await testProfileRepo.findOne({
+      where: { testId: test_id, profileId: profile_id }
+    });
   };
 
   app.get('/attend', async (
@@ -209,6 +212,23 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
       user_agent: request.headers['trc'] as string || '',
       ...validatedAnswer,
     });
+
+    // Check if this is the first answer for this test/profile combination
+    const existingAnswerCount = await answerRepo.count({
+      where: {
+        test_id: parseInt(testId),
+        profile_id: profile.id
+      }
+    });
+
+    // If this is the first answer, set the test start time
+    if (existingAnswerCount === 0 && validatedAnswer.start_time) {
+      await testService.updateTestStartTime(
+        parseInt(testId),
+        profile.id,
+        validatedAnswer.start_time
+      );
+    }
 
     await answerRepo.save(newAnswer);
 
