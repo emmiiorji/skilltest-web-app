@@ -61,6 +61,15 @@ class TestService {
     return dataSource.getRepository(Test).findOne({ where: { id } });
   }
 
+  async updateTestTrackingConfig(testId: number, trackingConfig: TrackingConfig): Promise<void> {
+    const dataSource = await connection();
+    const testRepository = dataSource.getRepository(Test);
+
+    await testRepository.update(testId, {
+      tracking_config: trackingConfig
+    });
+  }
+
   async linkUserAndGroupToTest(profileId: number, groupId: number, test: Test) {
     const dataSource = await connection();
     const testProfileRepository = dataSource.getRepository(TestProfile);

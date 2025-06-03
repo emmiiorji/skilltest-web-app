@@ -10,6 +10,10 @@
           <option value="{{this.id}}">{{this.template}}</option>
         {{/each}}
       </select>
+      <div class="mt-2">
+        <button type="button" id="createTemplateBtn" class="btn btn-secondary">Create New Template</button>
+        <button type="button" id="viewTemplatesBtn" class="btn btn-info ml-2">View Templates</button>
+      </div>
     </div>
 
     <div class="form-div">
@@ -18,9 +22,25 @@
     </div>
 
     <div class="form-div">
-      <label for="testName">Test Name (optional):</label>
-      <input type="text" id="testName" class="form-control" placeholder="Enter a custom test name">
-      <small>If left empty, a random name will be generated</small>
+      <label for="testName">Select Test Name:</label>
+      <select id="testName" class="form-control">
+        <option value="">-- Select Existing Test (Optional) --</option>
+        {{#each tests}}
+          <option value="{{this.name}}" data-test-id="{{this.id}}">{{this.name}}</option>
+        {{/each}}
+      </select>
+      <input type="text" id="customTestName" class="form-control mt-2" placeholder="Enter test name" required>
+      <small>Select an existing test name above or enter a custom one below</small>
+    </div>
+
+    <div class="form-div">
+      <label for="group">Select Group:</label>
+      <select id="group" class="form-control" required>
+        <option value="">-- Select Group --</option>
+        {{#each groups}}
+          <option value="{{this.id}}">{{this.name}}</option>
+        {{/each}}
+      </select>
     </div>
 
     <div class="form-div">
@@ -76,6 +96,7 @@
     </div>
 
     <button id="generateBtn" class="btn btn-primary">Generate Test</button>
+    <button id="updateTestBtn" class="btn btn-warning" style="display: none; margin-left: 10px;">Save Changes to Test</button>
 
     <div id="resultContainer" style="display: none; margin-top: 20px;">
       <h3>Generated Message:</h3>
@@ -164,6 +185,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   const templateSelect = document.getElementById('template');
   const templatePreview = document.getElementById('templatePreview');
+  const groupSelect = document.getElementById('group');
+  const testNameSelect = document.getElementById('testName');
+  const customTestNameInput = document.getElementById('customTestName');
   const freelancerInput = document.getElementById('freelancerInput');
   const parsedIdSpan = document.getElementById('parsedId');
   const generateBtn = document.getElementById('generateBtn');
@@ -172,16 +196,126 @@ document.addEventListener('DOMContentLoaded', () => {
   const copyBtn = document.getElementById('copyBtn');
   const addQuestionBtn = document.getElementById('addQuestionBtn');
   const questionsContainer = document.getElementById('questions-container');
+  const createTemplateBtn = document.getElementById('createTemplateBtn');
+  const viewTemplatesBtn = document.getElementById('viewTemplatesBtn');
+  const updateTestBtn = document.getElementById('updateTestBtn');
 
   // Track questions
   let questionCount = 0;
   const questions = [];
+  let currentTestId = null; // Track currently selected test ID
+
+  // Function to load test details
+  const loadTestDetails = async (testId) => {
+    try {
+      const key = '{{key}}';
+      const response = await fetch(`/admin/test/details/${testId}?key=${key}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch test details: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Load tracking configuration
+        loadTrackingConfig(data.test.tracking_config);
+
+        // Load questions
+        loadQuestions(data.questions);
+
+        console.log('Loaded test details:', data);
+      } else {
+        throw new Error(data.error || 'Failed to load test details');
+      }
+    } catch (error) {
+      console.error('Error loading test details:', error);
+      alert('Failed to load test details: ' + error.message);
+    }
+  };
+
+  // Function to clear test details
+  const clearTestDetails = () => {
+    // Reset tracking configuration to defaults
+    document.querySelectorAll('.tracking-option input[type="checkbox"]').forEach(checkbox => {
+      checkbox.checked = true; // Default is all tracking enabled
+    });
+
+    // Clear all questions
+    questionsContainer.innerHTML = '';
+    questionCount = 0;
+  };
+
+  // Function to load tracking configuration
+  const loadTrackingConfig = (config) => {
+    // Set tracking checkboxes based on config
+    // Note: config stores disabled features as true, checkboxes show enabled features
+    document.getElementById('trackFocusLost').checked = !config.disableFocusLostEvents;
+    document.getElementById('trackMouseClicks').checked = !config.disableMouseClickEvents;
+    document.getElementById('trackKeyboardPresses').checked = !config.disableKeyboardPressEvents;
+    document.getElementById('trackDeviceFingerprint').checked = !config.disableDeviceFingerprint;
+    document.getElementById('trackClipboardEvents').checked = !config.disableClipboardEvents;
+    document.getElementById('trackAnswerChanges').checked = !config.disableAnswerChangeEvents;
+    document.getElementById('trackPreSubmitDelay').checked = !config.disablePreSubmitDelay;
+    document.getElementById('trackTimeToFirstInteraction').checked = !config.disableTimeToFirstInteraction;
+  };
+
+  // Function to load questions
+  const loadQuestions = (questionsData) => {
+    // Clear existing questions
+    questionsContainer.innerHTML = '';
+    questionCount = 0;
+
+    // Add each question
+    questionsData.forEach(questionData => {
+      addQuestionToForm(questionData);
+    });
+  };
 
   // Template selection
   templateSelect.addEventListener('change', (e) => {
     const selectedOption = e.target.options[e.target.selectedIndex];
     templatePreview.value = selectedOption.value ? selectedOption.text : '';
     updatePreview();
+  });
+
+  // Test name selection - disable custom input when existing test is selected
+  testNameSelect.addEventListener('change', async (e) => {
+    if (e.target.value !== '') {
+      customTestNameInput.value = '';
+      customTestNameInput.placeholder = 'Existing test selected above';
+      customTestNameInput.disabled = true;
+
+      // Load test details when existing test is selected
+      const selectedOption = e.target.options[e.target.selectedIndex];
+      const testId = selectedOption.getAttribute('data-test-id');
+      if (testId) {
+        currentTestId = parseInt(testId);
+        await loadTestDetails(testId);
+        updateTestBtn.style.display = 'inline-block'; // Show update button
+      }
+    } else {
+      customTestNameInput.placeholder = 'Enter test name';
+      customTestNameInput.disabled = false;
+      customTestNameInput.focus();
+
+      // Clear loaded test details when switching to custom name
+      currentTestId = null;
+      clearTestDetails();
+      updateTestBtn.style.display = 'none'; // Hide update button
+    }
+  });
+
+  // Create template button
+  createTemplateBtn.addEventListener('click', () => {
+    const key = '{{key}}';
+    window.open(`/admin/template/create?key=${key}`, '_blank');
+  });
+
+  // View templates button
+  viewTemplatesBtn.addEventListener('click', () => {
+    const key = '{{key}}';
+    window.open(`/admin/template/list?key=${key}`, '_blank');
   });
 
   // Parse freelancer ID
@@ -207,12 +341,30 @@ document.addEventListener('DOMContentLoaded', () => {
   // Generate test
   generateBtn.addEventListener('click', async () => {
     const templateId = templateSelect.value;
-    const testName = document.getElementById('testName').value.trim();
-    const freelancerInput = document.getElementById('freelancerInput').value;
+    const groupId = groupSelect.value;
+    const selectedTestName = testNameSelect.value;
+    const customTestName = customTestNameInput.value.trim();
+    const freelancerInputValue = freelancerInput.value;
 
-    if (!templateId || !freelancerInput) {
-      alert('Please fill all required fields');
+    if (!templateId || !groupId || !freelancerInputValue) {
+      alert('Please fill all required fields (Template, Group, and Freelancer)');
       return;
+    }
+
+    // Determine if we're using existing test or creating new one
+    const isExistingTest = selectedTestName !== '';
+    const testName = selectedTestName || customTestName;
+
+    if (!testName) {
+      alert('Please enter a test name or select an existing one');
+      return;
+    }
+
+    // Get test ID if existing test is selected
+    let testId = null;
+    if (isExistingTest) {
+      const selectedOption = testNameSelect.options[testNameSelect.selectedIndex];
+      testId = selectedOption.getAttribute('data-test-id');
     }
 
     try {
@@ -234,9 +386,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const questionText = questionItem.querySelector('.question-text').value.trim();
         const answerType = questionItem.querySelector('.answer-type').value;
         const answerHtml = questionItem.querySelector('.answer-html').value.trim();
-        const correctAnswer = questionItem.querySelector('.correct-answer').value.trim();
+        const correctAnswerRaw = questionItem.querySelector('.correct-answer').value.trim();
 
         if (questionText) {
+          // Process correct answer - convert "First OR Second" back to ["First", "Second"] if needed
+          let correctAnswer = correctAnswerRaw;
+          if (correctAnswerRaw && correctAnswerRaw.includes(' OR ')) {
+            // Split by " OR " and create JSON array
+            const answers = correctAnswerRaw.split(' OR ').map(answer => answer.trim()).filter(answer => answer);
+            if (answers.length > 1) {
+              correctAnswer = JSON.stringify(answers);
+            }
+          }
+
           questions.push({
             question: questionText,
             answer_type: answerType,
@@ -247,16 +409,27 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const key = '{{key}}'; // Get the key from the template context
+
+      // Prepare request body - send either test_id or test_name
+      const requestBody = {
+        template_id: templateId,
+        group_id: groupId,
+        freelancer_input: freelancerInputValue,
+        tracking_config: trackingConfig,
+        questions: questions
+      };
+
+      // Add either test_id or test_name based on selection
+      if (isExistingTest) {
+        requestBody.test_id = parseInt(testId);
+      } else {
+        requestBody.test_name = testName;
+      }
+
       const response = await fetch(`/admin/test/create-link?key=${key}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          template_id: templateId,
-          test_name: testName, // Add the custom test name
-          freelancer_input: freelancerInput,
-          tracking_config: trackingConfig,
-          questions: questions // Add the questions
-        })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
@@ -301,8 +474,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Add question button
-  addQuestionBtn.addEventListener('click', () => {
+  // Function to add question to form (used for both new questions and loading existing ones)
+  const addQuestionToForm = (questionData = null) => {
     questionCount++;
     const questionId = `question-${questionCount}`;
 
@@ -310,23 +483,46 @@ document.addEventListener('DOMContentLoaded', () => {
     questionDiv.className = 'question-item mb-3 p-3 border rounded';
     questionDiv.id = questionId;
 
+    // Set values from questionData if provided, otherwise use defaults
+    const questionText = questionData ? questionData.question : '';
+    const answerType = questionData ? questionData.answer_type : 'textarea';
+    const answerHtml = questionData ? questionData.answer_html : '';
+
+    // Handle correct answer - parse JSON arrays and format properly
+    let correctAnswer = '';
+    if (questionData && questionData.correct) {
+      try {
+        // Try to parse as JSON first (for arrays like ["First", "Second"])
+        const parsed = JSON.parse(questionData.correct);
+        if (Array.isArray(parsed)) {
+          // Join array elements with " OR " for display
+          correctAnswer = parsed.join(' OR ');
+        } else {
+          correctAnswer = questionData.correct;
+        }
+      } catch (e) {
+        // If not valid JSON, use as-is (for simple strings)
+        correctAnswer = questionData.correct;
+      }
+    }
+
     questionDiv.innerHTML = `
       <div class="form-group mb-2">
         <label for="${questionId}-text">Question Text:</label>
-        <textarea id="${questionId}-text" class="form-control question-text" rows="2" placeholder="Enter question text"></textarea>
+        <textarea id="${questionId}-text" class="form-control question-text" rows="2" placeholder="Enter question text">${questionText}</textarea>
       </div>
       <div class="form-group mb-2">
         <label for="${questionId}-type">Answer Type:</label>
         <select id="${questionId}-type" class="form-control answer-type">
-          <option value="textarea">Text Area</option>
-          <option value="radiobutton">Radio Buttons</option>
-          <option value="multiinput">Multiple Choice</option>
-          <option value="multiTextInput">Multiple Text Inputs</option>
+          <option value="textarea" ${answerType === 'textarea' ? 'selected' : ''}>Text Area</option>
+          <option value="radiobutton" ${answerType === 'radiobutton' ? 'selected' : ''}>Radio Buttons</option>
+          <option value="multiinput" ${answerType === 'multiinput' ? 'selected' : ''}>Multiple Choice</option>
+          <option value="multiTextInput" ${answerType === 'multiTextInput' ? 'selected' : ''}>Multiple Text Inputs</option>
         </select>
       </div>
       <div class="form-group mb-2 answer-html-container">
         <label for="${questionId}-html">Answer HTML:</label>
-        <textarea id="${questionId}-html" class="form-control answer-html" rows="3" placeholder="Enter HTML for answer options"></textarea>
+        <textarea id="${questionId}-html" class="form-control answer-html" rows="3" placeholder="Enter HTML for answer options">${answerHtml}</textarea>
         <small class="form-text text-muted">
           For textarea: <code>&lt;textarea name="answer" class="form-control"&gt;&lt;/textarea&gt;</code><br>
           For radiobutton: <code>&lt;div&gt;&lt;input type="radio" name="answer" value="option1"&gt; Option 1&lt;/div&gt;</code><br>
@@ -336,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div class="form-group mb-2">
         <label for="${questionId}-correct">Correct Answer:</label>
-        <input type="text" id="${questionId}-correct" class="form-control correct-answer" placeholder="Enter correct answer or leave blank for essay questions">
+        <input type="text" id="${questionId}-correct" class="form-control correct-answer" placeholder="Enter correct answer or leave blank for essay questions" value="${correctAnswer}">
         <small class="form-text text-muted">
           For multiple correct answers, separate with OR (e.g., "answer1 OR answer2")
         </small>
@@ -355,22 +551,107 @@ document.addEventListener('DOMContentLoaded', () => {
     // Add event listener for answer type change
     questionDiv.querySelector('.answer-type').addEventListener('change', (e) => {
       const answerType = e.target.value;
-      const answerHtmlContainer = questionDiv.querySelector('.answer-html-container');
+      const answerHtmlTextarea = questionDiv.querySelector('.answer-html');
 
-      // Show/hide answer HTML based on type
-      if (answerType === 'textarea') {
-        questionDiv.querySelector('.answer-html').value = '<textarea name="answer" class="form-control"></textarea>';
-      } else if (answerType === 'radiobutton') {
-        questionDiv.querySelector('.answer-html').value = '<div><input type="radio" name="answer" value="option1"> Option 1</div>\n<div><input type="radio" name="answer" value="option2"> Option 2</div>';
-      } else if (answerType === 'multiinput') {
-        questionDiv.querySelector('.answer-html').value = '<div><input type="checkbox" name="answer" value="option1"> Option 1</div>\n<div><input type="checkbox" name="answer" value="option2"> Option 2</div>';
-      } else if (answerType === 'multiTextInput') {
-        questionDiv.querySelector('.answer-html').value = '<div><input type="text" name="answer-1" placeholder="Answer 1"></div>\n<div><input type="text" name="answer-2" placeholder="Answer 2"></div>';
+      // Only set default HTML if the field is empty (for new questions)
+      if (!answerHtmlTextarea.value.trim()) {
+        if (answerType === 'textarea') {
+          answerHtmlTextarea.value = '<textarea name="answer" class="form-control"></textarea>';
+        } else if (answerType === 'radiobutton') {
+          answerHtmlTextarea.value = '<div><input type="radio" name="answer" value="option1"> Option 1</div>\n<div><input type="radio" name="answer" value="option2"> Option 2</div>';
+        } else if (answerType === 'multiinput') {
+          answerHtmlTextarea.value = '<div><input type="checkbox" name="answer" value="option1"> Option 1</div>\n<div><input type="checkbox" name="answer" value="option2"> Option 2</div>';
+        } else if (answerType === 'multiTextInput') {
+          answerHtmlTextarea.value = '<div><input type="text" name="answer-1" placeholder="Answer 1"></div>\n<div><input type="text" name="answer-2" placeholder="Answer 2"></div>';
+        }
       }
     });
 
-    // Trigger change event to set default HTML
-    questionDiv.querySelector('.answer-type').dispatchEvent(new Event('change'));
+    // Only trigger change event for new questions (not when loading existing ones)
+    if (!questionData) {
+      questionDiv.querySelector('.answer-type').dispatchEvent(new Event('change'));
+    }
+  };
+
+  // Add question button
+  addQuestionBtn.addEventListener('click', () => {
+    addQuestionToForm(); // Add new empty question
+  });
+
+  // Update test button
+  updateTestBtn.addEventListener('click', async () => {
+    if (!currentTestId) {
+      alert('No test selected for update');
+      return;
+    }
+
+    try {
+      // Collect tracking configuration
+      const trackingConfig = {
+        disableFocusLostEvents: !document.getElementById('trackFocusLost').checked,
+        disableMouseClickEvents: !document.getElementById('trackMouseClicks').checked,
+        disableKeyboardPressEvents: !document.getElementById('trackKeyboardPresses').checked,
+        disableDeviceFingerprint: !document.getElementById('trackDeviceFingerprint').checked,
+        disableClipboardEvents: !document.getElementById('trackClipboardEvents').checked,
+        disableAnswerChangeEvents: !document.getElementById('trackAnswerChanges').checked,
+        disablePreSubmitDelay: !document.getElementById('trackPreSubmitDelay').checked,
+        disableTimeToFirstInteraction: !document.getElementById('trackTimeToFirstInteraction').checked
+      };
+
+      // Collect questions
+      const questions = [];
+      document.querySelectorAll('.question-item').forEach(questionItem => {
+        const questionText = questionItem.querySelector('.question-text').value.trim();
+        const answerType = questionItem.querySelector('.answer-type').value;
+        const answerHtml = questionItem.querySelector('.answer-html').value.trim();
+        const correctAnswerRaw = questionItem.querySelector('.correct-answer').value.trim();
+
+        if (questionText) {
+          // Process correct answer - convert "First OR Second" back to ["First", "Second"] if needed
+          let correctAnswer = correctAnswerRaw;
+          if (correctAnswerRaw && correctAnswerRaw.includes(' OR ')) {
+            // Split by " OR " and create JSON array
+            const answers = correctAnswerRaw.split(' OR ').map(answer => answer.trim()).filter(answer => answer);
+            if (answers.length > 1) {
+              correctAnswer = JSON.stringify(answers);
+            }
+          }
+
+          questions.push({
+            question: questionText,
+            answer_type: answerType,
+            answer_html: answerHtml,
+            correct: correctAnswer
+          });
+        }
+      });
+
+      const key = '{{key}}';
+      const response = await fetch(`/admin/test/update/${currentTestId}?key=${key}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tracking_config: trackingConfig,
+          questions: questions
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(`Test updated successfully! ${data.questions_updated} questions updated.`);
+      } else {
+        throw new Error(data.error || 'Failed to update test');
+      }
+    } catch (error) {
+      console.error('Error updating test:', error);
+      alert('Failed to update test: ' + error.message);
+    }
   });
 });
 </script>

@@ -12,6 +12,8 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
 
   app.get('/create', async (request, reply) => {
     const templates = await templateService.getAllTemplatesIdAndName();
+    const groups = await groupService.getAllGroupsIdAndName();
+    const tests = await testService.getAllTestsIdAndName();
 
     const { key } = z.object({
       key: z.string(),
@@ -20,15 +22,19 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
     return reply.view('admin/test/create', {
       title: 'Create Test',
       templates,
+      groups,
+      tests,
       key,
       url: request.url
     });
   });
 
   app.post('/create-link', async (request, reply) => {
-    const { template_id, test_name, freelancer_input, tracking_config, questions } = z.object({
+    const { template_id, test_name, test_id, group_id, freelancer_input, tracking_config, questions } = z.object({
       template_id: z.string(),
       test_name: z.string().optional(),
+      test_id: z.coerce.number().optional(),
+      group_id: z.coerce.number(),
       freelancer_input: z.string(),
       tracking_config: z.object({
         disableFocusLostEvents: z.boolean().optional(),
@@ -55,18 +61,24 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
       freelancerId = match && match[1] ? match[1] : freelancer_input;
     }
 
-    // Get profile and its associated group
-    const profile = await profileService.getProfileByLinkId(freelancerId);
+    // Get profile or create if it doesn't exist
+    let profile = await profileService.getProfileByLinkId(freelancerId);
     if (!profile) {
-      return reply.status(404).send({ error: 'Profile not found' });
+      // Create profile if it doesn't exist
+      profile = await profileService.createProfileByLinkId(freelancerId);
     }
 
-    // Use the first group associated with the profile
-    if (!profile.groups || profile.groups.length < 1 || !profile.groups[0]) {
-      return reply.status(400).send({ error: 'Profile has no associated group' });
+    // Check if profile is in the selected group, if not add them to it
+    if (profile && profile.groups.every(group => group.id !== group_id)) {
+      await profileService.updateProfile(profile, group_id);
+      // Refresh profile to get updated groups
+      profile = await profileService.getProfileByLinkId(freelancerId);
     }
 
-    const group_id = profile.groups[0].id;
+    // Ensure profile exists after all operations
+    if (!profile) {
+      return reply.status(500).send({ error: 'Failed to create or retrieve profile' });
+    }
 
     // Filter tracking config to only include disabled features (true values)
     const filterTrackingConfig = (config: TrackingConfig): TrackingConfig => {
@@ -82,34 +94,51 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
       return filtered;
     };
 
-    // Create test with the profile's group and filtered tracking config
-    const test = await testService.createTest({
-      group_id,
-      profile_id: profile.id,
-      tracking_config: filterTrackingConfig(tracking_config),
-      test_name
-    });
+    // Determine which test to use
+    let test;
+    let questionsAdded = 0;
 
-    // Create questions and associate them with the test
-    if (questions && questions.length > 0) {
-      for (let i = 0; i < questions.length; i++) {
-        const questionData = questions[i];
-        if (!questionData) continue;
+    if (test_id) {
+      // Use existing test - do NOT create new questions
+      test = await testService.getTestById(test_id);
+      if (!test) {
+        return reply.status(404).send({ error: `Test with ID ${test_id} not found` });
+      }
+      // Link user and group to existing test
+      await testService.linkUserAndGroupToTest(profile.id, group_id, test);
 
-        try {
-          // Create the question
-          const question = await questionService.createQuestion({
-            question: questionData.question,
-            answer_type: questionData.answer_type,
-            answer_html: questionData.answer_html,
-            correct: questionData.correct
-          });
+      // For existing tests, don't add questions - just use what's already there
+    } else {
+      // Create new test
+      test = await testService.createTest({
+        group_id,
+        profile_id: profile.id,
+        tracking_config: filterTrackingConfig(tracking_config),
+        test_name
+      });
 
-          // Associate the question with the test
-          await questionService.addQuestionToTest(question.id, test.id, i + 1);
-        } catch (error) {
-          console.error('Error creating question:', error);
-          // Continue with other questions even if one fails
+      // Only create questions for NEW tests
+      if (questions && questions.length > 0) {
+        for (let i = 0; i < questions.length; i++) {
+          const questionData = questions[i];
+          if (!questionData) continue;
+
+          try {
+            // Create the question
+            const question = await questionService.createQuestion({
+              question: questionData.question,
+              answer_type: questionData.answer_type,
+              answer_html: questionData.answer_html,
+              correct: questionData.correct
+            });
+
+            // Associate the question with the test
+            await questionService.addQuestionToTest(question.id, test.id, i + 1);
+            questionsAdded++;
+          } catch (error) {
+            console.error('Error creating question:', error);
+            // Continue with other questions even if one fails
+          }
         }
       }
     }
@@ -124,8 +153,129 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
       message,
       freelancerId,
       testUrl,
-      questions_added: questions.length
+      questions_added: questionsAdded
     });
+  });
+
+  // Get test details (questions and config)
+  app.get('/details/:testId', async (request, reply) => {
+    const { testId } = z.object({
+      testId: z.coerce.number(),
+    }).parse(request.params);
+
+    const { key } = z.object({
+      key: z.string(),
+    }).parse(request.query);
+
+    try {
+      // Get test details
+      const test = await testService.getTestById(testId);
+      if (!test) {
+        return reply.status(404).send({ error: 'Test not found' });
+      }
+
+      // Get questions for this test
+      const questions = await questionService.getQuestionsForTest(testId);
+
+      return reply.send({
+        success: true,
+        test: {
+          id: test.id,
+          name: test.name,
+          tracking_config: test.tracking_config || {}
+        },
+        questions: questions.map(q => ({
+          id: q.id,
+          question: q.question,
+          answer_type: q.answer_type,
+          answer_html: q.answer_html,
+          correct: q.correct
+        }))
+      });
+    } catch (error) {
+      console.error('Error fetching test details:', error);
+      return reply.status(500).send({ error: 'Failed to fetch test details' });
+    }
+  });
+
+  // Update test details (questions and config)
+  app.put('/update/:testId', async (request, reply) => {
+    const { testId } = z.object({
+      testId: z.coerce.number(),
+    }).parse(request.params);
+
+    const { key } = z.object({
+      key: z.string(),
+    }).parse(request.query);
+
+    const { tracking_config, questions } = z.object({
+      tracking_config: z.object({
+        disableFocusLostEvents: z.boolean().optional(),
+        disableMouseClickEvents: z.boolean().optional(),
+        disableKeyboardPressEvents: z.boolean().optional(),
+        disableDeviceFingerprint: z.boolean().optional(),
+        disableClipboardEvents: z.boolean().optional(),
+        disableAnswerChangeEvents: z.boolean().optional(),
+        disablePreSubmitDelay: z.boolean().optional(),
+        disableTimeToFirstInteraction: z.boolean().optional()
+      }).optional().default({}) as z.ZodType<TrackingConfig>,
+      questions: z.array(z.object({
+        question: z.string(),
+        answer_type: z.enum(["textarea", "radiobutton", "multiinput", "multiTextInput"]),
+        answer_html: z.string(),
+        correct: z.string()
+      })).optional().default([])
+    }).parse(request.body);
+
+    try {
+      // Get test to verify it exists
+      const test = await testService.getTestById(testId);
+      if (!test) {
+        return reply.status(404).send({ error: 'Test not found' });
+      }
+
+      // Update test tracking configuration
+      await testService.updateTestTrackingConfig(testId, tracking_config);
+
+      // Remove all existing questions for this test
+      const existingQuestions = await questionService.getQuestionsForTest(testId);
+      for (const question of existingQuestions) {
+        await questionService.removeQuestionFromTest(question.id, testId);
+      }
+
+      // Add new questions
+      if (questions && questions.length > 0) {
+        for (let i = 0; i < questions.length; i++) {
+          const questionData = questions[i];
+          if (!questionData) continue;
+
+          try {
+            // Create the question
+            const question = await questionService.createQuestion({
+              question: questionData.question,
+              answer_type: questionData.answer_type,
+              answer_html: questionData.answer_html,
+              correct: questionData.correct
+            });
+
+            // Associate the question with the test
+            await questionService.addQuestionToTest(question.id, testId, i + 1);
+          } catch (error) {
+            console.error('Error creating question:', error);
+            // Continue with other questions even if one fails
+          }
+        }
+      }
+
+      return reply.send({
+        success: true,
+        message: 'Test updated successfully',
+        questions_updated: questions.length
+      });
+    } catch (error) {
+      console.error('Error updating test:', error);
+      return reply.status(500).send({ error: 'Failed to update test' });
+    }
   });
 
   done();

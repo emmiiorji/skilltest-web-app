@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { In, Not } from 'typeorm';
+
 import { z } from 'zod';
 import { connection } from '../database/connection';
 import { Answer } from '../database/entities/Answer.entity';
@@ -74,14 +74,28 @@ export function attendTestController(app: FastifyInstance, opts: any, done: () =
       });
     }
 
-
-    const pendingQuestion = await questionRepo.findOne({
-      relations: ["questionTests"],
-      where: {
-        id: Not(In(answeredQuestionsIds)),
-        questionTests: { test_id }
-      }
-    });
+    // Find pending question with proper handling of empty answered questions array
+    let pendingQuestion;
+    if (answeredQuestionsIds.length === 0) {
+      // No questions answered yet, get the first question for this test (ordered by priority)
+      pendingQuestion = await questionRepo
+        .createQueryBuilder('question')
+        .innerJoin('question.questionTests', 'qt')
+        .where('qt.test_id = :testId', { testId: test_id })
+        .orderBy('qt.priority', 'ASC')
+        .addOrderBy('question.id', 'ASC')
+        .getOne();
+    } else {
+      // Some questions answered, find next unanswered question (ordered by priority)
+      pendingQuestion = await questionRepo
+        .createQueryBuilder('question')
+        .innerJoin('question.questionTests', 'qt')
+        .where('qt.test_id = :testId', { testId: test_id })
+        .andWhere('question.id NOT IN (:...answeredIds)', { answeredIds: answeredQuestionsIds })
+        .orderBy('qt.priority', 'ASC')
+        .addOrderBy('question.id', 'ASC')
+        .getOne();
+    }
 
     if (!pendingQuestion) {
       return reply.view('test/completed', { title: 'Test Completed', url: request.url });
