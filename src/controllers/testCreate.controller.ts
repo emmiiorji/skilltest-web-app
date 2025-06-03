@@ -20,7 +20,7 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
     }).parse(request.query);
 
     return reply.view('admin/test/create', {
-      title: 'Create Test',
+      title: 'Generate Test Message',
       templates,
       groups,
       tests,

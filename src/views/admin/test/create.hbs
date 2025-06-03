@@ -1,5 +1,5 @@
-<div class="container">
-  <h1>Create Test</h1>
+<div class="test-message-container">
+  <h1>Generate Test Message</h1>
 
   <div class="form-container">
     <div class="form-div">
@@ -10,27 +10,22 @@
           <option value="{{this.id}}">{{this.template}}</option>
         {{/each}}
       </select>
-      <div class="mt-2">
-        <button type="button" id="createTemplateBtn" class="btn btn-secondary">Create New Template</button>
-        <button type="button" id="viewTemplatesBtn" class="btn btn-info ml-2">View Templates</button>
-      </div>
     </div>
 
     <div class="form-div">
       <label>Template Preview:</label>
-      <textarea id="templatePreview" readonly class="form-control" rows="10"></textarea>
+      <textarea id="templatePreview" readonly class="form-control template-preview" rows="10"></textarea>
     </div>
 
     <div class="form-div">
-      <label for="testName">Select Test Name:</label>
-      <select id="testName" class="form-control">
-        <option value="">-- Select Existing Test (Optional) --</option>
+      <label for="testName">Select Test:</label>
+      <select id="testName" class="form-control" required>
+        <option value="">-- Select Test --</option>
         {{#each tests}}
           <option value="{{this.name}}" data-test-id="{{this.id}}">{{this.name}}</option>
         {{/each}}
       </select>
-      <input type="text" id="customTestName" class="form-control mt-2" placeholder="Enter test name" required>
-      <small>Select an existing test name above or enter a custom one below</small>
+      <small>Select an existing test to generate a message</small>
     </div>
 
     <div class="form-div">
@@ -54,7 +49,7 @@
       <div id="questions-container">
         <!-- Questions will be added here dynamically -->
       </div>
-      <button type="button" id="addQuestionBtn" class="btn btn-secondary mt-2">Add Question</button>
+      <button type="button" id="addQuestionBtn" class="btn btn-secondary mt-2" style="display: none;">Add Question</button>
     </div>
 
     <div class="form-div">
@@ -95,8 +90,7 @@
       </div>
     </div>
 
-    <button id="generateBtn" class="btn btn-primary">Generate Test</button>
-    <button id="updateTestBtn" class="btn btn-warning" style="display: none; margin-left: 10px;">Save Changes to Test</button>
+    <button id="generateBtn" class="btn btn-primary">Generate Message</button>
 
     <div id="resultContainer" style="display: none; margin-top: 20px;">
       <h3>Generated Message:</h3>
@@ -108,53 +102,256 @@
 </div>
 
 <style>
+.test-message-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.test-message-container h1 {
+  margin-bottom: 30px;
+  color: #2c3e50;
+  font-weight: 600;
+  text-align: center;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.form-container {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  margin-bottom: 20px;
+}
+
+.form-div {
+  margin-bottom: 25px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  overflow: hidden;
+  word-wrap: break-word;
+}
+
+.form-div label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.form-div small {
+  color: #6c757d;
+  font-size: 0.875rem;
+  margin-top: 5px;
+  display: block;
+}
+
+.form-control {
+  margin-bottom: 10px;
+  padding: 12px 15px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.form-control:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-control select {
+  width: 100%;
+  max-width: 100%;
+}
+
+.form-control option {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+#template {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+}
+
+/* Force dropdown options to respect container width */
+#template option {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 8px 12px;
+}
+
+/* Additional constraint for the dropdown container */
+.form-div select {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
 .tracking-options {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 10px;
-  margin-top: 10px;
-  padding: 15px;
-  background-color: #f8f9fa;
-  border-radius: 5px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 6px;
   border: 1px solid #dee2e6;
 }
 
 .tracking-option {
   display: flex;
   align-items: center;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.tracking-option:hover {
+  background-color: #e9ecef;
 }
 
 .tracking-option input[type="checkbox"] {
-  margin-right: 8px;
+  margin-right: 12px;
+  transform: scale(1.1);
 }
 
 .tracking-option label {
   margin-bottom: 0;
   cursor: pointer;
+  font-size: 14px;
+}
+
+.toggle-tracking {
+  margin-bottom: 15px !important;
+  padding: 8px 16px;
+  font-size: 0.875rem;
 }
 
 .btn-sm {
-  padding: 5px 10px;
+  padding: 6px 12px;
   font-size: 0.875rem;
 }
 
 .question-item {
-  background-color: #f8f9fa;
-  margin-bottom: 15px;
+  background-color: #ffffff;
+  margin-bottom: 20px;
   position: relative;
+  padding: 20px;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.question-item.readonly {
+  background-color: #f8f9fa;
+  border-left: 4px solid #6c757d;
+}
+
+.question-item.readonly textarea,
+.question-item.readonly input,
+.question-item.readonly select {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+.question-item .form-group {
+  margin-bottom: 15px;
+}
+
+.question-item .form-group:last-child {
+  margin-bottom: 0;
 }
 
 .remove-question {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 15px;
+  right: 15px;
 }
 
 #questions-container {
-  margin-bottom: 10px;
-  max-height: 500px;
+  margin-bottom: 15px;
+  max-height: 600px;
   overflow-y: auto;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.template-preview {
+  width: 100%;
+  max-width: 100%;
+  resize: vertical;
+  padding: 15px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+#generateBtn {
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 20px auto;
+  display: block;
+  min-width: 200px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+#generateBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+#resultContainer {
+  margin-top: 30px;
+  padding: 25px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+#resultContainer h3 {
+  margin-bottom: 20px;
+  color: #495057;
+  font-weight: 600;
+}
+
+#generatedMessage {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 15px;
+}
+
+.alert {
+  margin-bottom: 15px;
+  padding: 12px 20px;
+  border-radius: 4px;
+}
+
+#copyBtn {
+  margin-top: 15px;
+  padding: 8px 20px;
 }
 </style>
 
@@ -187,7 +384,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const templatePreview = document.getElementById('templatePreview');
   const groupSelect = document.getElementById('group');
   const testNameSelect = document.getElementById('testName');
-  const customTestNameInput = document.getElementById('customTestName');
   const freelancerInput = document.getElementById('freelancerInput');
   const parsedIdSpan = document.getElementById('parsedId');
   const generateBtn = document.getElementById('generateBtn');
@@ -196,9 +392,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const copyBtn = document.getElementById('copyBtn');
   const addQuestionBtn = document.getElementById('addQuestionBtn');
   const questionsContainer = document.getElementById('questions-container');
-  const createTemplateBtn = document.getElementById('createTemplateBtn');
-  const viewTemplatesBtn = document.getElementById('viewTemplatesBtn');
-  const updateTestBtn = document.getElementById('updateTestBtn');
 
   // Track questions
   let questionCount = 0;
@@ -239,11 +432,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reset tracking configuration to defaults
     document.querySelectorAll('.tracking-option input[type="checkbox"]').forEach(checkbox => {
       checkbox.checked = true; // Default is all tracking enabled
+      checkbox.disabled = false; // Enable checkboxes
     });
 
     // Clear all questions
     questionsContainer.innerHTML = '';
     questionCount = 0;
+  };
+
+  // Function to set read-only mode for the form
+  const setReadOnlyMode = (isReadOnly) => {
+    // Disable/enable tracking configuration checkboxes
+    document.querySelectorAll('.tracking-option input[type="checkbox"]').forEach(checkbox => {
+      checkbox.disabled = isReadOnly;
+    });
+
+    // Always hide Add Question button since we only work with existing tests
+    addQuestionBtn.style.display = 'none';
   };
 
   // Function to load tracking configuration
@@ -279,43 +484,27 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePreview();
   });
 
-  // Test name selection - disable custom input when existing test is selected
+  // Test selection - load test details when test is selected
   testNameSelect.addEventListener('change', async (e) => {
     if (e.target.value !== '') {
-      customTestNameInput.value = '';
-      customTestNameInput.placeholder = 'Existing test selected above';
-      customTestNameInput.disabled = true;
-
-      // Load test details when existing test is selected
+      // Load test details when test is selected
       const selectedOption = e.target.options[e.target.selectedIndex];
       const testId = selectedOption.getAttribute('data-test-id');
       if (testId) {
         currentTestId = parseInt(testId);
         await loadTestDetails(testId);
-        updateTestBtn.style.display = 'inline-block'; // Show update button
+
+        // Make UI read-only when test is selected
+        setReadOnlyMode(true);
       }
     } else {
-      customTestNameInput.placeholder = 'Enter test name';
-      customTestNameInput.disabled = false;
-      customTestNameInput.focus();
-
-      // Clear loaded test details when switching to custom name
+      // Clear loaded test details when no test is selected
       currentTestId = null;
       clearTestDetails();
-      updateTestBtn.style.display = 'none'; // Hide update button
+
+      // Enable editing mode when no test is selected
+      setReadOnlyMode(false);
     }
-  });
-
-  // Create template button
-  createTemplateBtn.addEventListener('click', () => {
-    const key = '{{key}}';
-    window.open(`/admin/template/create?key=${key}`, '_blank');
-  });
-
-  // View templates button
-  viewTemplatesBtn.addEventListener('click', () => {
-    const key = '{{key}}';
-    window.open(`/admin/template/list?key=${key}`, '_blank');
   });
 
   // Parse freelancer ID
@@ -343,28 +532,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const templateId = templateSelect.value;
     const groupId = groupSelect.value;
     const selectedTestName = testNameSelect.value;
-    const customTestName = customTestNameInput.value.trim();
     const freelancerInputValue = freelancerInput.value;
 
-    if (!templateId || !groupId || !freelancerInputValue) {
-      alert('Please fill all required fields (Template, Group, and Freelancer)');
+    if (!templateId || !groupId || !selectedTestName || !freelancerInputValue) {
+      alert('Please fill all required fields (Template, Test, Group, and Freelancer)');
       return;
     }
 
-    // Determine if we're using existing test or creating new one
-    const isExistingTest = selectedTestName !== '';
-    const testName = selectedTestName || customTestName;
+    // Get test ID from selected test
+    const selectedOption = testNameSelect.options[testNameSelect.selectedIndex];
+    const testId = selectedOption.getAttribute('data-test-id');
 
-    if (!testName) {
-      alert('Please enter a test name or select an existing one');
+    if (!testId) {
+      alert('Please select a valid test');
       return;
-    }
-
-    // Get test ID if existing test is selected
-    let testId = null;
-    if (isExistingTest) {
-      const selectedOption = testNameSelect.options[testNameSelect.selectedIndex];
-      testId = selectedOption.getAttribute('data-test-id');
     }
 
     try {
@@ -410,21 +591,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const key = '{{key}}'; // Get the key from the template context
 
-      // Prepare request body - send either test_id or test_name
+      // Prepare request body - always use test_id since we only work with existing tests
       const requestBody = {
         template_id: templateId,
         group_id: groupId,
         freelancer_input: freelancerInputValue,
         tracking_config: trackingConfig,
-        questions: questions
+        questions: questions,
+        test_id: parseInt(testId)
       };
-
-      // Add either test_id or test_name based on selection
-      if (isExistingTest) {
-        requestBody.test_id = parseInt(testId);
-      } else {
-        requestBody.test_name = testName;
-      }
 
       const response = await fetch(`/admin/test/create-link?key=${key}`, {
         method: 'POST',
@@ -479,8 +654,11 @@ document.addEventListener('DOMContentLoaded', () => {
     questionCount++;
     const questionId = `question-${questionCount}`;
 
+    // Determine if this is a read-only question (loading existing question)
+    const isReadOnly = questionData !== null;
+
     const questionDiv = document.createElement('div');
-    questionDiv.className = 'question-item mb-3 p-3 border rounded';
+    questionDiv.className = `question-item mb-3 p-3 border rounded${isReadOnly ? ' readonly' : ''}`;
     questionDiv.id = questionId;
 
     // Set values from questionData if provided, otherwise use defaults
@@ -509,11 +687,11 @@ document.addEventListener('DOMContentLoaded', () => {
     questionDiv.innerHTML = `
       <div class="form-group mb-2">
         <label for="${questionId}-text">Question Text:</label>
-        <textarea id="${questionId}-text" class="form-control question-text" rows="2" placeholder="Enter question text">${questionText}</textarea>
+        <textarea id="${questionId}-text" class="form-control question-text" rows="2" placeholder="Enter question text" ${isReadOnly ? 'readonly' : ''}>${questionText}</textarea>
       </div>
       <div class="form-group mb-2">
         <label for="${questionId}-type">Answer Type:</label>
-        <select id="${questionId}-type" class="form-control answer-type">
+        <select id="${questionId}-type" class="form-control answer-type" ${isReadOnly ? 'disabled' : ''}>
           <option value="textarea" ${answerType === 'textarea' ? 'selected' : ''}>Text Area</option>
           <option value="radiobutton" ${answerType === 'radiobutton' ? 'selected' : ''}>Radio Buttons</option>
           <option value="multiinput" ${answerType === 'multiinput' ? 'selected' : ''}>Multiple Choice</option>
@@ -522,136 +700,61 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <div class="form-group mb-2 answer-html-container">
         <label for="${questionId}-html">Answer HTML:</label>
-        <textarea id="${questionId}-html" class="form-control answer-html" rows="3" placeholder="Enter HTML for answer options">${answerHtml}</textarea>
-        <small class="form-text text-muted">
+        <textarea id="${questionId}-html" class="form-control answer-html" rows="3" placeholder="Enter HTML for answer options" ${isReadOnly ? 'readonly' : ''}>${answerHtml}</textarea>
+        ${isReadOnly ? '' : `<small class="form-text text-muted">
           For textarea: <code>&lt;textarea name="answer" class="form-control"&gt;&lt;/textarea&gt;</code><br>
           For radiobutton: <code>&lt;div&gt;&lt;input type="radio" name="answer" value="option1"&gt; Option 1&lt;/div&gt;</code><br>
           For multiinput: <code>&lt;div&gt;&lt;input type="checkbox" name="answer" value="option1"&gt; Option 1&lt;/div&gt;</code><br>
           For multiTextInput: <code>&lt;div&gt;&lt;input type="text" name="answer-1" placeholder="Answer 1"&gt;&lt;/div&gt;</code>
-        </small>
+        </small>`}
       </div>
       <div class="form-group mb-2">
         <label for="${questionId}-correct">Correct Answer:</label>
-        <input type="text" id="${questionId}-correct" class="form-control correct-answer" placeholder="Enter correct answer or leave blank for essay questions" value="${correctAnswer}">
-        <small class="form-text text-muted">
+        <input type="text" id="${questionId}-correct" class="form-control correct-answer" placeholder="Enter correct answer or leave blank for essay questions" value="${correctAnswer}" ${isReadOnly ? 'readonly' : ''}>
+        ${isReadOnly ? '' : `<small class="form-text text-muted">
           For multiple correct answers, separate with OR (e.g., "answer1 OR answer2")
-        </small>
+        </small>`}
       </div>
-      <button type="button" class="btn btn-danger btn-sm remove-question" data-question-id="${questionId}">Remove Question</button>
+      ${isReadOnly ? '' : `<button type="button" class="btn btn-danger btn-sm remove-question" data-question-id="${questionId}">Remove Question</button>`}
     `;
 
     questionsContainer.appendChild(questionDiv);
 
-    // Add event listener for remove button
-    questionDiv.querySelector('.remove-question').addEventListener('click', (e) => {
-      const questionId = e.target.getAttribute('data-question-id');
-      document.getElementById(questionId).remove();
-    });
-
-    // Add event listener for answer type change
-    questionDiv.querySelector('.answer-type').addEventListener('change', (e) => {
-      const answerType = e.target.value;
-      const answerHtmlTextarea = questionDiv.querySelector('.answer-html');
-
-      // Only set default HTML if the field is empty (for new questions)
-      if (!answerHtmlTextarea.value.trim()) {
-        if (answerType === 'textarea') {
-          answerHtmlTextarea.value = '<textarea name="answer" class="form-control"></textarea>';
-        } else if (answerType === 'radiobutton') {
-          answerHtmlTextarea.value = '<div><input type="radio" name="answer" value="option1"> Option 1</div>\n<div><input type="radio" name="answer" value="option2"> Option 2</div>';
-        } else if (answerType === 'multiinput') {
-          answerHtmlTextarea.value = '<div><input type="checkbox" name="answer" value="option1"> Option 1</div>\n<div><input type="checkbox" name="answer" value="option2"> Option 2</div>';
-        } else if (answerType === 'multiTextInput') {
-          answerHtmlTextarea.value = '<div><input type="text" name="answer-1" placeholder="Answer 1"></div>\n<div><input type="text" name="answer-2" placeholder="Answer 2"></div>';
-        }
+    // Only add event listeners for editable questions
+    if (!isReadOnly) {
+      // Add event listener for remove button
+      const removeButton = questionDiv.querySelector('.remove-question');
+      if (removeButton) {
+        removeButton.addEventListener('click', (e) => {
+          const questionId = e.target.getAttribute('data-question-id');
+          document.getElementById(questionId).remove();
+        });
       }
-    });
 
-    // Only trigger change event for new questions (not when loading existing ones)
-    if (!questionData) {
-      questionDiv.querySelector('.answer-type').dispatchEvent(new Event('change'));
+      // Add event listener for answer type change
+      questionDiv.querySelector('.answer-type').addEventListener('change', (e) => {
+        const answerType = e.target.value;
+        const answerHtmlTextarea = questionDiv.querySelector('.answer-html');
+
+        // Only set default HTML if the field is empty (for new questions)
+        if (!answerHtmlTextarea.value.trim()) {
+          if (answerType === 'textarea') {
+            answerHtmlTextarea.value = '<textarea name="answer" class="form-control"></textarea>';
+          } else if (answerType === 'radiobutton') {
+            answerHtmlTextarea.value = '<div><input type="radio" name="answer" value="option1"> Option 1</div>\n<div><input type="radio" name="answer" value="option2"> Option 2</div>';
+          } else if (answerType === 'multiinput') {
+            answerHtmlTextarea.value = '<div><input type="checkbox" name="answer" value="option1"> Option 1</div>\n<div><input type="checkbox" name="answer" value="option2"> Option 2</div>';
+          } else if (answerType === 'multiTextInput') {
+            answerHtmlTextarea.value = '<div><input type="text" name="answer-1" placeholder="Answer 1"></div>\n<div><input type="text" name="answer-2" placeholder="Answer 2"></div>';
+          }
+        }
+      });
+
+      // Only trigger change event for new questions (not when loading existing ones)
+      if (!questionData) {
+        questionDiv.querySelector('.answer-type').dispatchEvent(new Event('change'));
+      }
     }
   };
-
-  // Add question button
-  addQuestionBtn.addEventListener('click', () => {
-    addQuestionToForm(); // Add new empty question
-  });
-
-  // Update test button
-  updateTestBtn.addEventListener('click', async () => {
-    if (!currentTestId) {
-      alert('No test selected for update');
-      return;
-    }
-
-    try {
-      // Collect tracking configuration
-      const trackingConfig = {
-        disableFocusLostEvents: !document.getElementById('trackFocusLost').checked,
-        disableMouseClickEvents: !document.getElementById('trackMouseClicks').checked,
-        disableKeyboardPressEvents: !document.getElementById('trackKeyboardPresses').checked,
-        disableDeviceFingerprint: !document.getElementById('trackDeviceFingerprint').checked,
-        disableClipboardEvents: !document.getElementById('trackClipboardEvents').checked,
-        disableAnswerChangeEvents: !document.getElementById('trackAnswerChanges').checked,
-        disablePreSubmitDelay: !document.getElementById('trackPreSubmitDelay').checked,
-        disableTimeToFirstInteraction: !document.getElementById('trackTimeToFirstInteraction').checked
-      };
-
-      // Collect questions
-      const questions = [];
-      document.querySelectorAll('.question-item').forEach(questionItem => {
-        const questionText = questionItem.querySelector('.question-text').value.trim();
-        const answerType = questionItem.querySelector('.answer-type').value;
-        const answerHtml = questionItem.querySelector('.answer-html').value.trim();
-        const correctAnswerRaw = questionItem.querySelector('.correct-answer').value.trim();
-
-        if (questionText) {
-          // Process correct answer - convert "First OR Second" back to ["First", "Second"] if needed
-          let correctAnswer = correctAnswerRaw;
-          if (correctAnswerRaw && correctAnswerRaw.includes(' OR ')) {
-            // Split by " OR " and create JSON array
-            const answers = correctAnswerRaw.split(' OR ').map(answer => answer.trim()).filter(answer => answer);
-            if (answers.length > 1) {
-              correctAnswer = JSON.stringify(answers);
-            }
-          }
-
-          questions.push({
-            question: questionText,
-            answer_type: answerType,
-            answer_html: answerHtml,
-            correct: correctAnswer
-          });
-        }
-      });
-
-      const key = '{{key}}';
-      const response = await fetch(`/admin/test/update/${currentTestId}?key=${key}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tracking_config: trackingConfig,
-          questions: questions
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
-        alert(`Test updated successfully! ${data.questions_updated} questions updated.`);
-      } else {
-        throw new Error(data.error || 'Failed to update test');
-      }
-    } catch (error) {
-      console.error('Error updating test:', error);
-      alert('Failed to update test: ' + error.message);
-    }
-  });
 });
 </script>
