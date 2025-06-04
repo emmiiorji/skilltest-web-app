@@ -434,6 +434,8 @@ document.addEventListener('DOMContentLoaded', () => {
       checkbox.checked = true; // Default is all tracking enabled
       checkbox.disabled = false; // Enable checkboxes
     });
+    const toggleButton = document.querySelector('.form-div .toggle-tracking');
+    toggleButton.disabled = false;
 
     // Clear all questions
     questionsContainer.innerHTML = '';
@@ -446,6 +448,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.tracking-option input[type="checkbox"]').forEach(checkbox => {
       checkbox.disabled = isReadOnly;
     });
+    const toggleButton = document.querySelector('.form-div .toggle-tracking');
+    toggleButton.disabled = isReadOnly;
+    console.log(toggleButton)
+    console.log('disabled', toggleButton?.disabled);
 
     // Always hide Add Question button since we only work with existing tests
     addQuestionBtn.style.display = 'none';
