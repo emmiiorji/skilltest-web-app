@@ -8,93 +8,74 @@
   {{/if}}
 </div>
 
-<style>
-  .export-icons {
-    display: inline-block;
-    margin-left: 10px;
-  }
-  .export-icon {
-    cursor: pointer;
-    margin: 0 5px;
-    color: #007bff;
-  }
-  .export-icon:hover {
-    color: #0056b3;
-  }
 
-  .snackbar {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #333;
-    color: white;
-    padding: 15px;
-    border-radius: 4px;
-    z-index: 1000;
-  }
-</style>
 
 
 {{#if testResults.length}}
-  <table id="resultsTable">
-    <thead>
-      <tr>
-        <th>User ID</th>
-        <th>User Name</th>
-        <th>Country</th>
-        <th>
-          Pass
-          {{#if (or (eq currentSort "pass") (eq currentSort "pass,date") (eq currentSort "date,pass"))}}
-            <span class="ml-1">▼</span>
-          {{/if}}
-        </th>
-        <th class="px-4 py-2">
-          Date
-          {{#if (or (eq currentSort "date") (eq currentSort "date,pass") (eq currentSort "pass,date"))}}
-            <span class="ml-1">▼</span>
-          {{/if}}
-        </th>
-        <th> Question Details</th>
-        <th><input type="checkbox" id="selectAll"></th>
-      </tr>
-    </thead>
-    <tbody>
-      {{#each testResults}}
+  <div class="table-container">
+    <table id="resultsTable">
+      <thead>
         <tr>
-          <td data-label="User ID"><a href="/admin/profile/view?id={{this.user_link_id}}&key={{../key}}">{{this.user_link_id}}</a>
-            <span class="export-icons">
-              {{#if this.user_link_id}}
-                <i class="fas fa-clipboard export-icon" title="Copy JSON" data-user="{{this.user_link_id}}" data-test="{{#if ../testId}}{{../testId}}{{else if this.question_details.[0]}}{{this.question_details.[0].test_id}}{{/if}}" data-test-names="{{this.test_names}}"></i>
-                <i class="fas fa-download export-icon" title="Download JSON" data-user="{{this.user_link_id}}" data-test="{{#if ../testId}}{{../testId}}{{else if this.question_details.[0]}}{{this.question_details.[0].test_id}}{{/if}}" data-test-names="{{this.test_names}}"></i>
-              {{else}}
-                <span title="User ID is missing, cannot export data">
-                  <i class="fas fa-clipboard export-icon disabled" style="color: #ccc; cursor: not-allowed;"></i>
-                  <i class="fas fa-download export-icon disabled" style="color: #ccc; cursor: not-allowed;"></i>
-                </span>
-              {{/if}}
-            </span>
-          </td>
-          <td data-label="User Name">{{this.user_name}}</td>
-          <td data-label="Country">{{#if this.country}}{{this.country}}{{else}}-{{/if}}</td>
-          <td data-label="Score">{{this.correct_answers}} / {{this.total_answers}}</td>
-          <td data-label="Date">{{formatDate this.completion_date}}</td>
-          <td data-label="Question Details" data-question-details='{{stringifyJson this.question_details}}'>
-            {{#each this.question_details}}
-              <span style="{{#if this.isCorrect}}background-color: #90EE90;{{/if}}">
-                {{this.answer_string}}
-              </span>
-              {{#unless @last}}<span>---</span>{{/unless}}
-            {{/each}}
-          </td>
-          <td>
-            <input type="checkbox" class="row-selector" data-row-id="{{@index}}">
-          </td>
+          <th>User ID</th>
+          <th>User Name</th>
+          <th>Country</th>
+          <th>
+            Pass
+            {{#if (or (eq currentSort "pass") (eq currentSort "pass,date") (eq currentSort "date,pass"))}}
+              <span class="ml-1">▼</span>
+            {{/if}}
+          </th>
+          <th class="px-4 py-2">
+            Date
+            {{#if (or (eq currentSort "date") (eq currentSort "date,pass") (eq currentSort "pass,date"))}}
+              <span class="ml-1">▼</span>
+            {{/if}}
+          </th>
+          <th>Question Details</th>
+          <th><input type="checkbox" id="selectAll"></th>
         </tr>
-      {{/each}}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {{#each testResults}}
+          <tr>
+            <td data-label="User ID">
+              <a href="/admin/profile/view?id={{this.user_link_id}}&key={{../key}}">{{this.user_link_id}}</a>
+              <span class="export-icons">
+                {{#if this.user_link_id}}
+                  <i class="fas fa-clipboard export-icon" title="Copy JSON" data-user="{{this.user_link_id}}" data-test="{{#if ../testId}}{{../testId}}{{else if this.question_details.[0]}}{{this.question_details.[0].test_id}}{{/if}}" data-test-names="{{this.test_names}}"></i>
+                  <i class="fas fa-download export-icon" title="Download JSON" data-user="{{this.user_link_id}}" data-test="{{#if ../testId}}{{../testId}}{{else if this.question_details.[0]}}{{this.question_details.[0].test_id}}{{/if}}" data-test-names="{{this.test_names}}"></i>
+                {{else}}
+                  <span title="User ID is missing, cannot export data">
+                    <i class="fas fa-clipboard export-icon disabled"></i>
+                    <i class="fas fa-download export-icon disabled"></i>
+                  </span>
+                {{/if}}
+              </span>
+            </td>
+            <td data-label="User Name">{{this.user_name}}</td>
+            <td data-label="Country">{{#if this.country}}{{this.country}}{{else}}-{{/if}}</td>
+            <td data-label="Score">{{this.correct_answers}} / {{this.total_answers}}</td>
+            <td data-label="Date">{{formatDate this.completion_date}}</td>
+            <td data-label="Question Details" data-question-details='{{stringifyJson this.question_details}}'>
+              {{#each this.question_details}}
+                <span style="{{#if this.isCorrect}}background-color: #90EE90; padding: 2px 4px; border-radius: 3px;{{/if}}">
+                  {{this.answer_string}}
+                </span>
+                {{#unless @last}}<span class="mx-1">---</span>{{/unless}}
+              {{/each}}
+            </td>
+            <td data-label="Select">
+              <input type="checkbox" class="row-selector" data-row-id="{{@index}}">
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
 {{else}}
-  <p style="color: #666;">No test results found for this group.</p>
+  <div class="text-center p-4">
+    <p class="text-muted">No test results found for this group.</p>
+  </div>
 {{/if}}
 
 <script>
@@ -261,49 +242,3 @@
   });
 </script>
 
-<style>
-  .header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-
-  .export-icons {
-    display: inline-flex;
-    align-items: center;
-    margin-left: 10px;
-    gap: 8px;
-  }
-
-  .export-icon {
-    cursor: pointer;
-    color: #007bff;
-    font-size: 1.1rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-  }
-
-  .export-icon:hover {
-    color: #0056b3;
-  }
-
-  .export-icon.disabled {
-    color: #ccc !important;
-    cursor: not-allowed !important;
-  }
-
-  .snackbar {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #333;
-    color: white;
-    padding: 15px;
-    border-radius: 4px;
-    z-index: 1000;
-  }
-</style>

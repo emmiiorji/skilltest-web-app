@@ -1,22 +1,23 @@
-<div class="container">
+<div class="header-container">
   <h1>Create Template</h1>
-  
-  <div class="form-container">
-    <form id="createTemplateForm">
-      <div class="form-div">
-        <label for="template_content">Template Content:</label>
-        <textarea id="template_content" name="template" rows="10" class="form-control" placeholder="Enter your template content here..."></textarea>
-        <small class="form-text text-muted">
-          Use <code>{url}</code> or <code>{link}</code> as placeholders for the test URL.
-          <br>Example: "Please take this test: {url}"
-        </small>
-      </div>
-      
-      <div class="form-div">
-        <button type="submit" class="btn btn-primary">Create Template</button>
-        <a href="/admin/template/list?key={{key}}" class="btn btn-secondary">View All Templates</a>
-      </div>
-    </form>
+  <a href="/admin/template/list?key={{key}}" class="btn btn-secondary">View All Templates</a>
+</div>
+
+<div class="form-container">
+  <form id="createTemplateForm">
+    <div class="form-div">
+      <label for="template_content">Template Content:</label>
+      <textarea id="template_content" name="template" rows="10" class="form-control" placeholder="Enter your template content here..."></textarea>
+      <small class="form-text text-muted">
+        Use <code>{url}</code> or <code>{link}</code> as placeholders for the test URL.
+        <br>Example: "Please take this test: {url}"
+      </small>
+    </div>
+
+    <div class="text-center">
+      <button type="submit" class="btn btn-primary">Create Template</button>
+    </div>
+  </form>
     
     <div id="resultContainer" style="display: none; margin-top: 20px;">
       <h3>Template Created Successfully!</h3>

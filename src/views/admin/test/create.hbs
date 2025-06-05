@@ -1,21 +1,22 @@
-<div class="test-message-container">
+<div class="header-container">
   <h1>Generate Test Message</h1>
+</div>
 
-  <div class="form-container">
-    <div class="form-div">
-      <label for="template">Select Template:</label>
-      <select id="template" class="form-control">
-        <option value="">-- Select Template --</option>
-        {{#each templates}}
-          <option value="{{this.id}}">{{this.template}}</option>
-        {{/each}}
-      </select>
-    </div>
+<div class="form-container">
+  <div class="form-div">
+    <label for="template">Select Template:</label>
+    <select id="template" class="form-control">
+      <option value="">-- Select Template --</option>
+      {{#each templates}}
+        <option value="{{this.id}}">{{this.template}}</option>
+      {{/each}}
+    </select>
+  </div>
 
-    <div class="form-div">
-      <label>Template Preview:</label>
-      <textarea id="templatePreview" readonly class="form-control template-preview" rows="10"></textarea>
-    </div>
+  <div class="form-div">
+    <label for="templatePreview">Template Preview:</label>
+    <textarea id="templatePreview" readonly class="form-control template-preview" rows="10"></textarea>
+  </div>
 
     <div class="form-div">
       <label for="testName">Select Test:</label>
@@ -41,219 +42,87 @@
     <div class="form-div">
       <label for="freelancerInput">Freelancer URL or ID:</label>
       <input type="text" id="freelancerInput" class="form-control" placeholder="abc123 or https://upwork.com/freelancers/~abc123">
-      <small>Parsed ID: <span id="parsedId">-</span></small>
-    </div>
+    <small class="form-text text-muted">Parsed ID: <span id="parsedId">-</span></small>
+  </div>
 
-    <div class="form-div">
-      <label>Test Questions:</label>
-      <div id="questions-container">
-        <!-- Questions will be added here dynamically -->
+  <div class="form-div">
+    <label>Test Questions:</label>
+    <div id="questions-container">
+      <!-- Questions will be added here dynamically -->
+    </div>
+    <button type="button" id="addQuestionBtn" class="btn btn-secondary mt-2" style="display: none;">Add Question</button>
+  </div>
+
+  <div class="form-div">
+    <label>Tracking Configuration:</label>
+    <div class="tracking-options">
+      <div class="tracking-option">
+        <input type="checkbox" id="trackFocusLost" checked>
+        <label for="trackFocusLost">Track Focus Lost Events</label>
       </div>
-      <button type="button" id="addQuestionBtn" class="btn btn-secondary mt-2" style="display: none;">Add Question</button>
-    </div>
-
-    <div class="form-div">
-      <label>Tracking Configuration:</label>
-      <div class="tracking-options">
-        <div class="tracking-option">
-          <input type="checkbox" id="trackFocusLost" checked>
-          <label for="trackFocusLost">Track Focus Lost Events</label>
-        </div>
-        <div class="tracking-option">
-          <input type="checkbox" id="trackMouseClicks" checked>
-          <label for="trackMouseClicks">Track Mouse Clicks</label>
-        </div>
-        <div class="tracking-option">
-          <input type="checkbox" id="trackKeyboardPresses" checked>
-          <label for="trackKeyboardPresses">Track Keyboard Presses</label>
-        </div>
-        <div class="tracking-option">
-          <input type="checkbox" id="trackDeviceFingerprint" checked>
-          <label for="trackDeviceFingerprint">Track Device Fingerprint</label>
-        </div>
-        <div class="tracking-option">
-          <input type="checkbox" id="trackClipboardEvents" checked>
-          <label for="trackClipboardEvents">Track Clipboard Events</label>
-        </div>
-        <div class="tracking-option">
-          <input type="checkbox" id="trackAnswerChanges" checked>
-          <label for="trackAnswerChanges">Track Answer Changes</label>
-        </div>
-        <div class="tracking-option">
-          <input type="checkbox" id="trackPreSubmitDelay" checked>
-          <label for="trackPreSubmitDelay">Track Pre-Submit Delay</label>
-        </div>
-        <div class="tracking-option">
-          <input type="checkbox" id="trackTimeToFirstInteraction" checked>
-          <label for="trackTimeToFirstInteraction">Track Time to First Interaction</label>
-        </div>
+      <div class="tracking-option">
+        <input type="checkbox" id="trackMouseClicks" checked>
+        <label for="trackMouseClicks">Track Mouse Clicks</label>
+      </div>
+      <div class="tracking-option">
+        <input type="checkbox" id="trackKeyboardPresses" checked>
+        <label for="trackKeyboardPresses">Track Keyboard Presses</label>
+      </div>
+      <div class="tracking-option">
+        <input type="checkbox" id="trackDeviceFingerprint" checked>
+        <label for="trackDeviceFingerprint">Track Device Fingerprint</label>
+      </div>
+      <div class="tracking-option">
+        <input type="checkbox" id="trackClipboardEvents" checked>
+        <label for="trackClipboardEvents">Track Clipboard Events</label>
+      </div>
+      <div class="tracking-option">
+        <input type="checkbox" id="trackAnswerChanges" checked>
+        <label for="trackAnswerChanges">Track Answer Changes</label>
+      </div>
+      <div class="tracking-option">
+        <input type="checkbox" id="trackPreSubmitDelay" checked>
+        <label for="trackPreSubmitDelay">Track Pre-Submit Delay</label>
+      </div>
+      <div class="tracking-option">
+        <input type="checkbox" id="trackTimeToFirstInteraction" checked>
+        <label for="trackTimeToFirstInteraction">Track Time to First Interaction</label>
       </div>
     </div>
+  </div>
 
+  <div class="text-center">
     <button id="generateBtn" class="btn btn-primary">Generate Message</button>
+  </div>
 
-    <div id="resultContainer" style="display: none; margin-top: 20px;">
-      <h3>Generated Message:</h3>
-      <div class="alert alert-success">Copied to clipboard!</div>
-      <textarea id="generatedMessage" readonly class="form-control" rows="10"></textarea>
-      <button id="copyBtn" class="btn btn-secondary mt-2">Copy Again</button>
-    </div>
+  <div id="resultContainer" style="display: none;" class="mt-4">
+    <h3>Generated Message:</h3>
+    <div class="alert alert-success">Copied to clipboard!</div>
+    <textarea id="generatedMessage" readonly class="form-control" rows="10"></textarea>
+    <button id="copyBtn" class="btn btn-secondary mt-2">Copy Again</button>
   </div>
 </div>
 
+<!-- Styles are now in main.css -->
 <style>
-.test-message-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+.alert {
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
 }
 
-.test-message-container h1 {
-  margin-bottom: 30px;
-  color: #2c3e50;
-  font-weight: 600;
-  text-align: center;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #e9ecef;
-}
-
-.form-container {
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 30px;
-  margin-bottom: 20px;
-}
-
-.form-div {
-  margin-bottom: 25px;
-  padding: 20px;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e9ecef;
-  overflow: hidden;
-  word-wrap: break-word;
-}
-
-.form-div label {
-  font-weight: 600;
-  color: #495057;
-  margin-bottom: 8px;
-  display: block;
-}
-
-.form-div small {
-  color: #6c757d;
-  font-size: 0.875rem;
-  margin-top: 5px;
-  display: block;
-}
-
-.form-control {
-  margin-bottom: 10px;
-  padding: 12px 15px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 14px;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.form-control:focus {
-  border-color: #80bdff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.form-control select {
-  width: 100%;
-  max-width: 100%;
-}
-
-.form-control option {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-#template {
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  box-sizing: border-box;
-}
-
-/* Force dropdown options to respect container width */
-#template option {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: 8px 12px;
-}
-
-/* Additional constraint for the dropdown container */
-.form-div select {
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-.tracking-options {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 15px;
-  margin-top: 15px;
-  padding: 20px;
-  background-color: #ffffff;
-  border-radius: 6px;
-  border: 1px solid #dee2e6;
-}
-
-.tracking-option {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-  padding: 8px 12px;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-}
-
-.tracking-option:hover {
-  background-color: #e9ecef;
-}
-
-.tracking-option input[type="checkbox"] {
-  margin-right: 12px;
-  transform: scale(1.1);
-}
-
-.tracking-option label {
-  margin-bottom: 0;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.toggle-tracking {
-  margin-bottom: 15px !important;
-  padding: 8px 16px;
-  font-size: 0.875rem;
-}
-
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 0.875rem;
+.alert-success {
+  color: #155724;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
 }
 
 .question-item {
   background-color: #ffffff;
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
   position: relative;
-  padding: 20px;
+  padding: 1.25rem;
   border-radius: 6px;
   border: 1px solid #dee2e6;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -272,7 +141,7 @@
 }
 
 .question-item .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 1rem;
 }
 
 .question-item .form-group:last-child {
@@ -281,77 +150,14 @@
 
 .remove-question {
   position: absolute;
-  top: 15px;
-  right: 15px;
-}
-
-#questions-container {
-  margin-bottom: 15px;
-  max-height: 600px;
-  overflow-y: auto;
-  padding: 10px;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e9ecef;
-}
-
-.template-preview {
-  width: 100%;
-  max-width: 100%;
-  resize: vertical;
-  padding: 15px;
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.5;
-  box-sizing: border-box;
-}
-
-#generateBtn {
-  padding: 12px 30px;
-  font-size: 16px;
-  font-weight: 600;
-  margin: 20px auto;
-  display: block;
-  min-width: 200px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-#generateBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
-}
-
-#resultContainer {
-  margin-top: 30px;
-  padding: 25px;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e9ecef;
-}
-
-#resultContainer h3 {
-  margin-bottom: 20px;
-  color: #495057;
-  font-weight: 600;
+  top: 1rem;
+  right: 1rem;
 }
 
 #generatedMessage {
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
   line-height: 1.6;
-  padding: 15px;
-}
-
-.alert {
-  margin-bottom: 15px;
-  padding: 12px 20px;
-  border-radius: 4px;
-}
-
-#copyBtn {
-  margin-top: 15px;
-  padding: 8px 20px;
 }
 </style>
 
