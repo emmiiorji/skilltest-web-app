@@ -1,11 +1,9 @@
 <div class="flex-container">
     <h1>{{test.name}}</h1>
     <div class="question-container">
-      <h2>
-        <div id="question-div">
-          {{{question}}}
-        </div>
-      </h2>
+      <div id="question-div">
+        {{{question}}}
+      </div>
       <form id="answerForm" method="POST" action="/test/attend?user={{userLinkId}}&test={{test_id}}">
         <input type="hidden" name="answer_type" id="answer_type" value="{{answer_type}}">
         <input type="hidden" name="test_id" id="test_id" value="{{test_id}}">
@@ -21,8 +19,58 @@
       </form>
     </div>
 </div>
-
-<script>
-  window.trackingConfig = {{{json tracking_config}}};
-</script>
+<style>
+  .flex-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+  #question-div {
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    max-width: 100%;
+    max-height: 100%;
+    overflow: auto;
+  }
+  .submit-container {
+    margin-top: 2rem;
+    text-align: center;
+    padding: 5px;
+    @media (min-width: 768px) {
+      padding: 20px;
+    }
+  }
+  #submitButton {
+    background-color: #2563eb;
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  #submitButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  @media (min-width: 768px) {
+    .flex-container {
+      flex-direction: row;
+      justify-content: center;
+    }
+    .content-left, .content-right {
+      width: 50%;
+    }
+  }
+</style>
 <script src="/js/attend.js"></script>
