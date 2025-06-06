@@ -22,7 +22,87 @@
     </div>
 </div>
 
-<!-- Styles are now in main.css -->
+<style>
+  /* Mobile-first responsive text sizing */
+  
+  /* Base mobile styles (up to 767px) */
+  @media (max-width: 767px) {
+    .flex-container {
+      padding: 10px;
+    }
+    
+    h1 {
+      font-size: 1.5rem; /* ~24px */
+      line-height: 1.3;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    
+    h2 {
+      font-size: 1.1rem; /* ~18px */
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+    
+    #question-div {
+      font-size: 0.95rem; /* ~15px */
+      line-height: 1.5;
+    }
+    
+    .question-container {
+      margin-bottom: 20px;
+    }
+    
+    /* Form elements */
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+      font-size: 0.9rem; /* ~14px */
+      padding: 8px;
+    }
+    
+    /* Submit button */
+    #submitButton {
+      font-size: 0.9rem; /* ~14px */
+      padding: 10px 20px;
+      width: 100%;
+      margin-top: 15px;
+    }
+    
+    /* Radio buttons and checkboxes labels */
+    label {
+      font-size: 0.85rem; /* ~14px */
+      line-height: 1.4;
+    }
+  }
+  
+  /* Small mobile devices (up to 480px) */
+  @media (max-width: 480px) {
+    h1 {
+      font-size: 1.25rem; /* ~20px */
+    }
+    
+    h2 {
+      font-size: 1rem; /* ~16px */
+    }
+    
+    #question-div {
+      font-size: 0.9rem; /* ~14px */
+    }
+    
+    label {
+      font-size: 0.8rem; /* ~13px */
+    }
+    
+    #submitButton {
+      font-size: 0.85rem; /* ~14px */
+      padding: 8px 16px;
+    }
+  }
+  
+  /* Existing styles */
+  #submitButton {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     cursor: pointer;
@@ -33,6 +113,7 @@
     cursor: not-allowed;
   }
 
+  /* Tablet and desktop styles */
   @media (min-width: 768px) {
     .flex-container {
       flex-direction: row;
@@ -41,6 +122,24 @@
 
     .content-left, .content-right {
       width: 50%;
+    }
+    
+    /* Reset to larger sizes for desktop */
+    h1 {
+      font-size: 2rem; /* ~32px */
+    }
+    
+    h2 {
+      font-size: 1.5rem; /* ~24px */
+    }
+    
+    #question-div {
+      font-size: 1.1rem; /* ~18px */
+    }
+    
+    #submitButton {
+      font-size: 1rem; /* ~16px */
+      width: auto;
     }
   }
 </style>
