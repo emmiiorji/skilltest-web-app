@@ -38,25 +38,34 @@
     .header {
         flex-direction: column;
         align-items: center;
-        padding: 10px;
+        padding: 5px 10px; /* Reduced padding */
+        min-height: auto; /* Remove any fixed height */
+    }
+    
+    .header h1 {
+        font-size: 1.2rem; /* Smaller title */
+        margin: 5px 0; /* Reduced margins */
+        line-height: 1.2;
     }
     
     .nav {
         flex-direction: column;
-        gap: 10px;
-        margin-top: 15px;
+        gap: 4px; /* Reduced gap between links */
+        margin-top: 8px; /* Reduced top margin */
         width: 100%;
     }
     
     .nav a {
         text-align: center;
-        padding: 8px 12px;
+        padding: 6px 10px; /* Reduced padding */
         border-radius: 4px;
         background-color: rgba(255, 255, 255, 0.1);
-        margin: 2px 0;
+        margin: 1px 0; /* Reduced margins */
         display: block;
         width: 100%;
         box-sizing: border-box;
+        font-size: 0.85rem; /* Smaller text */
+        line-height: 1.3;
     }
 }
 
