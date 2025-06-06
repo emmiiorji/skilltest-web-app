@@ -1,8 +1,13 @@
 <header class="header">
     <h1>{{title}}</h1>
-    <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle navigation">
-        <i class="fas fa-bars"></i>
-    </button>
+    {{#if url}}
+        {{#if (startsWith url '/admin')}}
+            <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+        {{/if}}
+    {{/if}}
+
     <nav class="nav" id="mainNav">
             {{#if url}}
                 {{#if (startsWith url '/admin')}}
