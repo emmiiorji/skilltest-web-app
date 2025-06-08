@@ -6,11 +6,37 @@ import {
   Answer,
   AnswerChangeEvent,
   FocusLostEvent,
+  FocusEvent,
   MouseClickEvent,
   KeyboardPressEvent,
   MathTestSummary,
   JavaScriptTestSummary
 } from '../types/tracking';
+
+// Utility function to format timestamps to readable format
+function formatTimestamp(timestamp: number | Date | string | null | undefined): string | null {
+  if (!timestamp) return null;
+
+  let date: Date;
+  if (typeof timestamp === 'number') {
+    date = new Date(timestamp);
+  } else if (typeof timestamp === 'string') {
+    date = new Date(timestamp);
+  } else {
+    date = timestamp;
+  }
+
+  // Format as "YYYY-MM-DD H:mm:ss.SSS"
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  const milliseconds = String(date.getMilliseconds()).padStart(3, '0');
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+}
 
 export function aiExportController(app: FastifyInstance, _opts: any, done: () => void) {
 
@@ -101,7 +127,6 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
 
       const questionData: any = {
         id: a.question_id,
-        question: a.question,
         user_answer: a.answer,
         correct_answer: correctAnswer,
         is_correct: a.is_correct,
@@ -110,8 +135,8 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
         copy_count: a.copy_count,
         paste_count: a.paste_count,
         right_click_count: a.right_click_count,
-        start_time: a.start_time,
-        submit_time: a.submit_time
+        start_time: formatTimestamp(a.start_time),
+        submit_time: formatTimestamp(a.submit_time)
       };
 
       // Only include tracking fields that have data (were enabled during test)
@@ -131,8 +156,19 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
         questionData.answer_changes = a.answer_change_events;
       }
 
-      if (a.focus_lost_events && a.focus_lost_events.length > 0) {
-        questionData.focus_lost_events = a.focus_lost_events;
+      // Handle focus events - support both old and new formats
+      if (a.focus_events && a.focus_events.length > 0) {
+        questionData.focus_events = a.focus_events.map((event: FocusEvent) => ({
+          ...event,
+          timestamp: formatTimestamp(event.timestamp)
+        }));
+      } else if (a.focus_lost_events && a.focus_lost_events.length > 0) {
+        // Convert old focus_lost_events to new format for backward compatibility
+        questionData.focus_events = a.focus_lost_events.map((event: FocusLostEvent) => ({
+          timestamp: formatTimestamp(event.timestamp),
+          duration_ms: event.duration_ms,
+          type: "inactive" as const
+        }));
       }
 
       if (a.mouse_click_events && a.mouse_click_events.length > 0) {
@@ -161,11 +197,15 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
     };
 
     // Only include tracking metrics in summary if they were tracked
-    const questionsWithFocusEvents = questions.filter((q: any) => q.focus_lost_events);
+    const questionsWithFocusEvents = questions.filter((q: any) => q.focus_events);
     if (questionsWithFocusEvents.length > 0) {
-      summary.total_focus_lost_count = questionsWithFocusEvents.reduce((sum: number, q: any) => sum + q.focus_lost_events.length, 0);
+      // Calculate focus lost metrics from focus_events with type "inactive"
+      summary.total_focus_lost_count = questionsWithFocusEvents.reduce((sum: number, q: any) =>
+        sum + q.focus_events.filter((e: any) => e.type === "inactive").length, 0);
       summary.total_focus_lost_duration = questionsWithFocusEvents.reduce((sum: number, q: any) =>
-        sum + q.focus_lost_events.reduce((s: number, e: FocusLostEvent) => s + e.duration_ms, 0), 0);
+        sum + q.focus_events
+          .filter((e: any) => e.type === "inactive")
+          .reduce((s: number, e: any) => s + e.duration_ms, 0), 0);
     }
 
     const questionsWithAnswerChanges = questions.filter((q: any) => q.answer_changes);
@@ -202,9 +242,9 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
       test: {
         id: test[0].id,
         name: test[0].name,
-        created_at: test[0].createdAt,
-        completed_at: completedAt,
-        test_start_time: test[0].test_start_time
+        created_at: formatTimestamp(test[0].createdAt),
+        completed_at: formatTimestamp(completedAt),
+        test_start_time: formatTimestamp(test[0].test_start_time)
       },
       device_info: deviceInfo,
       questions: questions,
@@ -311,19 +351,28 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
     const questions = answers.map((a: Answer) => {
       const questionData: any = {
         id: a.question_id,
-        question: a.question,
         user_answer: a.answer,
         time_taken: a.time_taken,
         inactive_time: a.inactive_time,
         answer_length: a.answer.length,
         word_count: a.answer.split(/\s+/).filter((word: string) => word.length > 0).length,
-        start_time: a.start_time,
-        submit_time: a.submit_time
+        start_time: formatTimestamp(a.start_time),
+        submit_time: formatTimestamp(a.submit_time)
       };
 
-      // Only include focus events if they were tracked
-      if (a.focus_lost_events && a.focus_lost_events.length > 0) {
-        questionData.focus_lost_events = a.focus_lost_events;
+      // Handle focus events - support both old and new formats
+      if (a.focus_events && a.focus_events.length > 0) {
+        questionData.focus_events = a.focus_events.map((event: FocusEvent) => ({
+          ...event,
+          timestamp: formatTimestamp(event.timestamp)
+        }));
+      } else if (a.focus_lost_events && a.focus_lost_events.length > 0) {
+        // Convert old focus_lost_events to new format for backward compatibility
+        questionData.focus_events = a.focus_lost_events.map((event: FocusLostEvent) => ({
+          timestamp: formatTimestamp(event.timestamp),
+          duration_ms: event.duration_ms,
+          type: "inactive" as const
+        }));
       }
 
       return questionData;
@@ -339,11 +388,15 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
     };
 
     // Only include focus tracking metrics if they were tracked
-    const questionsWithFocusEvents = questions.filter((q: any) => q.focus_lost_events);
+    const questionsWithFocusEvents = questions.filter((q: any) => q.focus_events);
     if (questionsWithFocusEvents.length > 0) {
-      summary.total_focus_lost_count = questionsWithFocusEvents.reduce((sum: number, q: any) => sum + q.focus_lost_events.length, 0);
+      // Calculate focus lost metrics from focus_events with type "inactive"
+      summary.total_focus_lost_count = questionsWithFocusEvents.reduce((sum: number, q: any) =>
+        sum + q.focus_events.filter((e: any) => e.type === "inactive").length, 0);
       summary.total_focus_lost_duration = questionsWithFocusEvents.reduce((sum: number, q: any) =>
-        sum + q.focus_lost_events.reduce((s: number, e: FocusLostEvent) => s + e.duration_ms, 0), 0);
+        sum + q.focus_events
+          .filter((e: any) => e.type === "inactive")
+          .reduce((s: number, e: any) => s + e.duration_ms, 0), 0);
     }
 
     // Calculate completed_at as the latest submit_time from answers
@@ -363,9 +416,9 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
       test: {
         id: test[0].id,
         name: test[0].name,
-        created_at: test[0].createdAt,
-        completed_at: completedAt,
-        test_start_time: test[0].test_start_time
+        created_at: formatTimestamp(test[0].createdAt),
+        completed_at: formatTimestamp(completedAt),
+        test_start_time: formatTimestamp(test[0].test_start_time)
       },
       device_info: deviceInfo,
       questions: questions,
