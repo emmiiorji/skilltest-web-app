@@ -12,7 +12,7 @@ class TestService {
     const dataSource = await connection();
     return dataSource.getRepository(Test).find({
       select: ['id', 'name'],
-      order: { name: 'ASC' }
+      order: { createdAt: 'DESC' }
     });
   }
 

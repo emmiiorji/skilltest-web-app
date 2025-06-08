@@ -9,7 +9,7 @@ class TemplateService {
     const templateRepository = dataSource.getRepository(Template);
     return templateRepository.find({
       select: ['id', 'template'],
-      order: { template: 'ASC' }
+      order: { createdAt: 'DESC' }
     });
   }
 

@@ -23,6 +23,15 @@ export interface FocusLostEvent {
 }
 
 /**
+ * Event triggered when user gains or loses focus on the test window
+ */
+export interface FocusEvent {
+    timestamp: number;
+    duration_ms: number;
+    type: "active" | "inactive";
+}
+
+/**
  * Event triggered when user clicks the mouse
  */
 export interface MouseClickEvent {
@@ -72,6 +81,7 @@ export interface Answer {
     clipboard_events?: ClipboardEvent[];
     answer_change_events?: AnswerChangeEvent[];
     focus_lost_events?: FocusLostEvent[];
+    focus_events?: FocusEvent[];
     mouse_click_events?: MouseClickEvent[];
     keyboard_press_events?: KeyboardPressEvent[];
 }
@@ -81,6 +91,7 @@ export interface Answer {
  */
 export interface TrackingConfig {
     disableFocusLostEvents?: boolean;
+    disableFocusEvents?: boolean;
     disableMouseClickEvents?: boolean;
     disableKeyboardPressEvents?: boolean;
     disableDeviceFingerprint?: boolean;

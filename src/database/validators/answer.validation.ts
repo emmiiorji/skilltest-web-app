@@ -1,10 +1,10 @@
 import { z } from "zod";
 // We're using the interface structures from tracking.ts but implementing them as Zod schemas
 
-// Create Zod schemas from the TypeScript interfaces
-const FocusLostEventSchema = z.object({
+const FocusEventSchema = z.object({
     timestamp: z.number(),
-    duration_ms: z.number()
+    duration_ms: z.number(),
+    type: z.enum(["active", "inactive"])
 });
 
 const ClipboardEventSchema = z.object({
@@ -52,7 +52,7 @@ export const AnswerSchema = z.object({
     submit_time: z.string().optional().transform((val) => val ? new Date(val) : null),
 
     // New tracking fields - all optional and only validated if present
-    focus_lost_events: z.array(FocusLostEventSchema).optional(),
+    focus_events: z.array(FocusEventSchema).optional(),
     clipboard_events: z.array(ClipboardEventSchema).optional(),
     pre_submit_delay: z.number().optional(),
     answer_change_events: z.array(AnswerChangeEventSchema).optional(),

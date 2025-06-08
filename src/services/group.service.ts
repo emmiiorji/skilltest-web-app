@@ -7,7 +7,7 @@ class GroupService {
     const dataSource = await connection();
     return dataSource.getRepository(Group).find({
       select: ['id', 'name'],
-      order: { name: 'ASC' }
+      order: { createdAt: 'DESC' }
     });
   }
 

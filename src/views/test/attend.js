@@ -16,7 +16,7 @@ const startScript = () => {
   let ip = '';
 
   // New tracking variables
-  let focusLostEvents = [];
+  let focusEvents = [];
   let clipboardEvents = [];
   let answerChangeEvents = [];
   let mouseClickEvents = [];
@@ -31,7 +31,7 @@ const startScript = () => {
 
   // Determine what to track (with browser support checks)
   const shouldTrack = {
-    focusLost: !config.disableFocusLostEvents && browserSupport.visibilityAPI,
+    focusEvents: !config.disableFocusEvents && browserSupport.visibilityAPI,
     clipboard: !config.disableClipboardEvents,
     preSubmitDelay: !config.disablePreSubmitDelay,
     answerChanges: !config.disableAnswerChangeEvents,
@@ -58,42 +58,69 @@ const startScript = () => {
   };
   deviceType = detectDeviceType();
 
-  // Focus tracking - only initialize if enabled
-  if (shouldTrack.focusLost) {
-    let focusLostStart = null;
+  // New Focus Events tracking - only initialize if enabled
+  let currentFocusState = 'active'; // Start as active since user just loaded the page
+  let focusStateStart = Date.now();
 
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        focusLostStart = Date.now();
-      } else if (focusLostStart) {
-        focusLostEvents.push({
-          timestamp: focusLostStart,
-          duration_ms: Date.now() - focusLostStart
-        });
-        focusLostStart = null;
+  if (shouldTrack.focusEvents) {
+
+    // Record initial active state
+    focusEvents.push({
+      timestamp: focusStateStart,
+      duration_ms: 0, // Will be updated when state changes
+      type: 'active'
+    });
+
+    const handleFocusStateChange = (newState) => {
+      const now = Date.now();
+      const duration = now - focusStateStart;
+
+      // Update the duration of the current event
+      if (focusEvents.length > 0) {
+        focusEvents[focusEvents.length - 1].duration_ms = duration;
+      }
+
+      // Add new event for the new state
+      focusEvents.push({
+        timestamp: now,
+        duration_ms: 0, // Will be updated on next state change
+        type: newState
+      });
+
+      currentFocusState = newState;
+      focusStateStart = now;
+    };
+
+    const handleVisibilityChangeFocus = () => {
+      const newState = document.hidden ? 'inactive' : 'active';
+      if (newState !== currentFocusState) {
+        handleFocusStateChange(newState);
       }
     };
 
-    const handleWindowBlur = () => {
-      if (!focusLostStart) {
-        focusLostStart = Date.now();
+    const handleWindowBlurFocus = () => {
+      if (currentFocusState !== 'inactive') {
+        handleFocusStateChange('inactive');
       }
     };
 
-    const handleWindowFocus = () => {
-      if (focusLostStart) {
-        focusLostEvents.push({
-          timestamp: focusLostStart,
-          duration_ms: Date.now() - focusLostStart
-        });
-        focusLostStart = null;
+    const handleWindowFocusFocus = () => {
+      if (currentFocusState !== 'active') {
+        handleFocusStateChange('active');
       }
     };
 
-    // Only add event listeners if focus tracking is enabled
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('blur', handleWindowBlur);
-    window.addEventListener('focus', handleWindowFocus);
+    // Add event listeners for new focus tracking
+    document.addEventListener('visibilitychange', handleVisibilityChangeFocus);
+    window.addEventListener('blur', handleWindowBlurFocus);
+    window.addEventListener('focus', handleWindowFocusFocus);
+
+    // Update the final duration when the page is about to unload
+    window.addEventListener('beforeunload', () => {
+      if (focusEvents.length > 0) {
+        focusEvents[focusEvents.length - 1].duration_ms = Date.now() - focusStateStart;
+      }
+    });
   }
 
   // Clipboard tracking - only initialize if enabled
@@ -528,9 +555,12 @@ const startScript = () => {
       device_type: deviceType
     };
 
-    // Only add enabled tracking metrics to payload
-    if (shouldTrack.focusLost) {
-      payload.focus_lost_events = limitArray(focusLostEvents);
+    if (shouldTrack.focusEvents) {
+      // Update the final duration before submitting
+      if (focusEvents.length > 0) {
+        focusEvents[focusEvents.length - 1].duration_ms = Date.now() - focusStateStart;
+      }
+      payload.focus_events = limitArray(focusEvents);
     }
 
     if (shouldTrack.clipboard) {

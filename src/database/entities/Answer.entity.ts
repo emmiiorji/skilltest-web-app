@@ -6,6 +6,7 @@ import { Test } from "./Test.entity";
 import {
     AnswerChangeEvent,
     FocusLostEvent,
+    FocusEvent,
     MouseClickEvent,
     KeyboardPressEvent,
     ClipboardEvent
@@ -88,7 +89,10 @@ export class Answer implements AnswerInput {
     submit_time: Date | null;
 
     @Column("json", { default: [] })
-    focus_lost_events: FocusLostEvent[];
+    focus_lost_events: FocusLostEvent[]; // Deprecated in favor of focus_events
+
+    @Column("json", { default: [] })
+    focus_events: FocusEvent[];
 
     @Column("json", { default: [] })
     clipboard_events: ClipboardEvent[];

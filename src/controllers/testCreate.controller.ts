@@ -37,7 +37,7 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
       group_id: z.coerce.number(),
       freelancer_input: z.string(),
       tracking_config: z.object({
-        disableFocusLostEvents: z.boolean().optional(),
+        disableFocusEvents: z.boolean().optional(),
         disableMouseClickEvents: z.boolean().optional(),
         disableKeyboardPressEvents: z.boolean().optional(),
         disableDeviceFingerprint: z.boolean().optional(),
@@ -210,7 +210,7 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
 
     const { tracking_config, questions } = z.object({
       tracking_config: z.object({
-        disableFocusLostEvents: z.boolean().optional(),
+        disableFocusEvents: z.boolean().optional(),
         disableMouseClickEvents: z.boolean().optional(),
         disableKeyboardPressEvents: z.boolean().optional(),
         disableDeviceFingerprint: z.boolean().optional(),

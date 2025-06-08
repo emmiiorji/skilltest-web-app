@@ -3,12 +3,44 @@
 </div>
 
 <div class="form-container">
+
+
+  <!-- Top row with Freelancer ID and Generate Button -->
+  <div class="freelancer-generate-row">
+    <div class="freelancer-input-container">
+      <div class="form-div">
+        <label for="freelancerInput">Freelancer URL or ID:</label>
+        <input type="text" id="freelancerInput" class="form-control" placeholder="abc123 or https://upwork.com/freelancers/~abc123">
+        <small class="form-text text-muted">Parsed ID: <span id="parsedId">-</span></small>
+      </div>
+    </div>
+    <button id="generateBtn" class="btn btn-primary">Generate Message</button>
+  </div>
+
+  <!-- Generated Message Result - moved here -->
+  <div id="resultContainer" style="display: none;" class="result-container">
+    <h3>Generated Message:</h3>
+    <div class="alert alert-success">Copied to clipboard!</div>
+    <textarea id="generatedMessage" readonly class="form-control" rows="10"></textarea>
+    <button id="copyBtn" class="btn btn-secondary mt-2">Copy Again</button>
+  </div>
+
+  <div class="form-div">
+    <label for="group">Select Group:</label>
+    <select id="group" class="form-control" required>
+      <option value="">-- Select Group --</option>
+      {{#each groups}}
+        <option value="{{this.id}}" {{#if @first}}selected{{/if}}>{{this.name}}</option>
+      {{/each}}
+    </select>
+  </div>
+
   <div class="form-div">
     <label for="template">Select Template:</label>
     <select id="template" class="form-control">
       <option value="">-- Select Template --</option>
       {{#each templates}}
-        <option value="{{this.id}}">{{this.template}}</option>
+        <option value="{{this.id}}" {{#if @first}}selected{{/if}}>{{this.template}}</option>
       {{/each}}
     </select>
   </div>
@@ -18,31 +50,15 @@
     <textarea id="templatePreview" readonly class="form-control template-preview" rows="10"></textarea>
   </div>
 
-    <div class="form-div">
-      <label for="testName">Select Test:</label>
-      <select id="testName" class="form-control" required>
-        <option value="">-- Select Test --</option>
-        {{#each tests}}
-          <option value="{{this.name}}" data-test-id="{{this.id}}">{{this.name}}</option>
-        {{/each}}
-      </select>
-      <small>Select an existing test to generate a message</small>
-    </div>
-
-    <div class="form-div">
-      <label for="group">Select Group:</label>
-      <select id="group" class="form-control" required>
-        <option value="">-- Select Group --</option>
-        {{#each groups}}
-          <option value="{{this.id}}">{{this.name}}</option>
-        {{/each}}
-      </select>
-    </div>
-
-    <div class="form-div">
-      <label for="freelancerInput">Freelancer URL or ID:</label>
-      <input type="text" id="freelancerInput" class="form-control" placeholder="abc123 or https://upwork.com/freelancers/~abc123">
-    <small class="form-text text-muted">Parsed ID: <span id="parsedId">-</span></small>
+  <div class="form-div">
+    <label for="testName">Select Test:</label>
+    <select id="testName" class="form-control" required>
+      <option value="">-- Select Test --</option>
+      {{#each tests}}
+        <option value="{{this.name}}" data-test-id="{{this.id}}" {{#if @first}}selected{{/if}}>{{this.name}}</option>
+      {{/each}}
+    </select>
+    <small>Select an existing test to generate a message</small>
   </div>
 
   <div class="form-div">
@@ -57,8 +73,8 @@
     <label>Tracking Configuration:</label>
     <div class="tracking-options">
       <div class="tracking-option">
-        <input type="checkbox" id="trackFocusLost" checked>
-        <label for="trackFocusLost">Track Focus Lost Events</label>
+        <input type="checkbox" id="trackFocusEvents" checked>
+        <label for="trackFocusEvents">Track Focus Events</label>
       </div>
       <div class="tracking-option">
         <input type="checkbox" id="trackMouseClicks" checked>
@@ -91,75 +107,12 @@
     </div>
   </div>
 
-  <div class="text-center">
-    <button id="generateBtn" class="btn btn-primary">Generate Message</button>
-  </div>
 
-  <div id="resultContainer" style="display: none;" class="mt-4">
-    <h3>Generated Message:</h3>
-    <div class="alert alert-success">Copied to clipboard!</div>
-    <textarea id="generatedMessage" readonly class="form-control" rows="10"></textarea>
-    <button id="copyBtn" class="btn btn-secondary mt-2">Copy Again</button>
-  </div>
+
+
 </div>
 
 <!-- Styles are now in main.css -->
-<style>
-.alert {
-  padding: 0.75rem 1.25rem;
-  margin-bottom: 1rem;
-  border: 1px solid transparent;
-  border-radius: 0.375rem;
-}
-
-.alert-success {
-  color: #155724;
-  background-color: #d4edda;
-  border-color: #c3e6cb;
-}
-
-.question-item {
-  background-color: #ffffff;
-  margin-bottom: 1.25rem;
-  position: relative;
-  padding: 1.25rem;
-  border-radius: 6px;
-  border: 1px solid #dee2e6;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.question-item.readonly {
-  background-color: #f8f9fa;
-  border-left: 4px solid #6c757d;
-}
-
-.question-item.readonly textarea,
-.question-item.readonly input,
-.question-item.readonly select {
-  background-color: #e9ecef;
-  cursor: not-allowed;
-}
-
-.question-item .form-group {
-  margin-bottom: 1rem;
-}
-
-.question-item .form-group:last-child {
-  margin-bottom: 0;
-}
-
-.remove-question {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-}
-
-#generatedMessage {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 0.875rem;
-  line-height: 1.6;
-}
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -203,6 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let questionCount = 0;
   const questions = [];
   let currentTestId = null; // Track currently selected test ID
+
+  
 
   // Function to load test details
   const loadTestDetails = async (testId) => {
@@ -256,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     const toggleButton = document.querySelector('.form-div .toggle-tracking');
     toggleButton.disabled = isReadOnly;
-    console.log(toggleButton)
     console.log('disabled', toggleButton?.disabled);
 
     // Always hide Add Question button since we only work with existing tests
@@ -267,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const loadTrackingConfig = (config) => {
     // Set tracking checkboxes based on config
     // Note: config stores disabled features as true, checkboxes show enabled features
-    document.getElementById('trackFocusLost').checked = !config.disableFocusLostEvents;
+    document.getElementById('trackFocusEvents').checked = !config.disableFocusEvents;
     document.getElementById('trackMouseClicks').checked = !config.disableMouseClickEvents;
     document.getElementById('trackKeyboardPresses').checked = !config.disableKeyboardPressEvents;
     document.getElementById('trackDeviceFingerprint').checked = !config.disableDeviceFingerprint;
@@ -319,6 +273,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Auto-select the first template, group, and test (latest created) and trigger change events
+  if (templateSelect.options.length > 1) {
+    templateSelect.selectedIndex = 1; // Skip the "-- Select Template --" option
+    // Manually populate the template preview
+    const selectedOption = templateSelect.options[templateSelect.selectedIndex];
+    templatePreview.value = selectedOption.text;
+    templateSelect.dispatchEvent(new Event('change'));
+  }
+
+  if (groupSelect.options.length > 1) {
+    groupSelect.selectedIndex = 1; // Skip the "-- Select Group --" option
+  }
+
+  if (testNameSelect.options.length > 1) {
+    testNameSelect.selectedIndex = 1; // Skip the "-- Select Test --" option
+    currentTestId = testNameSelect.options[testNameSelect.selectedIndex].dataset.testId;
+    testNameSelect.dispatchEvent(new Event('change'));
+  }
+
   // Parse freelancer ID
   freelancerInput.addEventListener('input', (e) => {
     let parsed = e.target.value;
@@ -363,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       // Collect tracking configuration
       const trackingConfig = {
-        disableFocusLostEvents: !document.getElementById('trackFocusLost').checked,
+        disableFocusEvents: !document.getElementById('trackFocusEvents').checked,
         disableMouseClickEvents: !document.getElementById('trackMouseClicks').checked,
         disableKeyboardPressEvents: !document.getElementById('trackKeyboardPresses').checked,
         disableDeviceFingerprint: !document.getElementById('trackDeviceFingerprint').checked,
