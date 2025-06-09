@@ -14,12 +14,15 @@ import { testService } from '../services/test.service';
 
 const decryptPayload = (encryptedPayload: string, key: string) => {
   try {
-    const text = atob(encryptedPayload);
-    let result = '';
-    for (let i = 0; i < text.length; i++) {
-      result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-    }
-    return JSON.parse(result);
+    const encryptedStr = Buffer.from(encryptedPayload, 'base64').toString('binary');
+    const encryptedBytes = Uint8Array.from(encryptedStr, char => char.charCodeAt(0));
+    const keyBytes = Buffer.from(key, 'utf-8');
+
+    const decryptedBytes = encryptedBytes.map((byte, i) => 
+      byte ^ (keyBytes[i % keyBytes.length] || 0));
+    const decryptedStr = Buffer.from(decryptedBytes).toString('utf-8');
+
+  return JSON.parse(decryptedStr);
   } catch (error) {
     console.error('Decryption error:', error);
     throw error;

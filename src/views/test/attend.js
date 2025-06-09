@@ -594,14 +594,16 @@ const startScript = () => {
     const resultSalt = document.querySelector('input[name="result_salt"]')?.value;
     const encryptionKey = userId + resultSalt;
 
-    // Existing encryption logic
+    // Encryption logic
     const encryptPayload = (payload, key) => {
       const text = JSON.stringify(payload);
-      let result = '';
-      for (let i = 0; i < text.length; i++) {
-        result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-      }
-      return btoa(result);
+      const textBytes = new TextEncoder().encode(text);
+      const keyBytes = new TextEncoder().encode(key);
+
+      const encryptedBytes = textBytes.map((byte, i) => byte ^ keyBytes[i % keyBytes.length]);
+      const encryptedStr = String.fromCharCode(...encryptedBytes);
+      
+      return btoa(encryptedStr);
     };
 
     const encryptedPayload = encryptPayload(payload, encryptionKey);
