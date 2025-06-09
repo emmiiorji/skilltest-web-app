@@ -10,7 +10,8 @@ import {
   MouseClickEvent,
   KeyboardPressEvent,
   MathTestSummary,
-  JavaScriptTestSummary
+  JavaScriptTestSummary,
+  ClipboardEvent
 } from '../types/tracking';
 
 // Utility function to format timestamps to readable format
@@ -149,34 +150,43 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
       }
 
       if (a.clipboard_events && a.clipboard_events.length > 0) {
-        questionData.clipboard_events = a.clipboard_events;
+        // Format timestamps
+        questionData.clipboard_events = a.clipboard_events.map((event: ClipboardEvent) => ({
+          ...event,
+          timestamp: formatTimestamp(event.timestamp)
+        }));
       }
 
       if (a.answer_change_events && a.answer_change_events.length > 0) {
-        questionData.answer_changes = a.answer_change_events;
+        questionData.answer_changes = a.answer_change_events.map((event: AnswerChangeEvent) => ({
+          ...event,
+          timestamp: formatTimestamp(event.timestamp)
+        }));
       }
 
-      // Handle focus events - support both old and new formats
+      // Handle focus events
       if (a.focus_events && a.focus_events.length > 0) {
+        // Format timestamps
         questionData.focus_events = a.focus_events.map((event: FocusEvent) => ({
           ...event,
           timestamp: formatTimestamp(event.timestamp)
         }));
-      } else if (a.focus_lost_events && a.focus_lost_events.length > 0) {
-        // Convert old focus_lost_events to new format for backward compatibility
-        questionData.focus_events = a.focus_lost_events.map((event: FocusLostEvent) => ({
-          timestamp: formatTimestamp(event.timestamp),
-          duration_ms: event.duration_ms,
-          type: "inactive" as const
-        }));
       }
 
       if (a.mouse_click_events && a.mouse_click_events.length > 0) {
-        questionData.mouse_click_events = a.mouse_click_events;
+        // Format timestamps
+        questionData.mouse_click_events = a.mouse_click_events.map((event: MouseClickEvent) => ({
+          ...event,
+          timestamp: formatTimestamp(event.timestamp)
+        }));
       }
 
       if (a.keyboard_press_events && a.keyboard_press_events.length > 0) {
-        questionData.keyboard_press_events = a.keyboard_press_events;
+        // Format timestamps
+        questionData.keyboard_press_events = a.keyboard_press_events.map((event: KeyboardPressEvent) => ({
+          ...event,
+          timestamp: formatTimestamp(event.timestamp)
+        }));
       }
 
       return questionData;
