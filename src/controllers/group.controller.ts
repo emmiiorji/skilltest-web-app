@@ -234,17 +234,17 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
           -- Collect all answers for each profile
           GROUP_CONCAT(
               CONCAT(
-                  a.id, '::', -- Answer ID
-                  t.id, '::', -- Test ID
-                  q.id, '::', -- Question ID
-                  q.question, '::', -- Question text
-                  a.answer, '::', -- Answer text
-                  a.time_taken, '::', -- Time taken
-                  a.paste_count, '::', -- Ctrl+V count
-                  a.copy_count, '::', -- Ctrl+C count
-                  a.right_click_count, '::', -- Right-click count
-                  a.inactive_time, "::", -- Inactive time
-                  a.is_correct
+                  IFNULL(a.id, ''), '::', -- Answer ID
+                  IFNULL(t.id, ''), '::', -- Test ID
+                  IFNULL(q.id, ''), '::', -- Question ID
+                  IFNULL(q.question, ''), '::', -- Question text
+                  IFNULL(a.answer, ''), '::', -- Answer text
+                  IFNULL(a.time_taken, ''), '::', -- Time taken
+                  IFNULL(a.paste_count, ''), '::', -- Ctrl+V count
+                  IFNULL(a.copy_count, ''), '::', -- Ctrl+C count
+                  IFNULL(a.right_click_count, ''), '::', -- Right-click count
+                  IFNULL(a.inactive_time, ''), "::", -- Inactive time
+                  IFNULL(a.is_correct, '')
               )
               ORDER BY a.created_at DESC
               SEPARATOR '||'
@@ -277,32 +277,34 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
     `, test_id ? [group_id, test_id] : [group_id]);
 
     // Process the results
-    const processedResults = detailedResults.map(result => ({
-      profile: {
-        id: result.profile_id,
-        name: result.profile_name,
-        country: result.country,
-        hourlyRate: result.hourly_rate,
-        linkId: result.link_id,
-        lastAnswerDate: new Date(result.last_answer_date).toLocaleString(),
-        url: result.url,
-      },
-      testNames: result.test_names, // Add test names to the result
-      answers: result.answer_details.split('||').map(answer => {
-        const [id, testId, questionId, question, answerText, timeTaken, ctrlV, ctrlC, rightClick, inactive, isCorrect] = answer.split('::');
-        return {
-          id: Number(id),
-          testId: Number(testId),
-          questionId: Number(questionId),
-          question,
-          answer: answerText,
-          timeTaken: Number(timeTaken),
-          inactive: Number(inactive),
-          copyPaste: Number(ctrlV) + Number(ctrlC) + Number(rightClick),
-          isCorrect: isCorrect === '1' ? true : false,
-        };
-      }),
-    }));
+    const processedResults = detailedResults.map(result => {
+      return {
+        profile: {
+          id: result.profile_id,
+          name: result.profile_name,
+          country: result.country,
+          hourlyRate: result.hourly_rate,
+          linkId: result.link_id,
+          lastAnswerDate: new Date(result.last_answer_date).toLocaleString(),
+          url: result.url,
+        },
+        testNames: result.test_names, // Add test names to the result
+        answers: result.answer_details.split('||').map(answer => {
+          const [id, testId, questionId, question, answerText, timeTaken, ctrlV, ctrlC, rightClick, inactive, isCorrect] = answer.split('::');
+          return {
+            id: Number(id),
+            testId: Number(testId),
+            questionId: Number(questionId),
+            question,
+            answer: answerText,
+            timeTaken: Number(timeTaken),
+            inactive: Number(inactive),
+            copyPaste: Number(ctrlV) + Number(ctrlC) + Number(rightClick),
+            isCorrect: isCorrect === '1' ? true : false,
+          };
+        }),
+      };
+    });
 
     return reply.view("/admin/group/detailed_result", {
       title: "Detailed Test Results",

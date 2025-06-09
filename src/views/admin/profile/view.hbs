@@ -499,11 +499,11 @@
                     <strong>Pre-Submit Delay:</strong> {{this.preSubmitDelay}}s
                   </div>
 
-                  <!-- Focus Lost Events -->
+                  <!-- Focus Events -->
                   <div class="tracking-item">
-                    <strong>Focus Lost Events:</strong>
-                    <span class="tracking-count">{{this.focusLostEvents.length}}</span>
-                    {{#if this.focusLostEvents.length}}
+                    <strong>Focus Events:</strong>
+                    <span class="tracking-count">{{this.focusEvents.length}}</span>
+                    {{#if this.focusEvents.length}}
                       <button class="toggle-details-btn" data-target="focus-lost-{{@../index}}-{{@index}}">Details</button>
                       <div class="tracking-details-container" id="focus-lost-{{@../index}}-{{@index}}" style="display: none;">
                         <table class="tracking-details-table">
@@ -511,13 +511,15 @@
                             <tr>
                               <th>Time</th>
                               <th>Duration (ms)</th>
+                              <th>Type</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {{#each this.focusLostEvents}}
+                            {{#each this.focusEvents}}
                               <tr>
                                 <td>{{formatTimestamp this.timestamp}}</td>
                                 <td>{{this.duration_ms}}</td>
+                                <td>{{this.type}}</td>
                               </tr>
                             {{/each}}
                           </tbody>

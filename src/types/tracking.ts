@@ -90,7 +90,6 @@ export interface Answer {
  * Tracking configuration options
  */
 export interface TrackingConfig {
-    disableFocusLostEvents?: boolean;
     disableFocusEvents?: boolean;
     disableMouseClickEvents?: boolean;
     disableKeyboardPressEvents?: boolean;

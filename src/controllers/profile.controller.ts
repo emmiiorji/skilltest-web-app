@@ -93,7 +93,7 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
           (a.paste_count + a.copy_count + a.right_click_count) AS copyPaste,
           a.inactive_time AS inactive,
           a.is_correct AS isCorrect,
-          a.focus_lost_events AS focusLostEvents,
+          a.focus_events AS focusEvents,
           a.clipboard_events AS clipboardEvents,
           a.pre_submit_delay AS preSubmitDelay,
           a.answer_change_events AS answerChangeEvents,
@@ -113,8 +113,8 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
           return {
             ...answer,
             // Parse JSON fields if they're strings
-            focusLostEvents: typeof answer.focusLostEvents === 'string' ?
-              JSON.parse(answer.focusLostEvents) : (answer.focusLostEvents || []),
+            focusEvents: typeof answer.focusEvents === 'string' ?
+              JSON.parse(answer.focusEvents) : (answer.focusEvents || []),
             clipboardEvents: typeof answer.clipboardEvents === 'string' ?
               JSON.parse(answer.clipboardEvents) : (answer.clipboardEvents || []),
             answerChangeEvents: typeof answer.answerChangeEvents === 'string' ?
