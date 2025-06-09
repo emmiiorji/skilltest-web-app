@@ -498,6 +498,15 @@ const startScript = () => {
   document.getElementById('answerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    // Get submit button and set loading state
+    const submitButton = document.getElementById('submitButton');
+    const originalButtonText = submitButton.textContent;
+
+    // Disable button and show loading state
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<span class="loading-spinner"></span> Submitting...';
+    submitButton.classList.add('loading');
+
     const answerType = document.querySelector('input[name="answer_type"]')?.value;
     let answer;
 
@@ -514,6 +523,11 @@ const startScript = () => {
     }
 
     if (!answer || (Array.isArray(answer) && answer.length === 0)) {
+      // Re-enable button and restore original state
+      submitButton.disabled = false;
+      submitButton.innerHTML = originalButtonText;
+      submitButton.classList.remove('loading');
+
       alert('Please provide an answer before submitting.');
       return;
     }
@@ -624,6 +638,11 @@ const startScript = () => {
         throw new Error('Server responded with an error');
       }
     } catch (error) {
+      // Re-enable button and restore original state on error
+      submitButton.disabled = false;
+      submitButton.innerHTML = originalButtonText;
+      submitButton.classList.remove('loading');
+
       console.error('Error:', error);
       alert('An error occurred. Please try again.');
     }
