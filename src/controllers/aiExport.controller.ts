@@ -215,7 +215,7 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
       summary.total_focus_lost_duration = questionsWithFocusEvents.reduce((sum: number, q: any) =>
         sum + q.focus_events
           .filter((e: any) => e.type === "inactive")
-          .reduce((s: number, e: any) => s + e.duration_ms, 0), 0);
+          .reduce((s: number, e: any) => s + e.duration_ms/1000, 0), 0);
     }
 
     const questionsWithAnswerChanges = questions.filter((q: any) => q.answer_changes);
@@ -376,13 +376,6 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
           ...event,
           timestamp: formatTimestamp(event.timestamp)
         }));
-      } else if (a.focus_lost_events && a.focus_lost_events.length > 0) {
-        // Convert old focus_lost_events to new format for backward compatibility
-        questionData.focus_events = a.focus_lost_events.map((event: FocusLostEvent) => ({
-          timestamp: formatTimestamp(event.timestamp),
-          duration_ms: event.duration_ms,
-          type: "inactive" as const
-        }));
       }
 
       return questionData;
@@ -406,7 +399,7 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
       summary.total_focus_lost_duration = questionsWithFocusEvents.reduce((sum: number, q: any) =>
         sum + q.focus_events
           .filter((e: any) => e.type === "inactive")
-          .reduce((s: number, e: any) => s + e.duration_ms, 0), 0);
+          .reduce((s: number, e: any) => s + e.duration_ms/1000, 0), 0);
     }
 
     // Calculate completed_at as the latest submit_time from answers
