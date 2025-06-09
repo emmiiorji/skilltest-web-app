@@ -216,7 +216,7 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
         sum + q.focus_events
           .filter((e: any) => e.type === "inactive")
           .reduce((s: number, e: any) => s + e.duration_ms, 0), 0);
-      summary.total_focus_lost_duration = Math.round(summary.total_focus_lost_duration || 0 / 1000);
+      summary.total_focus_lost_duration = Math.round((summary.total_focus_lost_duration || 0) / 10)/100;
     }
 
     const questionsWithAnswerChanges = questions.filter((q: any) => q.answer_changes);
@@ -401,7 +401,7 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
         sum + q.focus_events
           .filter((e: any) => e.type === "inactive")
           .reduce((s: number, e: any) => s + e.duration_ms, 0), 0);
-      summary.total_focus_lost_duration = Math.round(summary.total_focus_lost_duration || 0 / 1000);
+      summary.total_focus_lost_duration = Math.round(summary.total_focus_lost_duration || 0 / 10)/100;
     }
 
     // Calculate completed_at as the latest submit_time from answers
