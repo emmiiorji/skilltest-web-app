@@ -1,7 +1,6 @@
 const startScript = () => {
   // Browser compatibility checks
   const browserSupport = {
-    visibilityAPI: typeof document.hidden !== 'undefined',
     clipboardAPI: typeof navigator.clipboard !== 'undefined',
     deviceMemory: typeof navigator.deviceMemory !== 'undefined',
     hardwareConcurrency: typeof navigator.hardwareConcurrency !== 'undefined',
@@ -12,7 +11,6 @@ const startScript = () => {
 
   // Existing variables
   const startTime = Date.now();
-  let lastActiveTime = startTime;
   let ip = '';
 
   // New tracking variables
@@ -31,7 +29,7 @@ const startScript = () => {
 
   // Determine what to track (with browser support checks)
   const shouldTrack = {
-    focusEvents: !config.disableFocusEvents && browserSupport.visibilityAPI,
+    focusEvents: !config.disableFocusEvents,
     clipboard: !config.disableClipboardEvents,
     preSubmitDelay: !config.disablePreSubmitDelay,
     answerChanges: !config.disableAnswerChangeEvents,
@@ -58,23 +56,33 @@ const startScript = () => {
   };
   deviceType = detectDeviceType();
 
-  // New Focus Events tracking - only initialize if enabled
-  let currentFocusState = 'active'; // Start as active since user just loaded the page
+  // Global focus state tracking (used by both new and legacy systems)
+  // Use document.hasFocus() to determine initial state
+  let currentFocusState = document.hasFocus() ? 'active' : 'inactive';
   let focusStateStart = Date.now();
+  let totalInactiveTime = 0; // Global inactive time accumulator
 
+  // Record initial state if focus events are enabled
   if (shouldTrack.focusEvents) {
-
-    // Record initial active state
     focusEvents.push({
       timestamp: focusStateStart,
       duration_ms: 0, // Will be updated when state changes
-      type: 'active'
+      type: currentFocusState
     });
+  }
 
-    const handleFocusStateChange = (newState) => {
-      const now = Date.now();
-      const duration = now - focusStateStart;
+  // Global focus state change handler
+  const handleGlobalFocusStateChange = (newState) => {
+    const now = Date.now();
+    const duration = now - focusStateStart;
 
+    // Update inactive time accumulator if we're leaving an inactive state
+    if (currentFocusState === 'inactive') {
+      totalInactiveTime += duration;
+    }
+
+    // Update focus events array if tracking is enabled
+    if (shouldTrack.focusEvents) {
       // Update the duration of the current event
       if (focusEvents.length > 0) {
         focusEvents[focusEvents.length - 1].duration_ms = duration;
@@ -86,42 +94,44 @@ const startScript = () => {
         duration_ms: 0, // Will be updated on next state change
         type: newState
       });
+    }
 
-      currentFocusState = newState;
-      focusStateStart = now;
-    };
+    currentFocusState = newState;
+    focusStateStart = now;
+  };
 
-    const handleVisibilityChangeFocus = () => {
-      const newState = document.hidden ? 'inactive' : 'active';
-      if (newState !== currentFocusState) {
-        handleFocusStateChange(newState);
-      }
-    };
+  // Event handlers that use the global state change function
+  const handleWindowBlur = () => {
+    if (currentFocusState !== 'inactive') {
+      handleGlobalFocusStateChange('inactive');
+    }
+  };
 
-    const handleWindowBlurFocus = () => {
-      if (currentFocusState !== 'inactive') {
-        handleFocusStateChange('inactive');
-      }
-    };
+  const handleWindowFocus = () => {
+    if (currentFocusState !== 'active') {
+      handleGlobalFocusStateChange('active');
+    }
+  };
 
-    const handleWindowFocusFocus = () => {
-      if (currentFocusState !== 'active') {
-        handleFocusStateChange('active');
-      }
-    };
+  // Only add focus/blur event listeners for global focus tracking
+  window.addEventListener('blur', handleWindowBlur);
+  window.addEventListener('focus', handleWindowFocus);
 
-    // Add event listeners for new focus tracking
-    document.addEventListener('visibilitychange', handleVisibilityChangeFocus);
-    window.addEventListener('blur', handleWindowBlurFocus);
-    window.addEventListener('focus', handleWindowFocusFocus);
+  // Update the final duration when the page is about to unload
+  window.addEventListener('beforeunload', () => {
+    const now = Date.now();
+    const duration = now - focusStateStart;
 
-    // Update the final duration when the page is about to unload
-    window.addEventListener('beforeunload', () => {
-      if (focusEvents.length > 0) {
-        focusEvents[focusEvents.length - 1].duration_ms = Date.now() - focusStateStart;
-      }
-    });
-  }
+    // Update inactive time if currently inactive
+    if (currentFocusState === 'inactive') {
+      totalInactiveTime += duration;
+    }
+
+    // Update focus events if tracking is enabled
+    if (shouldTrack.focusEvents && focusEvents.length > 0) {
+      focusEvents[focusEvents.length - 1].duration_ms = duration;
+    }
+  });
 
   // Clipboard tracking - only initialize if enabled
   if (shouldTrack.clipboard) {
@@ -462,22 +472,9 @@ const startScript = () => {
   }
 
   // Original tracking variables (backward compatibility)
-  let inactiveTime = 0;
   let copyCount = 0;
   let pasteCount = 0;
   let rightClickCount = 0;
-
-  // Original event tracking (keep for backward compatibility)
-  const handleVisibilityChangeInactive = () => {
-    if (document.hidden) {
-      lastActiveTime = Date.now();
-    } else {
-      inactiveTime += Date.now() - lastActiveTime;
-    }
-  };
-
-  // Always track inactive time for backward compatibility
-  document.addEventListener('visibilitychange', handleVisibilityChangeInactive);
 
   // Only track legacy clipboard events if clipboard tracking is enabled
   if (shouldTrack.clipboard) {
@@ -543,6 +540,12 @@ const startScript = () => {
       ? (Date.now() - lastAnswerChangeTime) / 1000
       : 0;
 
+    // Calculate final inactive time (including current state if inactive)
+    let finalInactiveTime = totalInactiveTime;
+    if (currentFocusState === 'inactive') {
+      finalInactiveTime += Date.now() - focusStateStart;
+    }
+
     // Limit array sizes to prevent huge payloads
     const limitArray = (arr, limit = 1000) => arr.slice(0, limit);
 
@@ -559,7 +562,7 @@ const startScript = () => {
       copy_count: copyCount,
       paste_count: pasteCount,
       right_click_count: rightClickCount,
-      inactive_time: Math.round(inactiveTime / 1000),
+      inactive_time: Math.round(finalInactiveTime / 1000),
 
       // Timestamps
       start_time: new Date(startTime).toISOString(),
