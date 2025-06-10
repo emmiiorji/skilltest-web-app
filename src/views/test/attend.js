@@ -504,7 +504,7 @@ const startScript = () => {
 
     // Disable button and show loading state
     submitButton.disabled = true;
-    submitButton.innerHTML = '<span class="loading-spinner"></span> Submitting...';
+    submitButton.innerHTML = 'Submitting...';
     submitButton.classList.add('loading');
 
     const answerType = document.querySelector('input[name="answer_type"]')?.value;
