@@ -57,8 +57,8 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
     // Parse freelancer ID from input
     let freelancerId = freelancer_input;
     if (freelancer_input.includes('upwork.com')) {
-      const match = freelancer_input.match(/~([a-zA-Z0-9]+)/);
-      freelancerId = match && match[1] ? match[1] : freelancer_input;
+      const match = freelancer_input.match(/(~?([a-zA-Z0-9]+))$/);
+      freelancerId = match && match[2] ? match[2] : freelancer_input;
     }
 
     // Get profile or create if it doesn't exist

@@ -211,6 +211,10 @@ export function profileController(app: FastifyInstance, opts: any, done: () => v
 
       // Extract group_id and create profile data object
       const { group_id, ...profileInput } = profileData;
+      if (profileData.name?.includes('upwork.com')) {
+        const match = profileData.name.match(/(~?([a-zA-Z0-9]+))$/);
+        profileData.name = match && match[2] ? match[2] : profileData.name;
+      }
 
       // Create the profile
       const profile = await profileService.createProfile(profileInput as ProfileInput, group_id);

@@ -296,8 +296,8 @@ document.addEventListener('DOMContentLoaded', () => {
   freelancerInput.addEventListener('input', (e) => {
     let parsed = e.target.value;
     if (e.target.value.includes('upwork.com')) {
-      const match = e.target.value.match(/~([a-zA-Z0-9]+)/);
-      parsed = match ? match[1] : e.target.value;
+      const match = e.target.value.match(/(~?([a-zA-Z0-9]+))$/);
+      parsed = match ? match[2] : e.target.value;
     }
     parsedIdSpan.textContent = parsed;
     updatePreview();
