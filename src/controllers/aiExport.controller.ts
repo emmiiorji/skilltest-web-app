@@ -90,7 +90,7 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
 
       // Fetch test data with test_start_time from tests_profiles
       const test = await dataSource.query(`
-        SELECT t.id, t.name, t.createdAt, tp.test_start_time
+        SELECT t.id, t.name, tp.assignedAt, tp.test_start_time
         FROM tests t
         LEFT JOIN tests_profiles tp ON t.id = tp.testId AND tp.profileId = (SELECT id FROM profile WHERE link = ?)
         WHERE t.id = ?

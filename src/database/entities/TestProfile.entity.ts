@@ -15,6 +15,9 @@ export class TestProfile {
     @Column({ type: "datetime", nullable: true })
     test_start_time: Date | null;
 
+    @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+    createdAt: Date;
+
     @ManyToOne(() => Test, test => test.testProfiles, { onDelete: "CASCADE", onUpdate: "CASCADE" })
     @JoinColumn({ name: "testId" })
     test: Test;
