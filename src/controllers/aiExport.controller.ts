@@ -253,7 +253,7 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
       test: {
         id: test[0].id,
         name: test[0].name,
-        created_at: formatTimestamp(test[0].createdAt),
+        assignedAt: formatTimestamp(test[0].assignedAt),
         completed_at: formatTimestamp(completedAt),
         test_start_time: formatTimestamp(test[0].test_start_time)
       },
@@ -332,7 +332,7 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
       }
 
       const test = await dataSource.query(`
-        SELECT t.id, t.name, t.createdAt, tp.test_start_time
+        SELECT t.id, t.name, tp.assignedAt, tp.test_start_time
         FROM tests t
         LEFT JOIN tests_profiles tp ON t.id = tp.testId AND tp.profileId = (SELECT id FROM profile WHERE link = ?)
         WHERE t.id = ?
@@ -421,7 +421,7 @@ export function aiExportController(app: FastifyInstance, _opts: any, done: () =>
       test: {
         id: test[0].id,
         name: test[0].name,
-        created_at: formatTimestamp(test[0].createdAt),
+        assignedAt: formatTimestamp(test[0].assignedAt),
         completed_at: formatTimestamp(completedAt),
         test_start_time: formatTimestamp(test[0].test_start_time)
       },
