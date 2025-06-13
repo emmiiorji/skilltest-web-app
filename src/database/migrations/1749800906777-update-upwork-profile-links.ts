@@ -1,60 +1,60 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class UpdateUpworkProfileNames1749651978009 implements MigrationInterface {
+export class UpdateUpworkProfileLinks1749800906777 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        // Update profile names that contain 'upwork.com' and match the regex pattern
+        // Update profile links that contain 'upwork.com' and match the regex pattern
         // Extract only the username part using the same regex as in testCreate.controller.ts: /(~?([a-zA-Z0-9]+))$/
 
-        // Gt all profiles that contain 'upwork.com' in their name field
-        const profilesWithUpworkNames = await queryRunner.query(`
-            SELECT id, name
+        // Gt all profiles that contain 'upwork.com' in their link field
+        const profilesWithUpworkLinks = await queryRunner.query(`
+            SELECT id, link
             FROM profile
-            WHERE name LIKE '%upwork.com%'
+            WHERE link LIKE '%upwork.com%'
         `);
 
-        console.log(`Found ${profilesWithUpworkNames.length} profiles with upwork.com names to update`);
+        console.log(`Found ${profilesWithUpworkLinks.length} profiles with upwork.com links to update`);
 
         // Process each profile individually to apply the regex extraction
-        for (const profile of profilesWithUpworkNames) {
-            const originalName = profile.name;
+        for (const profile of profilesWithUpworkLinks) {
+            const originalLink = profile.link;
 
             // Apply the same regex pattern as in the controller: /(~?([a-zA-Z0-9]+))$/
-            const match = originalName.match(/(~?([a-zA-Z0-9]+))$/);
+            const match = originalLink.match(/(~?([a-zA-Z0-9]+))$/);
 
             if (match && match[2]) {
                 const username = match[2];
 
                 // Check if this username already exists to avoid unique constraint violations
                 const existingProfile = await queryRunner.query(`
-                    SELECT id FROM profile WHERE name = ? AND id != ?
+                    SELECT id FROM profile WHERE link = ? AND id != ?
                 `, [username, profile.id]);
 
                 if (existingProfile.length > 0) {
-                    console.log(`WARNING: Username "${username}" already exists for profile ${existingProfile[0].id}. Skipping profile ${profile.id}: "${originalName}"`);
-                    console.log(`You may need to manually resolve this duplicate: profile ${profile.id} with name "${originalName}"`);
+                    console.log(`WARNING: Username "${username}" already exists for profile ${existingProfile[0].id}. Skipping profile ${profile.id}: "${originalLink}"`);
+                    console.log(`You may need to manually resolve this duplicate: profile ${profile.id} with link "${originalLink}"`);
                     continue;
                 }
 
                 try {
-                    // Update the profile name to contain only the username
+                    // Update the profile link to contain only the username
                     await queryRunner.query(`
                         UPDATE profile
-                        SET name = ?
+                        SET link = ?
                         WHERE id = ?
                     `, [username, profile.id]);
 
-                    console.log(`Updated profile ${profile.id}: "${originalName}" -> "${username}"`);
+                    console.log(`Updated profile ${profile.id}: "${originalLink}" -> "${username}"`);
                 } catch (error) {
                     console.log(`ERROR updating profile ${profile.id}: ${error}`);
-                    console.log(`Original name: "${originalName}", attempted username: "${username}"`);
+                    console.log(`Original link: "${originalLink}", attempted username: "${username}"`);
                 }
             } else {
-                console.log(`Skipping profile ${profile.id}: "${originalName}" - does not match expected pattern`);
+                console.log(`Skipping profile ${profile.id}: "${originalLink}" - does not match expected pattern`);
             }
         }
 
-        console.log('Profile name update migration completed');
+        console.log('Profile link update migration completed');
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -64,7 +64,7 @@ export class UpdateUpworkProfileNames1749651978009 implements MigrationInterface
 
         console.log('WARNING: This migration cannot be automatically reverted.');
         console.log('The original upwork.com URLs have been replaced with usernames only.');
-        console.log('To restore original URLs, you would need to manually update the profile names');
+        console.log('To restore original URLs, you would need to manually update the profile links');
         console.log('or restore from a database backup taken before this migration was run.');
 
         throw new Error('Migration cannot be automatically reverted. Manual intervention required.');
