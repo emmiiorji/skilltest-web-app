@@ -186,14 +186,15 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       -- Join with tests to get test details and ensure test exists
       JOIN tests t ON ta.test_id = t.id
       -- Join to ensure only tests belonging to the group are included
-      JOIN tests_groups tg ON t.id = tg.testId AND tg.groupId = pg.groupId
+      INNER JOIN tests_groups tg ON t.id = tg.testId AND tg.groupId = pg.groupId
       -- Join with questions to ensure question exists (filter out orphaned answers)
       JOIN questions q ON ta.question_id = q.id
       -- Join with questions_tests to get priority information and ensure question-test relationship exists
       JOIN questions_tests qt ON ta.question_id = qt.question_id AND ta.test_id = qt.test_id
       -- Filter for the specific group
       WHERE pg.groupId = ?
-      ${testId ? 'AND ta.test_id = ?' : ''}
+        AND q.id IS NOT NULL
+        ${testId ? 'AND ta.test_id = ?' : ''}
       -- Group results by user
       GROUP BY p.id, p.name, p.country
       ORDER BY ${orderBy}
