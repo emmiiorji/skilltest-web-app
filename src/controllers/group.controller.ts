@@ -128,17 +128,13 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
     }
 
     const dataSource = await connection();
-    const testResults: {
+    const rawTestResults: {
       user_link_id: string;
       user_name: string;
       country: string;
       correct_answers: number;
       total_answers: number;
-      question_details: Array<{
-        answer_string: string;
-        isCorrect: boolean;
-        test_id: number;
-      }>;
+      question_details_raw: string;
       completion_date: Date;
       test_names: string;
     }[] = await dataSource.query(`
@@ -147,14 +143,15 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
         p.link AS user_link_id,
         p.name AS user_name,
         p.country,
-        -- Count of correct answers for this user in this group
+        -- Count of correct answers for this user in this group (only for tests belonging to the group)
         COUNT(CASE WHEN ta.is_correct = 1 THEN 1 END) AS correct_answers,
-        -- Total number of answers for this user in this group
+        -- Total number of answers for this user in this group (only for tests belonging to the group)
         COUNT(ta.id) AS total_answers,
-        -- Detailed information about each question answered
-        JSON_ARRAYAGG(
-          JSON_OBJECT(
-            'answer_string', CONCAT(
+        -- Detailed information about each question answered, sorted by test_id and priority
+        GROUP_CONCAT(
+          CONCAT(
+            '{"answer_string":"',
+            CONCAT(
               ta.question_id,
               '(',
               ta.time_taken,
@@ -164,13 +161,18 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
               ta.copy_count + ta.paste_count + ta.right_click_count,
               ')'
             ),
-            'isCorrect', ta.is_correct,
-            'test_id', ta.test_id
+            '","isCorrect":',
+            CASE WHEN ta.is_correct = 1 THEN 'true' ELSE 'false' END,
+            ',"test_id":',
+            ta.test_id,
+            '}'
           )
-        ) AS question_details,
+          ORDER BY ta.test_id, COALESCE(qt.priority, 999999)
+          SEPARATOR ','
+        ) AS question_details_raw,
         -- The latest answer date, considered as the completion date
         MAX(ta.created_at) AS completion_date,
-        -- Collect unique test names for each profile
+        -- Collect unique test names for each profile (only tests belonging to the group)
         GROUP_CONCAT(
             DISTINCT t.name
             ORDER BY t.name
@@ -182,7 +184,11 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       -- Join to get all answers for these profiles
       JOIN answers ta ON p.id = ta.profile_id
       -- Join with tests to get test details
-      LEFT JOIN tests t ON ta.test_id = t.id
+      JOIN tests t ON ta.test_id = t.id
+      -- Join to ensure only tests belonging to the group are included
+      JOIN tests_groups tg ON t.id = tg.testId AND tg.groupId = pg.groupId
+      -- Join with questions_tests to get priority information for sorting
+      LEFT JOIN questions_tests qt ON ta.question_id = qt.question_id AND ta.test_id = qt.test_id
       -- Filter for the specific group
       WHERE pg.groupId = ?
       ${testId ? 'AND ta.test_id = ?' : ''}
@@ -190,6 +196,14 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       GROUP BY p.id, p.name, p.country
       ORDER BY ${orderBy}
     `, testId ? [groupId, testId] : [groupId]);
+
+    // Process the raw results to convert the concatenated JSON string back to an array
+    const testResults = rawTestResults.map(result => ({
+      ...result,
+      question_details: result.question_details_raw
+        ? JSON.parse(`[${result.question_details_raw}]`)
+        : []
+    }));
 
     return reply.view("/admin/group/test_result", {
       title: "Test Results",
