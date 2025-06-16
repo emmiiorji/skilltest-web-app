@@ -167,7 +167,7 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
             ta.test_id,
             '}'
           )
-          ORDER BY ta.test_id, COALESCE(qt.priority, 999999)
+          ORDER BY ta.test_id, qt.priority
           SEPARATOR ','
         ) AS question_details_raw,
         -- The latest answer date, considered as the completion date
@@ -183,12 +183,14 @@ export function groupController(app: FastifyInstance, opts: any, done: () => voi
       JOIN profiles_groups pg ON p.id = pg.profileId
       -- Join to get all answers for these profiles
       JOIN answers ta ON p.id = ta.profile_id
-      -- Join with tests to get test details
+      -- Join with tests to get test details and ensure test exists
       JOIN tests t ON ta.test_id = t.id
       -- Join to ensure only tests belonging to the group are included
       JOIN tests_groups tg ON t.id = tg.testId AND tg.groupId = pg.groupId
-      -- Join with questions_tests to get priority information for sorting
-      LEFT JOIN questions_tests qt ON ta.question_id = qt.question_id AND ta.test_id = qt.test_id
+      -- Join with questions to ensure question exists (filter out orphaned answers)
+      JOIN questions q ON ta.question_id = q.id
+      -- Join with questions_tests to get priority information and ensure question-test relationship exists
+      JOIN questions_tests qt ON ta.question_id = qt.question_id AND ta.test_id = qt.test_id
       -- Filter for the specific group
       WHERE pg.groupId = ?
       ${testId ? 'AND ta.test_id = ?' : ''}
