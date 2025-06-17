@@ -68,6 +68,16 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
       profile = await profileService.createProfileByLinkId(freelancerId);
     }
 
+    if (test_id) {
+      // Check if user has already completed this test
+      const hasCompleted = await testService.hasUserCompletedTest(profile.id, test_id);
+      if (hasCompleted) {
+        return reply.status(400).send({
+          error: 'User has already completed this test. Cannot create a new test link for a completed test.'
+        });
+      }
+    }
+
     // Check if profile is in the selected group, if not add them to it
     if (profile && profile.groups.every(group => group.id !== group_id)) {
       await profileService.updateProfile(profile, group_id);
@@ -103,14 +113,6 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
       test = await testService.getTestById(test_id);
       if (!test) {
         return reply.status(404).send({ error: `Test with ID ${test_id} not found` });
-      }
-
-      // Check if user has already completed this test
-      const hasCompleted = await testService.hasUserCompletedTest(profile.id, test_id);
-      if (hasCompleted) {
-        return reply.status(400).send({
-          error: 'User has already completed this test. Cannot create a new test link for a completed test.'
-        });
       }
 
       // Link user and group to existing test
