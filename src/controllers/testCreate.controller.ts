@@ -104,6 +104,15 @@ export function testCreateController(app: FastifyInstance, opts: any, done: () =
       if (!test) {
         return reply.status(404).send({ error: `Test with ID ${test_id} not found` });
       }
+
+      // Check if user has already completed this test
+      const hasCompleted = await testService.hasUserCompletedTest(profile.id, test_id);
+      if (hasCompleted) {
+        return reply.status(400).send({
+          error: 'User has already completed this test. Cannot create a new test link for a completed test.'
+        });
+      }
+
       // Link user and group to existing test
       await testService.linkUserAndGroupToTest(profile.id, group_id, test);
 

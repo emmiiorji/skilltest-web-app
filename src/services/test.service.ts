@@ -3,6 +3,8 @@ import { Group } from '../database/entities/Group.entity';
 import { Profile } from '../database/entities/Profile.entity';
 import { Test } from '../database/entities/Test.entity';
 import { TestProfile } from '../database/entities/TestProfile.entity';
+import { Answer } from '../database/entities/Answer.entity';
+import { QuestionTest } from '../database/entities/QuestionTest.entity';
 import { generateRandomString } from '../utils/generateRandomString.utils';
 import { TrackingConfig } from '../types/tracking';
 
@@ -142,6 +144,28 @@ class TestService {
       testProfile.test_start_time = startTime;
       await testProfileRepository.save(testProfile);
     }
+  }
+
+  async hasUserCompletedTest(profileId: number, testId: number): Promise<boolean> {
+    const dataSource = await connection();
+
+    // Get all questions for this test
+    const totalQuestions = await dataSource
+      .getRepository(QuestionTest)
+      .createQueryBuilder('qt')
+      .where('qt.test_id = :testId', { testId })
+      .getCount();
+
+    // Get count of answered questions by this user for this test
+    const answeredQuestions = await dataSource
+      .getRepository(Answer)
+      .createQueryBuilder('answer')
+      .where('answer.test_id = :testId', { testId })
+      .andWhere('answer.profile_id = :profileId', { profileId })
+      .getCount();
+
+    // Test is completed if user has answered all questions
+    return totalQuestions > 0 && answeredQuestions >= totalQuestions;
   }
 }
 
