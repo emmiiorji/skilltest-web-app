@@ -1,0 +1,29 @@
+# Auto-generated from captain-definition - DO NOT EDIT DIRECTLY
+# Edit captain-definition instead and run: node generate-dockerfile.js
+
+FROM node:20-bullseye
+# Install native build dependencies
+RUN apt-get update && apt-get install -y python3 make g++ git libsodium-dev
+WORKDIR /usr/src/app
+# Use corepack for pnpm instead of npm -g
+RUN corepack enable
+# Copy dependency-related files
+COPY package.json pnpm-lock.yaml tsconfig.json ./
+# Install dependencies
+RUN pnpm install
+COPY . .
+ENV NODE_ENV=production
+ENV PORT=10000
+RUN pnpm run build
+RUN pnpm run copy-views
+RUN pnpm run copy-public
+# Create a non-root user
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+RUN chown -R appuser:appgroup /usr/src/app
+USER appuser
+# Create a startup script that runs migrations before starting the app
+RUN echo '#!/bin/sh' > /usr/src/app/start.sh
+RUN echo 'pnpm run migration:run && node dist/server.js' >> /usr/src/app/start.sh
+RUN chmod +x /usr/src/app/start.sh
+EXPOSE 10000
+CMD ["/usr/src/app/start.sh"]

@@ -1,14 +1,14 @@
 services:
-  # Web Service
+  # Web Service with Docker (generated from captain-definition)
   - type: web
     name: skilltest-web-app
-    env: node
+    env: docker
     repo: https://github.com/emmiiorji/skilltest-web-app.git
-    buildCommand: pnpm install && pnpm run build
-    startCommand: pnpm run migration:run:build && node dist/server.js
+    branch: extend-tracking-metrics
+    dockerfilePath: ./Dockerfile
+    dockerContext: ./
     plan: starter
     region: oregon
-    branch: extend-tracking-metrics
     envVars:
       - key: NODE_ENV
         value: production

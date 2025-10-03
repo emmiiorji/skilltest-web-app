@@ -16,7 +16,8 @@
     "migration:create": "node create-migration.js",
     "migration:generate": "node generate-migration.js",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/connection.ts",
-    "migration:revert": "pnpm run typeorm migration:revert -- -d src/database/connection.ts"
+    "migration:revert": "pnpm run typeorm migration:revert -- -d src/database/connection.ts",
+    "docker:generate": "node generate-dockerfile.js"
   },
   "repository": {
     "type": "git",
