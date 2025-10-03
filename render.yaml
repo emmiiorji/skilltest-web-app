@@ -1,0 +1,41 @@
+services:
+  # Web Service
+  - type: web
+    name: skilltest-web-app
+    env: node
+    repo: https://github.com/emmiiorji/skilltest-web-app.git
+    buildCommand: pnpm install && pnpm run build
+    startCommand: pnpm run migration:run:build && node dist/server.js
+    plan: starter
+    region: oregon
+    branch: extend-tracking-metrics
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_HOST
+        value: your-mysql-host.com
+      - key: DB_PORT
+        value: 3306
+      - key: DB_USER
+        value: your-mysql-username
+      - key: DB_PASSWORD
+        value: your-mysql-password
+      - key: DB_NAME
+        value: your-database-name
+      - key: DB_CONNECTION_LIMIT
+        value: 10
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SESSION_SALT
+        generateValue: true
+      - key: URL
+        fromService:
+          type: web
+          name: skilltest-web-app
+          property: host
+      - key: KEY
+        generateValue: true
+      - key: RESULT_SALT
+        generateValue: true

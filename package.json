@@ -1,14 +1,14 @@
 {
-  "name": "skilltest-new",
+  "name": "skilltest-web-app",
   "version": "1.0.0",
   "description": "A platform to create skill tests for users.",
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --watch src -e ts,hbs src/server.ts",
-    "build": "tsc && terser src/views/test/attend.js -o src/public/js/attend.js -c -m",
-    "copy-views": "mkdir -p dist/views && cp -R src/views dist",
-    "copy-public": "mkdir -p dist/public && cp -R src/public dist",
-    "prebuild": "rm -rf dist",
+    "build": "npm run prebuild && tsc && terser src/views/test/attend.js -o src/public/js/attend.js -c -m && npm run copy-views && npm run copy-public",
+    "copy-views": "node -e \"const fs=require('fs'); const path=require('path'); function copyDir(src,dest){fs.mkdirSync(dest,{recursive:true}); const entries=fs.readdirSync(src,{withFileTypes:true}); for(let entry of entries){const srcPath=path.join(src,entry.name); const destPath=path.join(dest,entry.name); if(entry.isDirectory()){copyDir(srcPath,destPath);}else{fs.copyFileSync(srcPath,destPath);}}} copyDir('src/views','dist/views');\"",
+    "copy-public": "node -e \"const fs=require('fs'); const path=require('path'); function copyDir(src,dest){fs.mkdirSync(dest,{recursive:true}); const entries=fs.readdirSync(src,{withFileTypes:true}); for(let entry of entries){const srcPath=path.join(src,entry.name); const destPath=path.join(dest,entry.name); if(entry.isDirectory()){copyDir(srcPath,destPath);}else{fs.copyFileSync(srcPath,destPath);}}} copyDir('src/public','dist/public');\"",
+    "prebuild": "node -e \"const fs=require('fs'); if(fs.existsSync('dist')){fs.rmSync('dist',{recursive:true,force:true});}\"",
     "build:ts": "tsc",
     "migration:run:build": "npm run build:ts && npm run migration:run",
     "start": "ts-node src/server.ts",
@@ -20,7 +20,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/qwillio-live/skilltest-new.git"
+    "url": "git+https://github.com/emmiiorji/skilltest-web-app.git"
   },
   "keywords": [
     "skilltest",
@@ -29,9 +29,9 @@
   "author": "Ansuman Agarwal",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/qwillio-live/skilltest-new/issues"
+    "url": "https://github.com/emmiiorji/skilltest-web-app/issues"
   },
-  "homepage": "https://github.com/qwillio-live/skilltest-new#readme",
+  "homepage": "https://github.com/emmiiorji/skilltest-web-app#readme",
   "dependencies": {
     "@fastify/cors": "^9.0.1",
     "@fastify/formbody": "^7.4.0",
