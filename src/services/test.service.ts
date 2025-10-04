@@ -50,7 +50,8 @@ class TestService {
     const testProfile = testProfileRepository.create({
       testId: savedTest.id,
       profileId: profile_id,
-      test_start_time: null // Will be set when first answer is submitted
+      test_start_time: null, // Will be set when first answer is submitted
+      assignedAt: new Date() // Explicitly set the assignment date
     });
 
     await testProfileRepository.save(testProfile);
@@ -94,7 +95,8 @@ class TestService {
       const testProfile = testProfileRepository.create({
         testId: test.id,
         profileId: profileId,
-        test_start_time: null
+        test_start_time: null,
+        assignedAt: new Date() // Explicitly set the assignment date
       });
       operations.push(testProfileRepository.save(testProfile));
     }
