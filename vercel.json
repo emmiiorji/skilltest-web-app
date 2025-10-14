@@ -1,20 +1,9 @@
 {
-  "builds": [
-    {
-      "src": "Dockerfile",
-      "use": "@vercel/static-build"
-    }
-  ],
-  "functions": {
-    "Dockerfile": {
-      "memory": 1024,
-      "maxDuration": 60
-    }
-  },
   "routes": [
     {
       "src": "/(.*)",
       "dest": "/"
     }
-  ]
+  ],
+  "version": 2
 }
